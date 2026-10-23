@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/require-role";
 import postgres from "postgres";
 
-/**
- * POST /api/dev/tamper
- *
- * Mutates an event row for the given entity so a demo can prove the verify
- * endpoint catches it. The trigger must be disabled during the update —
- * that's why this endpoint uses the owner connection (DATABASE_URL), not
- * the app role. It ALWAYS re-enables the trigger before returning.
- *
- * Guarded by NODE_ENV so production never exposes this route.
- */
+type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONValue[]
+  | { [key: string]: JSONValue };
+
 export async function POST(req: NextRequest) {
   if (
     process.env.NODE_ENV === "production" &&
@@ -31,10 +29,13 @@ export async function POST(req: NextRequest) {
         .catch(() => ({}))) as {
         entityId?: string;
         chainSeq?: number;
-        payload?: Record<string, unknown>;
+        payload?: JSONValue;
       };
 
-      if (!body.entityId || typeof body.chainSeq !== "number") {
+      const entityId = body.entityId;
+      const chainSeq = body.chainSeq;
+
+      if (!entityId || typeof chainSeq !== "number") {
         return NextResponse.json(
           {
             error: {
@@ -54,6 +55,8 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const payloadJson: JSONValue = body.payload ?? {};
+
       const sql = postgres(ownerUrl, { prepare: false, max: 1 });
 
       try {
@@ -61,10 +64,10 @@ export async function POST(req: NextRequest) {
           await tx`ALTER TABLE events DISABLE TRIGGER events_no_update`;
           const result = await tx`
             UPDATE events
-            SET payload = ${tx.json(body.payload ?? {})}
+            SET payload = ${tx.json(payloadJson)}
             WHERE business_id = ${ctx.businessId}
-              AND entity_id = ${body.entityId}
-              AND chain_seq = ${body.chainSeq}
+              AND entity_id = ${entityId}
+              AND chain_seq = ${chainSeq}
             RETURNING seq, chain_seq
           `;
           await tx`ALTER TABLE events ENABLE TRIGGER events_no_update`;
@@ -81,8 +84,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           data: {
             tampered: true,
-            entityId: body.entityId,
-            chainSeq: body.chainSeq,
+            entityId,
+            chainSeq,
             row: affected[0],
           },
         });
