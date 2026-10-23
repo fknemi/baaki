@@ -116,8 +116,8 @@ async function main() {
     const businessId = randomUUID();
 
     await sql`
-    INSERT INTO users (id, phone_e164, name)
-    VALUES (${userId}, '+918357037152', 'Rakesh Sharma')
+    INSERT INTO users (id, phone_e164, name, email)
+    VALUES (${userId}, '+918357037152', 'Rakesh Sharma', 'fk.nemi.kf@gmail.com')
   `;
 
     await sql`
