@@ -15,6 +15,27 @@
       "when": 1792627104953,
       "tag": "0001_admin_roles_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792698588616,
+      "tag": "0002_full_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792698597376,
+      "tag": "0003_full_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792698652452,
+      "tag": "0004_full_grants",
+      "breakpoints": true
     }
   ]
 }

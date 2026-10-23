@@ -25,6 +25,7 @@
     "db:generate": "bun --env-file=.env.local drizzle-kit generate",
     "db:migrate": "bun --env-file=.env.local drizzle-kit migrate",
     "db:studio": "bun --env-file=.env.local drizzle-kit studio",
+    "db:check": "bun --env-file=.env.local drizzle-kit check",
     "seed": "bun scripts/seed.mjs",
     "check:forbidden": "bun scripts/check-forbidden-tokens.mjs",
     "check:i18n": "bun scripts/check-i18n-parity.mjs",
