@@ -68,3 +68,11 @@ export function roundToRupee(paise: number): number {
 }
 
 
+/** Format signed paise (round-off, refunds). Accepts negatives. */
+export function formatINRDelta(paise: number): string {
+  if (typeof paise !== "number" || !Number.isInteger(paise)) {
+    throw new TypeError(`formatINRDelta: expected integer, got ${String(paise)}`);
+  }
+  const sign = paise < 0 ? "\u2212" : "";
+  return sign + INR.format(Math.abs(paise) / 100);
+}

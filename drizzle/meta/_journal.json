@@ -36,6 +36,13 @@
       "when": 1792698652452,
       "tag": "0004_full_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792704497526,
+      "tag": "0005_chain_seq",
+      "breakpoints": true
     }
   ]
 }
