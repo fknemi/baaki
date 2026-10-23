@@ -37,14 +37,14 @@ jobs:
       - name: Lint
         run: bun lint
 
+      - name: Build
+        run: bun run build
+
       - name: Typecheck
         run: bun typecheck
 
       - name: Test
         run: bun test
-
-      - name: Build
-        run: bun build
 
       - name: Secrets scan
         run: bun check:secrets
