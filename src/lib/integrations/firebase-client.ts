@@ -1,6 +1,5 @@
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -9,8 +8,30 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(config) : getApp();
+function getFirebaseApp(): FirebaseApp {
+  return getApps().length === 0 ? initializeApp(config) : getApp();
+}
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
+let _auth: Auth | null = null;
+let _googleProvider: GoogleAuthProvider | null = null;
+
+/**
+ * Lazy accessor — never call this at module scope.
+ * getAuth() eagerly validates the API key, so calling it during
+ * static prerendering throws auth/invalid-api-key.
+ * Only call inside useEffect / event handlers (browser only).
+ */
+export function getFirebaseAuth(): Auth {
+  if (typeof window === "undefined") {
+    throw new Error(
+      "getFirebaseAuth() is client-only. Move the call inside useEffect or an event handler.",
+    );
+  }
+  if (!_auth) _auth = getAuth(getFirebaseApp());
+  return _auth;
+}
+
+export function getGoogleProvider(): GoogleAuthProvider {
+  if (!_googleProvider) _googleProvider = new GoogleAuthProvider();
+  return _googleProvider;
+}
