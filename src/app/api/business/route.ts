@@ -14,6 +14,8 @@ const EDITABLE = [
   "udyamRegistered",
   "udyamType",
   "everCrossedEinvoiceThreshold",
+  "ladderOverride",
+  "autoSendStages",
 ] as const;
 
 type EditableField = (typeof EDITABLE)[number];

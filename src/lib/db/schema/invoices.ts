@@ -18,6 +18,7 @@ export const invoices = pgTable(
     amountPaidPaise: bigint("amount_paid_paise", { mode: "number" }).notNull().default(0),
     disputed: boolean("disputed").notNull().default(false),
     promiseToPayDate: date("promise_to_pay_date"),
+    snoozedUntil: date("snoozed_until"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => ({ uniq: uniqueIndex("inv_business_number_uniq").on(t.businessId, t.number) }),

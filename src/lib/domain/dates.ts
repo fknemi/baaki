@@ -28,6 +28,9 @@ export function addDays(yyyymmdd: string, days: number): string {
 
 /** Today in IST — YYYY-MM-DD. Uses local time but normalises to IST. */
 export function todayIST(): string {
+  const override = process.env.NEXT_PUBLIC_DEMO_TODAY;
+  if (override && /^\d{4}-\d{2}-\d{2}$/.test(override)) return override;
+
   const now = new Date();
   const istOffsetMs = 5.5 * 60 * 60 * 1000;
   const ist = new Date(now.getTime() + istOffsetMs);

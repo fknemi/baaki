@@ -43,6 +43,13 @@
       "when": 1792704497526,
       "tag": "0005_chain_seq",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792713204117,
+      "tag": "0006_snooze_auto_send",
+      "breakpoints": true
     }
   ]
 }
