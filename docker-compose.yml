@@ -1,0 +1,90 @@
+name: baaki
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: baaki-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: baaki
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d baaki"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - baaki-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: baaki-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - baaki-net
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.47
+    container_name: baaki-seaweedfs
+    restart: unless-stopped
+    ports:
+      - "8333:8333" # S3 API — browser hits this for presigned PUT/GET
+      - "9333:9333" # Master
+      - "8888:8888" # Filer
+    command: >
+      server
+      -dir=/data
+      -s3
+      -s3.port=8333
+      -s3.config=/etc/seaweedfs/s3.json
+      -volume.max=0
+    volumes:
+      - seaweeddata:/data
+      - ./docker/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    networks:
+      - baaki-net
+
+  seaweedfs-init:
+    image: chrislusf/seaweedfs:4.47
+    container_name: baaki-seaweedfs-init
+    depends_on:
+      seaweedfs:
+        condition: service_started
+    network_mode: "service:seaweedfs"
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command: >
+      until echo "s3.bucket.create -name baaki-evidence" |
+      weed shell -master 127.0.0.1:9333 -filer 127.0.0.1:8888;
+      do echo "waiting for SeaweedFS..."; sleep 2; done
+
+volumes:
+  pgdata:
+  redisdata:
+  seaweeddata:
+
+networks:
+  baaki-net:
+    driver: bridge

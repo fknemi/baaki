@@ -1,36 +1,42 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { friendlyError } from "@/lib/auth/friendly-error";
 
 export default function CompletePage() {
   const router = useRouter();
-  const ran = useRef(false); // guards React Strict Mode double-run
+  const ran = useRef(false);
   const [status, setStatus] = useState("Verifying link…");
   const [needEmail, setNeedEmail] = useState(false);
   const [email, setEmail] = useState("");
-
-  async function finish(emailToUse: string) {
-    try {
-      await signInWithEmailLink(auth, emailToUse, window.location.href);
-      window.localStorage.removeItem("emailForSignIn");
-      setStatus("Signed in. Redirecting…");
-      router.push("/");
-    } catch (e: any) {
-      setStatus(`Sign-in failed: ${e.code ?? e.message}`);
-    }
-  }
+  const [error, setError] = useState<string | null>(null);
+  const finish = useCallback(
+    async (emailToUse: string) => {
+      try {
+        await signInWithEmailLink(auth, emailToUse, window.location.href);
+        window.localStorage.removeItem("emailForSignIn");
+        setStatus("Signed in. Redirecting…");
+        router.push("/");
+      } catch (e) {
+        const code = (e as { code?: string })?.code ?? "";
+        setError(friendlyError(code));
+      }
+    },
+    [router],
+  );
 
   useEffect(() => {
     if (ran.current) return;
     ran.current = true;
 
     if (!isSignInWithEmailLink(auth, window.location.href)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount check; ref-guarded so it cannot re-trigger
       setStatus("This is not a valid sign-in link.");
       return;
     }
@@ -43,11 +49,12 @@ export default function CompletePage() {
       setNeedEmail(true);
       setStatus("Confirm the email this link was sent to.");
     }
-  }, []);
+  }, [finish]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
-      <Card className="w-full max-w-sm p-6 space-y-4">
+    <main className="flex min-h-screen items-center justify-center p-6">
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <Card className="w-full max-w-sm space-y-4 p-6">
         <p className="text-sm">{status}</p>
 
         {needEmail && (

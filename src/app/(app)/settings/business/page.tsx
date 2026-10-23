@@ -1,3 +1,3 @@
 export default function Page() {
-  return <div className="p-8 text-sm text-muted-foreground">TODO: /settings/business</div>;
+  return <div className="text-muted-foreground p-8 text-sm">TODO: /settings/business</div>;
 }
