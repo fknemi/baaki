@@ -50,7 +50,7 @@ export default function HelpPage() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
-      let acc = "";
+      const accParts: string[] = [];
 
       setMessages([...next, { role: "assistant", content: "" }]);
 
@@ -68,7 +68,9 @@ export default function HelpPage() {
           try {
             const obj = JSON.parse(payload);
             if (obj.text) {
-              acc += obj.text;
+              accParts.push(obj.text);
+              const acc = accParts.join("");
+
               setMessages((prev) => {
                 const copy = [...prev];
                 copy[copy.length - 1] = {
@@ -95,8 +97,8 @@ export default function HelpPage() {
     <main className="flex min-h-screen flex-col p-4 pb-24">
       <h1 className="text-xl font-semibold">Help</h1>
       <p className="mt-1 text-xs text-[#5A6170]">
-        Ask anything about receivables, GST, or how Baaki works. Confirm any
-        tax decision with your CA.
+        Ask anything about receivables, GST, or how Baaki works. Confirm any tax decision with your
+        CA.
       </p>
 
       <div className="mt-4 flex-1 space-y-3 overflow-y-auto">

@@ -35,10 +35,7 @@ export async function GET(req: NextRequest) {
     req,
     async (req, ctx) => {
       const today = todayIST();
-      const topN = Math.min(
-        20,
-        Math.max(1, Number(req.nextUrl.searchParams.get("topN") ?? "5")),
-      );
+      const topN = Math.min(20, Math.max(1, Number(req.nextUrl.searchParams.get("topN") ?? "5")));
 
       const [biz] = await db
         .select()

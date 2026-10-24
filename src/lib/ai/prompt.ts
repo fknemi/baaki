@@ -27,10 +27,7 @@ export function matchFaq(message: string, faq: FaqEntry[]): string | null {
   const m = message.toLowerCase();
   let best: { score: number; answer: string } | null = null;
   for (const f of faq) {
-    const score = f.keywords.reduce(
-      (s, k) => s + (m.includes(k.toLowerCase()) ? 1 : 0),
-      0,
-    );
+    const score = f.keywords.reduce((s, k) => s + (m.includes(k.toLowerCase()) ? 1 : 0), 0);
     if (score > 0 && (!best || score > best.score)) {
       best = { score, answer: f.answer };
     }

@@ -50,8 +50,7 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
       try {
         client = await verifyChainClient(events);
       } catch (err) {
-        clientError =
-          err instanceof Error ? err.message : "Client verify failed";
+        clientError = err instanceof Error ? err.message : "Client verify failed";
       }
 
       setResult({ server: serverData, client, clientError });
@@ -63,8 +62,7 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
   }
 
   const chainBroken = result !== null && !result.server.chain.valid;
-  const totalsDrift =
-    result !== null && result.server.chain.valid && !result.server.totalsMatch;
+  const totalsDrift = result !== null && result.server.chain.valid && !result.server.totalsMatch;
   const clientMatches =
     result !== null &&
     result.client !== null &&
@@ -103,8 +101,7 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
           {result.server.chain.valid ? (
             <p className="mt-1">
               {result.server.chain.eventCount} event
-              {result.server.chain.eventCount === 1 ? "" : "s"} verified on
-              server
+              {result.server.chain.eventCount === 1 ? "" : "s"} verified on server
             </p>
           ) : (
             <p className="mt-1 font-mono">
@@ -134,25 +131,22 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
             ) : result.client?.valid && clientMatches ? (
               <p className="text-[10px]">
                 ✓ Independently recomputed on this device. Anchors match:
-                <span className="ml-1 font-mono">
-                  {result.client.anchor.slice(0, 12)}…
-                </span>
+                <span className="ml-1 font-mono">{result.client.anchor.slice(0, 12)}…</span>
               </p>
             ) : result.client?.valid ? (
-              <p className="text-[10px] font-mono">
-                ⚠ Anchor mismatch. Server:{" "}
-                {result.server.anchor.slice(0, 12)}… Device:{" "}
+              <p className="font-mono text-[10px]">
+                ⚠ Anchor mismatch. Server: {result.server.anchor.slice(0, 12)}… Device:{" "}
                 {result.client.anchor.slice(0, 12)}…
               </p>
             ) : result.client ? (
-              <p className="text-[10px] font-mono">
-                ✗ Client recompute failed at chain_seq {result.client.failedAt}{" "}
-                — {result.client.reason}
+              <p className="font-mono text-[10px]">
+                ✗ Client recompute failed at chain_seq {result.client.failedAt} —{" "}
+                {result.client.reason}
               </p>
             ) : null}
           </div>
 
-          <p className="mt-1 break-all font-mono text-[10px] opacity-70">
+          <p className="mt-1 font-mono text-[10px] break-all opacity-70">
             anchor: {result.server.anchor.slice(0, 40)}…
           </p>
         </div>

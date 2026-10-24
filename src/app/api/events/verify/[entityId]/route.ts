@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/require-role";
 import { verifyEntityChain } from "@/lib/db/hashchain-server";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ entityId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ entityId: string }> }) {
   const { entityId } = await params;
   return requireRole(
     req,

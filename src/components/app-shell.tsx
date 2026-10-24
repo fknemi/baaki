@@ -41,9 +41,7 @@ export function AppShell({
   }
 
   function moreIsActive(): boolean {
-    return MORE_ITEMS.some(
-      (m) => pathname === m.href || pathname?.startsWith(m.href + "/"),
-    );
+    return MORE_ITEMS.some((m) => pathname === m.href || pathname?.startsWith(m.href + "/"));
   }
 
   return (
@@ -87,13 +85,12 @@ export function AppShell({
 
       {/* BOTTOM NAV */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-30 flex h-14 items-center justify-around border-t border-[#E4E7EC] bg-white"
+        className="fixed right-0 bottom-0 left-0 z-30 flex h-14 items-center justify-around border-t border-[#E4E7EC] bg-white"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Main navigation"
       >
         {NAV_ITEMS.map((item) => {
-          const active =
-            item.href === "/more" ? moreIsActive() : isActive(item.href);
+          const active = item.href === "/more" ? moreIsActive() : isActive(item.href);
           const isMore = item.href === "/more";
           return (
             <button
@@ -156,9 +153,7 @@ export function AppShell({
                     className="block rounded-lg p-3 hover:bg-[#F7F8FA]"
                   >
                     <div className="text-sm font-medium">{item.label}</div>
-                    <div className="text-[10px] text-[#5A6170]">
-                      {item.desc}
-                    </div>
+                    <div className="text-[10px] text-[#5A6170]">{item.desc}</div>
                   </Link>
                 </li>
               ))}

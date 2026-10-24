@@ -5,13 +5,7 @@ import { randomUUID } from "node:crypto";
 import { requireRole } from "@/lib/auth/require-role";
 import { s3, BUCKET } from "@/lib/integrations/r2";
 
-const ALLOWED_MIMES = [
-  "image/jpeg",
-  "image/png",
-  "application/pdf",
-  "audio/mpeg",
-  "audio/wav",
-];
+const ALLOWED_MIMES = ["image/jpeg", "image/png", "application/pdf", "audio/mpeg", "audio/wav"];
 const MAX_SIZE = 5 * 1024 * 1024;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -28,10 +22,7 @@ export async function POST(req: NextRequest) {
 
       const mime = String(body.mime ?? "");
       const sizeBytes = Number(body.sizeBytes ?? 0);
-      const entityType = String(body.entityType ?? "temp").replace(
-        /[^a-z_-]/gi,
-        "",
-      );
+      const entityType = String(body.entityType ?? "temp").replace(/[^a-z_-]/gi, "");
 
       if (!ALLOWED_MIMES.includes(mime)) {
         return NextResponse.json(

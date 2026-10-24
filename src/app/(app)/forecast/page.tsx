@@ -59,9 +59,7 @@ export default function ForecastPage() {
   const gapCoverers = chase.filter((c) => gapSet.has(c.invoiceId));
 
   const toggle = (id: string) => {
-    setWhatIf((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setWhatIf((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const weekRow = openWeek !== null ? data.rows[openWeek - 1] : null;
@@ -81,13 +79,10 @@ export default function ForecastPage() {
           </div>
           <div>
             <div className="text-[10px] text-[#5A6170]">Lowest</div>
-            <div className="mt-0.5 font-semibold tabular-nums text-[#B42318]">
+            <div className="mt-0.5 font-semibold text-[#B42318] tabular-nums">
               {formatINR(data.lowestPointPaise)}
               {data.breachWeek !== null && (
-                <span className="text-[10px] text-[#5A6170]">
-                  {" "}
-                  (W{data.breachWeek})
-                </span>
+                <span className="text-[10px] text-[#5A6170]"> (W{data.breachWeek})</span>
               )}
             </div>
           </div>
@@ -105,8 +100,7 @@ export default function ForecastPage() {
           role="alert"
           className="rounded-xl bg-[#FEF3F2] p-3 text-xs font-medium text-[#B42318] ring-1 ring-[#FDA29B]"
         >
-          ⚠ Cash goes below buffer in week {data.breachWeek} · gap{" "}
-          {formatINR(data.gapPaise)}
+          ⚠ Cash goes below buffer in week {data.breachWeek} · gap {formatINR(data.gapPaise)}
         </div>
       )}
 
@@ -124,26 +118,14 @@ export default function ForecastPage() {
             </thead>
             <tbody>
               {data.rows.map((r) => {
-                const breach =
-                  data.breachWeek !== null && r.week === data.breachWeek;
+                const breach = data.breachWeek !== null && r.week === data.breachWeek;
                 return (
-                  <tr
-                    key={r.week}
-                    className={breach ? "bg-[#FEF3F2] text-[#B42318]" : ""}
-                  >
+                  <tr key={r.week} className={breach ? "bg-[#FEF3F2] text-[#B42318]" : ""}>
                     <td>{r.week}</td>
-                    <td className="text-right">
-                      {formatINR(r.openingPaise)}
-                    </td>
-                    <td className="text-right">
-                      {formatINR(r.inflowPaise)}
-                    </td>
-                    <td className="text-right">
-                      {formatINR(r.outflowPaise)}
-                    </td>
-                    <td className="text-right font-medium">
-                      {formatINR(r.closingPaise)}
-                    </td>
+                    <td className="text-right">{formatINR(r.openingPaise)}</td>
+                    <td className="text-right">{formatINR(r.inflowPaise)}</td>
+                    <td className="text-right">{formatINR(r.outflowPaise)}</td>
+                    <td className="text-right font-medium">{formatINR(r.closingPaise)}</td>
                   </tr>
                 );
               })}
@@ -167,25 +149,18 @@ export default function ForecastPage() {
       </button>
 
       <StuckBox>
-        What-if is a preview only — nothing is saved until you take action.
-        Reset returns you to the actual forecast.
+        What-if is a preview only — nothing is saved until you take action. Reset returns you to the
+        actual forecast.
       </StuckBox>
 
       <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
         <h2 className="text-sm font-semibold">What-if</h2>
         <div className="mt-3 space-y-2 text-xs">
-          <label
-            className={`flex items-center gap-2 ${
-              !topCustomerId ? "opacity-50" : ""
-            }`}
-          >
+          <label className={`flex items-center gap-2 ${!topCustomerId ? "opacity-50" : ""}`}>
             <input
               type="checkbox"
               checked={whatIf.some((w) => w.startsWith("delayCustomer"))}
-              onChange={() =>
-                topCustomerId &&
-                toggle(`delayCustomer:${topCustomerId}:30`)
-              }
+              onChange={() => topCustomerId && toggle(`delayCustomer:${topCustomerId}:30`)}
               disabled={!topCustomerId}
             />
             <span>Delay biggest customer 30 days</span>
@@ -198,17 +173,11 @@ export default function ForecastPage() {
             />
             <span>Simulate big order +₹20,00,000</span>
           </label>
-          <label
-            className={`flex items-center gap-2 ${
-              !topExpenseId ? "opacity-50" : ""
-            }`}
-          >
+          <label className={`flex items-center gap-2 ${!topExpenseId ? "opacity-50" : ""}`}>
             <input
               type="checkbox"
               checked={whatIf.some((w) => w.startsWith("delayExpense"))}
-              onChange={() =>
-                topExpenseId && toggle(`delayExpense:${topExpenseId}:14`)
-              }
+              onChange={() => topExpenseId && toggle(`delayExpense:${topExpenseId}:14`)}
               disabled={!topExpenseId}
             />
             <span>Delay biggest supplier payment 14 days</span>
@@ -237,13 +206,9 @@ export default function ForecastPage() {
                   className="flex items-center justify-between rounded-lg border border-[#E4E7EC] p-2 hover:bg-[#F7F8FA]"
                 >
                   <div>
-                    <div className="text-xs font-medium">
-                      {c.customerName}
-                    </div>
+                    <div className="text-xs font-medium">{c.customerName}</div>
                     <div className="text-[10px] text-[#5A6170]">
-                      {c.daysOverdue > 0
-                        ? `${c.daysOverdue} days overdue`
-                        : "not yet due"}
+                      {c.daysOverdue > 0 ? `${c.daysOverdue} days overdue` : "not yet due"}
                     </div>
                   </div>
                   <div className="text-xs font-semibold tabular-nums">
@@ -270,8 +235,7 @@ export default function ForecastPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-semibold">
-                  Week {weekRow.week} ({weekRow.weekStart} →{" "}
-                  {weekRow.weekEnd})
+                  Week {weekRow.week} ({weekRow.weekStart} → {weekRow.weekEnd})
                 </h2>
                 <p className="mt-1 text-xs text-[#5A6170]">
                   Opening {formatINR(weekRow.openingPaise)}
@@ -288,13 +252,13 @@ export default function ForecastPage() {
             <div className="mt-3 space-y-1 text-xs">
               <div className="flex justify-between">
                 <span className="text-[#5A6170]">Inflows</span>
-                <span className="font-medium tabular-nums text-[#067647]">
+                <span className="font-medium text-[#067647] tabular-nums">
                   +{formatINR(weekRow.inflowPaise)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#5A6170]">Outflows</span>
-                <span className="font-medium tabular-nums text-[#B42318]">
+                <span className="font-medium text-[#B42318] tabular-nums">
                   −{formatINR(weekRow.outflowPaise)}
                 </span>
               </div>

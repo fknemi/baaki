@@ -1,5 +1,3 @@
-import { config } from "./config";
-
 export type InvoiceItemInput = {
   qty: number;
   ratePaise: number;

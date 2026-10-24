@@ -18,8 +18,6 @@ const EDITABLE = [
   "autoSendStages",
 ] as const;
 
-type EditableField = (typeof EDITABLE)[number];
-
 export async function GET(req: NextRequest) {
   return requireRole(
     req,
@@ -45,10 +43,7 @@ export async function PATCH(req: NextRequest) {
   return requireRole(
     req,
     async (req, ctx) => {
-      const body = (await req.json().catch(() => ({}))) as Record<
-        string,
-        unknown
-      >;
+      const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
       const patch: Record<string, unknown> = {};
       for (const key of EDITABLE) {
@@ -78,10 +73,7 @@ export async function PATCH(req: NextRequest) {
             .limit(1);
           if (!before) throw new Error("Business not found");
 
-          await tx
-            .update(businesses)
-            .set(patch)
-            .where(eq(businesses.id, ctx.businessId));
+          await tx.update(businesses).set(patch).where(eq(businesses.id, ctx.businessId));
 
           const diff: Record<string, unknown> = {};
           for (const key of Object.keys(patch)) {
@@ -112,10 +104,7 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ data: after });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Update failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner"],

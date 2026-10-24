@@ -39,7 +39,10 @@ export function rankChase(
 
   const customerMap = new Map(customers.map((c) => [c.id, c]));
   const maxAmount = Math.max(1, ...invoices.map((i) => i.amountPaise));
-  const maxAge = Math.max(1, ...invoices.map((i) => Math.max(0, wholeDaysBetween(i.dueDate, today))));
+  const maxAge = Math.max(
+    1,
+    ...invoices.map((i) => Math.max(0, wholeDaysBetween(i.dueDate, today))),
+  );
 
   const w = config.priorityWeights;
 
@@ -53,10 +56,7 @@ export function rankChase(
     const gapNorm = gapInfo.gapInvoiceIds.has(inv.id) ? 1 : 0;
 
     const score =
-      w.amount * amountNorm +
-      w.age * ageNorm +
-      w.reliability * reliabilityNorm +
-      w.gap * gapNorm;
+      w.amount * amountNorm + w.age * ageNorm + w.reliability * reliabilityNorm + w.gap * gapNorm;
 
     return {
       invoiceId: inv.id,
@@ -78,9 +78,8 @@ export function rankChase(
 
   return scored.slice(0, topN).map((r) => {
     const amtText = `₹${(r.amountPaise / 100).toFixed(0)} outstanding (amount factor)`;
-    const ageText = r.daysOverdue > 0
-      ? `${r.daysOverdue} days overdue (age factor)`
-      : `not yet due (age factor)`;
+    const ageText =
+      r.daysOverdue > 0 ? `${r.daysOverdue} days overdue (age factor)` : `not yet due (age factor)`;
     const relText = `pays ${r.customerAvgLate} days late on average (reliability factor)`;
     const gapText = r.gapHelp
       ? `chasing now protects the cash buffer (gap-help factor)`

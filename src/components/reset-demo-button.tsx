@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-
+import { useRouter } from "next/navigation";
 export function ResetDemoButton() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
+  const router = useRouter();
   async function reset() {
     if (
       !window.confirm(
@@ -23,7 +23,7 @@ export function ResetDemoButton() {
 
       // Reseed wiped sessions — get a fresh demo session
       await fetch("/api/auth/demo", { method: "POST" });
-      window.location.href = "/dashboard";
+      router.push("/dashboard");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Reset failed");
       setBusy(false);

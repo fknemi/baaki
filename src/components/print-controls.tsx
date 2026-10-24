@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 export function PrintControls({ showInterest = false }: { showInterest?: boolean }) {
   return (
     <div className="no-print mb-4 flex flex-wrap items-center gap-3">
@@ -17,8 +15,6 @@ export function PrintControls({ showInterest = false }: { showInterest?: boolean
 }
 
 function InterestToggle() {
-  const router = useRouter();
-
   function handleChange(checked: boolean) {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
@@ -29,10 +25,7 @@ function InterestToggle() {
   }
 
   // Read initial state from the URL on mount (client-side)
-  const params =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search)
-      : null;
+  const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const initial = params?.get("includeInterest") === "true";
 
   return (

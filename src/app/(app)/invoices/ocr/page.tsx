@@ -144,9 +144,7 @@ export default function OcrPage() {
     const reported = Number(edited.totalPaise);
     const computed = totals.totalPaise;
     if (Math.abs(computed - reported) > 100) {
-      liveFlags.push(
-        `total_mismatch: computed=${computed} reported=${reported}`,
-      );
+      liveFlags.push(`total_mismatch: computed=${computed} reported=${reported}`);
     }
   }
 
@@ -154,13 +152,11 @@ export default function OcrPage() {
     <main className="space-y-4 p-4 pb-24">
       <h1 className="text-xl font-semibold">Scan invoice</h1>
       <p className="text-xs text-[#5A6170]">
-        Upload a photo. We'll pre-fill the fields, recompute GST, and flag
-        anything that looks off. Edit any field to fix — flags update live.
+        Upload a photo. We&apos;ll pre-fill the fields, recompute GST, and flag anything that looks
+        off. Edit any field to fix — flags update live.
       </p>
 
-      {!edited && (
-        <UploadButton onUploaded={handleUpload} label="Upload invoice photo" />
-      )}
+      {!edited && <UploadButton onUploaded={handleUpload} label="Upload invoice photo" />}
 
       {busy && <p className="text-xs text-[#5A6170]">Reading…</p>}
       {error && <p className="text-xs text-[#B42318]">{error}</p>}
@@ -212,9 +208,7 @@ export default function OcrPage() {
               <FieldInput
                 label="GSTIN"
                 value={edited.gstin ?? ""}
-                onChange={(v) =>
-                  patchField("gstin", v ? v.toUpperCase() : null)
-                }
+                onChange={(v) => patchField("gstin", v ? v.toUpperCase() : null)}
                 mono
               />
             </div>
@@ -232,17 +226,12 @@ export default function OcrPage() {
             </div>
             <ul className="mt-2 space-y-2 text-xs">
               {edited.items?.map((it, i) => (
-                <li
-                  key={i}
-                  className="space-y-1 rounded border border-[#E4E7EC] p-2"
-                >
+                <li key={i} className="space-y-1 rounded border border-[#E4E7EC] p-2">
                   <div className="flex gap-1">
                     <input
                       type="text"
                       value={it.description ?? ""}
-                      onChange={(e) =>
-                        patchItem(i, { description: e.target.value })
-                      }
+                      onChange={(e) => patchItem(i, { description: e.target.value })}
                       placeholder="Description"
                       className="flex-1 rounded border border-[#E4E7EC] px-2 py-1 text-xs"
                     />
@@ -258,36 +247,28 @@ export default function OcrPage() {
                     <input
                       type="text"
                       value={it.hsnSac ?? ""}
-                      onChange={(e) =>
-                        patchItem(i, { hsnSac: e.target.value })
-                      }
+                      onChange={(e) => patchItem(i, { hsnSac: e.target.value })}
                       placeholder="HSN"
-                      className="rounded border border-[#E4E7EC] px-2 py-1 text-[10px] font-mono"
+                      className="rounded border border-[#E4E7EC] px-2 py-1 font-mono text-[10px]"
                     />
                     <input
                       type="number"
                       value={it.qty ?? 0}
-                      onChange={(e) =>
-                        patchItem(i, { qty: Number(e.target.value) })
-                      }
+                      onChange={(e) => patchItem(i, { qty: Number(e.target.value) })}
                       placeholder="Qty"
                       className="rounded border border-[#E4E7EC] px-2 py-1 text-[10px]"
                     />
                     <input
                       type="number"
                       value={it.ratePaise ?? 0}
-                      onChange={(e) =>
-                        patchItem(i, { ratePaise: Number(e.target.value) })
-                      }
+                      onChange={(e) => patchItem(i, { ratePaise: Number(e.target.value) })}
                       placeholder="Rate paise"
                       className="rounded border border-[#E4E7EC] px-2 py-1 text-[10px]"
                     />
                     <input
                       type="number"
                       value={it.gstRatePct ?? 0}
-                      onChange={(e) =>
-                        patchItem(i, { gstRatePct: Number(e.target.value) })
-                      }
+                      onChange={(e) => patchItem(i, { gstRatePct: Number(e.target.value) })}
                       placeholder="GST%"
                       className="rounded border border-[#E4E7EC] px-2 py-1 text-[10px]"
                     />
@@ -350,7 +331,7 @@ export default function OcrPage() {
               <summary className="cursor-pointer font-medium text-[#5A6170]">
                 Show original extraction
               </summary>
-              <pre className="mt-2 overflow-x-auto whitespace-pre-wrap break-all text-[9px] text-[#5A6170]">
+              <pre className="mt-2 overflow-x-auto text-[9px] break-all whitespace-pre-wrap text-[#5A6170]">
                 {JSON.stringify(extracted, null, 2)}
               </pre>
             </details>

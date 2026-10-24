@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { requireRole } from "@/lib/auth/require-role";
 import { db } from "@/lib/db/client";
-import {
-  businesses,
-  customers,
-  expenses,
-  invoices,
-  payments,
-} from "@/lib/db/schema";
+import { businesses, customers, expenses, invoices, payments } from "@/lib/db/schema";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { todayIST, wholeDaysBetween, addDays } from "@/lib/domain/dates";
 import {
@@ -75,9 +69,7 @@ export async function GET(req: NextRequest) {
         const avg =
           latenesses.length === 0
             ? 0
-            : Math.round(
-                latenesses.reduce((s, d) => s + d, 0) / latenesses.length,
-              );
+            : Math.round(latenesses.reduce((s, d) => s + d, 0) / latenesses.length);
         return { id: c.id, avgDaysLate: avg };
       });
 
@@ -172,7 +164,7 @@ export async function GET(req: NextRequest) {
       // delayExpense: the target expense must be due at or before the breach
       // week, so pushing it out lifts the closing cash at the breach.
       const breachWeekEnd = baselineResult.breachWeek
-        ? baselineResult.rows[baselineResult.breachWeek - 1]?.weekEnd ?? null
+        ? (baselineResult.rows[baselineResult.breachWeek - 1]?.weekEnd ?? null)
         : null;
 
       let topCustomerId: string | null = null;
@@ -188,9 +180,7 @@ export async function GET(req: NextRequest) {
             const delayedEff = delayedRaw < today ? today : delayedRaw;
             return { inv, effDue, delayedEff };
           })
-          .filter(
-            (x) => x.effDue <= breachWeekEnd && x.delayedEff > breachWeekEnd,
-          );
+          .filter((x) => x.effDue <= breachWeekEnd && x.delayedEff > breachWeekEnd);
 
         if (customerCandidates.length > 0) {
           topCustomerId = customerCandidates.reduce((max, x) =>
@@ -198,9 +188,7 @@ export async function GET(req: NextRequest) {
           ).inv.customerId;
         }
 
-        const expenseCandidates = forecastExpenses.filter(
-          (e) => e.dueDate <= breachWeekEnd,
-        );
+        const expenseCandidates = forecastExpenses.filter((e) => e.dueDate <= breachWeekEnd);
         if (expenseCandidates.length > 0) {
           topExpenseId = expenseCandidates.reduce((max, e) =>
             e.amountPaise > max.amountPaise ? e : max,

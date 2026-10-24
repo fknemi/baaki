@@ -1,23 +1,11 @@
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import {
-  invoices,
-  invoiceItems,
-  customers,
-  businesses,
-} from "@/lib/db/schema";
+import { invoices, invoiceItems, customers, businesses } from "@/lib/db/schema";
 import { computeTotals, type GstTotals, type InvoiceItemInput } from "@/lib/domain/gst";
 import { wholeDaysBetween } from "@/lib/domain/dates";
 
 export type DerivedStatus =
-  | "draft"
-  | "sent"
-  | "due_soon"
-  | "overdue"
-  | "part_paid"
-  | "paid"
-  | "disputed"
-  | "cancelled";
+  "draft" | "sent" | "due_soon" | "overdue" | "part_paid" | "paid" | "disputed" | "cancelled";
 
 export type InvoiceItemView = {
   id: string;
@@ -121,10 +109,7 @@ export async function getInvoiceWithTotals(
 
   if (!row) return null;
 
-  const items = await db
-    .select()
-    .from(invoiceItems)
-    .where(eq(invoiceItems.invoiceId, invoiceId));
+  const items = await db.select().from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
 
   const itemsView: InvoiceItemView[] = items.map((it) => ({
     id: it.id,
@@ -150,9 +135,7 @@ export async function getInvoiceWithTotals(
     {
       stateCode: businessStateCode,
       registrationType: (row.business.registrationType ?? "regular") as
-        | "regular"
-        | "composition"
-        | "unregistered",
+        "regular" | "composition" | "unregistered",
     },
     { stateCode: row.customer.stateCode ?? "27" },
   );
@@ -207,8 +190,6 @@ export async function listInvoices(
     .orderBy(desc(invoices.invoiceDate), desc(invoices.number))
     .limit(limit);
 
-  const views = await Promise.all(
-    rows.map((r) => getInvoiceWithTotals(r.id, businessId, today)),
-  );
+  const views = await Promise.all(rows.map((r) => getInvoiceWithTotals(r.id, businessId, today)));
   return views.filter((v): v is InvoiceView => v !== null);
 }

@@ -35,7 +35,10 @@ export function AttachmentsSection({ invoiceId }: { invoiceId: string }) {
   }, [invoiceId]);
 
   useEffect(() => {
-    reload();
+    // reload is an async useCallback — setState fires after its internal
+    // awaits, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void reload();
   }, [reload]);
 
   async function handleUploaded(storageKey: string, sha256: string) {
@@ -85,14 +88,10 @@ export function AttachmentsSection({ invoiceId }: { invoiceId: string }) {
       {busy && <p className="mt-2 text-xs text-[#5A6170]">Verifying…</p>}
       {error && <p className="mt-2 text-xs text-[#B42318]">{error}</p>}
 
-      {files === null && (
-        <p className="mt-2 text-xs text-[#5A6170]">Loading…</p>
-      )}
+      {files === null && <p className="mt-2 text-xs text-[#5A6170]">Loading…</p>}
 
       {files !== null && files.length === 0 && (
-        <p className="mt-2 text-xs text-[#5A6170]">
-          No attachments yet.
-        </p>
+        <p className="mt-2 text-xs text-[#5A6170]">No attachments yet.</p>
       )}
 
       {files !== null && files.length > 0 && (

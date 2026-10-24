@@ -48,10 +48,7 @@ export function useT() {
     () => "en" as Lang,
   );
 
-  return function t(
-    key: I18nKey,
-    vars?: Record<string, string | number>,
-  ): string {
+  return function t(key: I18nKey, vars?: Record<string, string | number>): string {
     const dict = lang === "hi" ? hi : en;
     let str = dict[key] ?? en[key] ?? key;
     if (vars) {

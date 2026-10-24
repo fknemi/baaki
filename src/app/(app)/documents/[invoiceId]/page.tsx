@@ -63,16 +63,11 @@ export default function DocumentsDetailPage() {
       .catch((e) => setError(e.message));
   }, [invoiceId]);
 
-  if (error)
-    return <main className="p-4 text-sm text-[#B42318]">{error}</main>;
-  if (!data)
-    return <main className="p-4 text-sm text-[#5A6170]">Loading…</main>;
+  if (error) return <main className="p-4 text-sm text-[#B42318]">{error}</main>;
+  if (!data) return <main className="p-4 text-sm text-[#5A6170]">Loading…</main>;
 
   const artefactCount =
-    data.events.length +
-    data.payments.length +
-    data.messages.length +
-    data.attachments.length;
+    data.events.length + data.payments.length + data.messages.length + data.attachments.length;
 
   return (
     <main className="space-y-4 p-4 pb-24">
@@ -80,12 +75,9 @@ export default function DocumentsDetailPage() {
         <div className="text-xs text-[#5A6170]">
           {data.customer.name} · {data.invoice.daysOverdue} days overdue
         </div>
-        <h1 className="font-mono text-lg font-semibold">
-          {data.invoice.number}
-        </h1>
+        <h1 className="font-mono text-lg font-semibold">{data.invoice.number}</h1>
         <p className="text-xs text-[#5A6170]">
-          {artefactCount} artefacts ·{" "}
-          {formatINR(data.invoice.outstandingPaise)} outstanding
+          {artefactCount} artefacts · {formatINR(data.invoice.outstandingPaise)} outstanding
         </p>
       </header>
 
@@ -118,15 +110,11 @@ export default function DocumentsDetailPage() {
       </div>
 
       <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-        <h2 className="text-sm font-semibold">
-          Timeline ({data.events.length} events)
-        </h2>
+        <h2 className="text-sm font-semibold">Timeline ({data.events.length} events)</h2>
         <ol className="mt-3 space-y-2 text-xs">
           {data.events.map((e) => (
             <li key={e.chainSeq} className="flex gap-2">
-              <span className="min-w-[40px] text-[10px] text-[#5A6170]">
-                #{e.chainSeq}
-              </span>
+              <span className="min-w-[40px] text-[10px] text-[#5A6170]">#{e.chainSeq}</span>
               <div>
                 <div className="font-medium">{titleCase(e.type)}</div>
                 <div className="text-[10px] text-[#5A6170]">
@@ -140,9 +128,7 @@ export default function DocumentsDetailPage() {
 
       {data.attachments.length > 0 && (
         <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-          <h2 className="text-sm font-semibold">
-            Attachments ({data.attachments.length})
-          </h2>
+          <h2 className="text-sm font-semibold">Attachments ({data.attachments.length})</h2>
           <ul className="mt-2 space-y-1 text-xs">
             {data.attachments.map((a) => (
               <li key={a.id} className="text-[#5A6170]">

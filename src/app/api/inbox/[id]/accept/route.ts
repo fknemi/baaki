@@ -7,10 +7,7 @@ import { appendEventInTx } from "@/lib/db/hashchain-server";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { todayIST, atIso } from "@/lib/domain/dates";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return requireRole(
@@ -25,9 +22,7 @@ export async function POST(
       const [item] = await db
         .select()
         .from(inboxItems)
-        .where(
-          and(eq(inboxItems.id, id), eq(inboxItems.businessId, ctx.businessId)),
-        )
+        .where(and(eq(inboxItems.id, id), eq(inboxItems.businessId, ctx.businessId)))
         .limit(1);
 
       if (!item) {
@@ -92,11 +87,7 @@ export async function POST(
             });
           } else {
             // ─── already_paid path ─────────────────────────────────────
-            const total = await getInvoiceWithTotals(
-              inv.id,
-              ctx.businessId,
-              today,
-            );
+            const total = await getInvoiceWithTotals(inv.id, ctx.businessId, today);
             if (total) {
               await tx
                 .update(invoices)
@@ -125,18 +116,11 @@ export async function POST(
           }
         });
 
-        const updated = await getInvoiceWithTotals(
-          inv.id,
-          ctx.businessId,
-          today,
-        );
+        const updated = await getInvoiceWithTotals(inv.id, ctx.businessId, today);
         return NextResponse.json({ data: updated });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Accept failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

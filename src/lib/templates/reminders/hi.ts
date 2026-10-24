@@ -1,8 +1,7 @@
 import { formatINR } from "@/lib/domain/money";
 import type { TemplateVars, RenderedMessage } from "./en";
 
-const footer = (v: TemplateVars) =>
-  `सवाल? ${v.ownerName} को कॉल करें: ${v.ownerPhone}`;
+const footer = (v: TemplateVars) => `सवाल? ${v.ownerName} को कॉल करें: ${v.ownerPhone}`;
 
 export const templatesHI: Record<string, (v: TemplateVars) => RenderedMessage> = {
   headsUp: (v) => ({

@@ -4,7 +4,9 @@ import { invoices } from "./invoices";
 
 export const payments = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
-  businessId: uuid("business_id").notNull().references(() => businesses.id),
+  businessId: uuid("business_id")
+    .notNull()
+    .references(() => businesses.id),
   invoiceId: uuid("invoice_id").references(() => invoices.id),
   amountPaise: bigint("amount_paise", { mode: "number" }).notNull(),
   paidOn: date("paid_on").notNull(),

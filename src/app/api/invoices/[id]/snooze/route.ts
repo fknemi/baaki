@@ -6,10 +6,7 @@ import { invoices } from "@/lib/db/schema";
 import { appendEventInTx } from "@/lib/db/hashchain-server";
 import { todayIST, atIso } from "@/lib/domain/dates";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return requireRole(
@@ -46,10 +43,7 @@ export async function POST(
       const today = todayIST();
 
       await db.transaction(async (tx) => {
-        await tx
-          .update(invoices)
-          .set({ snoozedUntil: body.until })
-          .where(eq(invoices.id, id));
+        await tx.update(invoices).set({ snoozedUntil: body.until }).where(eq(invoices.id, id));
 
         await appendEventInTx(tx, {
           businessId: ctx.businessId,

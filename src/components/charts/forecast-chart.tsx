@@ -25,15 +25,8 @@ export function ForecastChart({
   const chartW = W - padLeft;
   const chartH = H - padBottom;
 
-  const maxCash = Math.max(
-    ...rows.map((r) => r.closingPaise),
-    safetyBufferPaise,
-    1,
-  );
-  const maxFlow = Math.max(
-    ...rows.flatMap((r) => [r.inflowPaise, r.outflowPaise]),
-    1,
-  );
+  const maxCash = Math.max(...rows.map((r) => r.closingPaise), safetyBufferPaise, 1);
+  const maxFlow = Math.max(...rows.flatMap((r) => [r.inflowPaise, r.outflowPaise]), 1);
   const barW = chartW / Math.max(rows.length, 1);
 
   const cashY = (v: number) => chartH - (v / maxCash) * chartH;
@@ -153,8 +146,7 @@ export function ForecastChart({
             onClick={onWeekClick ? () => onWeekClick(r.week) : undefined}
           >
             <title>
-              Week {r.week} ({r.weekStart}–{r.weekEnd}): closing ₹
-              {lakh(r.closingPaise)}L
+              Week {r.week} ({r.weekStart}–{r.weekEnd}): closing ₹{lakh(r.closingPaise)}L
             </title>
           </rect>
         ))}

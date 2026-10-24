@@ -10,8 +10,7 @@ export function ReminderButton({ invoiceId }: { invoiceId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<(typeof STAGES)[number]>("firm");
-  const [channel, setChannel] =
-    useState<(typeof CHANNELS)[number]>("email");
+  const [channel, setChannel] = useState<(typeof CHANNELS)[number]>("email");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
@@ -31,16 +30,10 @@ export function ReminderButton({ invoiceId }: { invoiceId: string }) {
         throw new Error(body?.error?.message ?? "Could not record reminder");
       }
       const data = (await res.json()).data;
-      setDone(
-        data.alreadySent
-          ? `${stage} already recorded`
-          : `${stage} logged (${channel})`,
-      );
+      setDone(data.alreadySent ? `${stage} already recorded` : `${stage} logged (${channel})`);
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Could not record reminder",
-      );
+      setError(err instanceof Error ? err.message : "Could not record reminder");
     } finally {
       setBusy(false);
     }
@@ -78,9 +71,7 @@ export function ReminderButton({ invoiceId }: { invoiceId: string }) {
           </select>
           <select
             value={channel}
-            onChange={(e) =>
-              setChannel(e.target.value as (typeof CHANNELS)[number])
-            }
+            onChange={(e) => setChannel(e.target.value as (typeof CHANNELS)[number])}
             className="w-full rounded-lg border border-[#E4E7EC] bg-white px-2 py-2 text-sm"
           >
             {CHANNELS.map((c) => (

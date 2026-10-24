@@ -6,18 +6,12 @@ export function canonicalJson(v: unknown): string {
   if (Array.isArray(v)) return "[" + v.map(canonicalJson).join(",") + "]";
   const obj = v as Record<string, unknown>;
   const keys = Object.keys(obj).sort();
-  return (
-    "{" +
-    keys.map((k) => JSON.stringify(k) + ":" + canonicalJson(obj[k])).join(",") +
-    "}"
-  );
+  return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJson(obj[k])).join(",") + "}";
 }
 
 export function canonicalTime(iso: string | Date): string {
   const d = typeof iso === "string" ? new Date(iso) : iso;
-  return new Date(Math.floor(d.getTime() / 1000) * 1000)
-    .toISOString()
-    .replace(".000Z", "Z");
+  return new Date(Math.floor(d.getTime() / 1000) * 1000).toISOString().replace(".000Z", "Z");
 }
 
 export function canonicalEvent(e: {

@@ -6,8 +6,12 @@ export const businessMembers = pgTable(
   "business_members",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    businessId: uuid("business_id").notNull().references(() => businesses.id),
-    userId: uuid("user_id").notNull().references(() => users.id),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
     role: text("role").notNull().default("owner"),
     invitedAt: timestamp("invited_at", { withTimezone: true }).notNull().defaultNow(),
     acceptedAt: timestamp("accepted_at", { withTimezone: true }),

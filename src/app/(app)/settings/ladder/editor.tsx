@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { config } from "@/lib/domain/config";
 
-const STAGES = config.ladder.map((s) => s.key);
-
 export function LadderEditor({
   ladder,
   autoSend,
@@ -22,15 +20,17 @@ export function LadderEditor({
   const [saved, setSaved] = useState(false);
 
   function update(i: number, day: number) {
-    setRows((prev) =>
-      prev.map((r, idx) => (idx === i ? { ...r, day } : r)),
-    );
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, day } : r)));
   }
 
   function toggleAuto(key: string) {
     setAuto((prev) => {
       const next = new Set(prev);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
       return next;
     });
   }
@@ -79,10 +79,7 @@ export function LadderEditor({
 
         <div className="space-y-2">
           {rows.map((row, i) => (
-            <div
-              key={row.key}
-              className="rounded-lg bg-white p-3 ring-1 ring-[#E4E7EC]"
-            >
+            <div key={row.key} className="rounded-lg bg-white p-3 ring-1 ring-[#E4E7EC]">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">{row.key}</span>
                 <label className="flex items-center gap-1 text-xs text-[#5A6170]">

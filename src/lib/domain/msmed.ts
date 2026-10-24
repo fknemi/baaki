@@ -35,7 +35,7 @@ export function msmedInterest(
   if (wholeDaysOverdue <= 0) return { applicable: false };
 
   const months = Math.ceil(wholeDaysOverdue / 30);
-  const monthlyRate = (config.msmedInterestMultiplier * rbiBankRatePct / 100) / 12;
+  const monthlyRate = (config.msmedInterestMultiplier * rbiBankRatePct) / 100 / 12;
   const interestPaise = Math.round(principalPaise * (Math.pow(1 + monthlyRate, months) - 1));
 
   const formulaNote =

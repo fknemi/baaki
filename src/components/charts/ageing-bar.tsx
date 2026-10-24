@@ -32,7 +32,20 @@ export function AgeingBar({ buckets }: { buckets: AgeingBucket[] }) {
   const W = 328;
   const H = 24;
 
-  let x = 0;
+  // Precompute per-segment geometry before rendering. This satisfies
+  // react-hooks/immutability (no reassignment during the .map callback)
+  // and produces a pure, TS-narrowed result.
+  const segments = buckets.map((b) => ({
+    bucket: b,
+    width: total > 0 ? (b.paise / total) * W : 0,
+  }));
+
+  const xOffsets = segments.reduce<number[]>((acc, _seg, i) => {
+    const prevOffset = i === 0 ? 0 : (acc[i - 1] ?? 0);
+    const prevWidth = i === 0 ? 0 : (segments[i - 1]?.width ?? 0);
+    acc.push(prevOffset + prevWidth);
+    return acc;
+  }, []);
 
   return (
     <div>
@@ -45,25 +58,20 @@ export function AgeingBar({ buckets }: { buckets: AgeingBucket[] }) {
           .map((b) => `${b.label}: ${b.count} invoices, ₹${lakh(b.paise)} lakh`)
           .join(", ")}`}
       >
-        {buckets.map((b) => {
-          const w = total > 0 ? (b.paise / total) * W : 0;
-          const r = (
-            <rect
-              key={b.key}
-              x={x}
-              y={0}
-              width={w}
-              height={H}
-              fill={COLORS[b.key] ?? "#E4E7EC"}
-            >
-              <title>
-                {b.label}: ₹{lakh(b.paise)}L across {b.count} invoices
-              </title>
-            </rect>
-          );
-          x += w;
-          return r;
-        })}
+        {segments.map(({ bucket, width }, i) => (
+          <rect
+            key={bucket.key}
+            x={xOffsets[i] ?? 0}
+            y={0}
+            width={width}
+            height={H}
+            fill={COLORS[bucket.key] ?? "#E4E7EC"}
+          >
+            <title>
+              {bucket.label}: ₹{lakh(bucket.paise)}L across {bucket.count} invoices
+            </title>
+          </rect>
+        ))}
       </svg>
       <div className="mt-2 grid grid-cols-5 gap-1 text-[10px] text-[#5A6170]">
         {buckets.map((b) => (

@@ -6,7 +6,6 @@ import { customers, invoices } from "@/lib/db/schema";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { loadCustomerStats } from "@/lib/db/queries/customers";
 import { todayIST } from "@/lib/domain/dates";
-import { gradeCustomer } from "@/lib/domain/grades";
 
 export async function GET(req: NextRequest) {
   return requireRole(
@@ -42,11 +41,6 @@ export async function GET(req: NextRequest) {
           pctOnTime: 0,
           paidCount: 0,
         };
-        const gradeResult = gradeCustomer(
-          // reconstruct minimal history: we already have aggregates,
-          // so derive reason directly from stats
-          [],
-        );
         // Use direct reason from aggregates (gradeCustomer needs paid history array)
         const reason =
           stat.paidCount === 0

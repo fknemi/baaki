@@ -45,8 +45,8 @@ export default function DocumentsIndexPage() {
     <main className="space-y-4 p-4 pb-24">
       <h1 className="text-xl font-semibold">Documents</h1>
       <p className="text-xs text-[#5A6170]">
-        Open any invoice to see its timeline, generate a demand letter, or
-        download the evidence pack.
+        Open any invoice to see its timeline, generate a demand letter, or download the evidence
+        pack.
       </p>
 
       <input
@@ -74,8 +74,7 @@ export default function DocumentsIndexPage() {
                 <div className="min-w-0">
                   <div className="font-mono text-xs">{inv.number}</div>
                   <div className="text-[10px] text-[#5A6170]">
-                    {inv.customer?.name ?? inv.customerName ?? "—"} · due{" "}
-                    {inv.dueDate}
+                    {inv.customer?.name ?? inv.customerName ?? "—"} · due {inv.dueDate}
                   </div>
                 </div>
                 <div className="text-right text-xs">

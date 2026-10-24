@@ -18,4 +18,3 @@ export function nextInvoiceNumber(
   }
   return { number, sequence: next };
 }
-

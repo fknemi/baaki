@@ -3,7 +3,9 @@ import { invoices } from "./invoices";
 
 export const invoiceItems = pgTable("invoice_items", {
   id: uuid("id").primaryKey().defaultRandom(),
-  invoiceId: uuid("invoice_id").notNull().references(() => invoices.id, { onDelete: "cascade" }),
+  invoiceId: uuid("invoice_id")
+    .notNull()
+    .references(() => invoices.id, { onDelete: "cascade" }),
   description: text("description").notNull(),
   hsnSac: text("hsn_sac").notNull(),
   qty: numeric("qty", { precision: 12, scale: 3 }).notNull(),

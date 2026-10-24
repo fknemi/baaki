@@ -16,10 +16,7 @@ function b64urlEncode(input: string | Buffer): string {
 
 function b64urlDecode(input: string): string {
   const pad = input.length % 4 === 0 ? "" : "=".repeat(4 - (input.length % 4));
-  return Buffer.from(
-    input.replace(/-/g, "+").replace(/_/g, "/") + pad,
-    "base64",
-  ).toString("utf8");
+  return Buffer.from(input.replace(/-/g, "+").replace(/_/g, "/") + pad, "base64").toString("utf8");
 }
 
 export type PayTokenPayload = {
@@ -42,9 +39,7 @@ export function signPayToken(
   };
   const header = b64urlEncode(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const body = b64urlEncode(JSON.stringify(payload));
-  const sig = b64urlEncode(
-    createHmac("sha256", getSecret()).update(`${header}.${body}`).digest(),
-  );
+  const sig = b64urlEncode(createHmac("sha256", getSecret()).update(`${header}.${body}`).digest());
   return { token: `${header}.${body}.${sig}`, payload };
 }
 
@@ -56,10 +51,7 @@ export function verifyPayToken(token: string): PayTokenPayload | null {
   const expected = b64urlEncode(
     createHmac("sha256", getSecret()).update(`${header}.${body}`).digest(),
   );
-  if (
-    sig.length !== expected.length ||
-    !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
-  ) {
+  if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
     return null;
   }
   try {
@@ -75,9 +67,10 @@ export function verifyPayToken(token: string): PayTokenPayload | null {
 }
 
 /** Unverified decode — used only to extract businessId for friendly 404s. */
-export function decodePayTokenUnverified(
-  token: string,
-): { invoiceId?: string; businessId?: string } {
+export function decodePayTokenUnverified(token: string): {
+  invoiceId?: string;
+  businessId?: string;
+} {
   const parts = token.split(".");
   if (parts.length !== 3) return {};
   try {

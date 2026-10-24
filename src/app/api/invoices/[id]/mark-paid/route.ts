@@ -7,10 +7,7 @@ import { appendEventInTx } from "@/lib/db/hashchain-server";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { todayIST, atIso } from "@/lib/domain/dates";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return requireRole(
@@ -31,7 +28,7 @@ export async function POST(
 
       const body = await req
         .json()
-        .catch(() => ({} as { amountPaise?: number; paidOn?: string; reference?: string }));
+        .catch(() => ({}) as { amountPaise?: number; paidOn?: string; reference?: string });
 
       if (!body.amountPaise || !Number.isInteger(body.amountPaise) || body.amountPaise <= 0) {
         return NextResponse.json(
@@ -108,10 +105,7 @@ export async function POST(
         return NextResponse.json({ data: updated });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Payment failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

@@ -1,4 +1,14 @@
-import { bigint, boolean, date, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  boolean,
+  date,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { businesses } from "./businesses";
 import { customers } from "./customers";
 
@@ -6,8 +16,12 @@ export const invoices = pgTable(
   "invoices",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    businessId: uuid("business_id").notNull().references(() => businesses.id),
-    customerId: uuid("customer_id").notNull().references(() => customers.id),
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id),
     number: text("number").notNull(),
     invoiceDate: date("invoice_date").notNull(),
     dueDate: date("due_date").notNull(),

@@ -20,15 +20,7 @@ function deriveStageWith(
   input: LadderInput,
   ladder: readonly { day: number; key: string }[],
 ): LadderStage | null {
-  const {
-    dueDate,
-    today,
-    paid,
-    disputed,
-    resolved,
-    promiseToPayDate,
-    sentStageKeys,
-  } = input;
+  const { dueDate, today, paid, disputed, resolved, promiseToPayDate, sentStageKeys } = input;
 
   if (paid) return null;
   if (disputed && !resolved) return null;

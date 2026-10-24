@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { lt } from "drizzle-orm";
-import {
-  DeleteObjectsCommand,
-  ListObjectsV2Command,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { db } from "@/lib/db/client";
 import { evidenceFiles, sessions } from "@/lib/db/schema";
 import { s3, BUCKET } from "@/lib/integrations/r2";
@@ -33,12 +30,8 @@ export async function GET(req: NextRequest) {
     .returning({ id: sessions.id });
 
   // 2. Orphan temp files: unreferenced by evidence_files and > 24h old
-  const listed = await s3.send(
-    new ListObjectsV2Command({ Bucket: BUCKET, Prefix: "temp/" }),
-  );
-  const referencedRows = await db
-    .select({ key: evidenceFiles.storageKey })
-    .from(evidenceFiles);
+  const listed = await s3.send(new ListObjectsV2Command({ Bucket: BUCKET, Prefix: "temp/" }));
+  const referencedRows = await db.select({ key: evidenceFiles.storageKey }).from(evidenceFiles);
   const referenced = new Set(referencedRows.map((r) => r.key));
 
   const cutoff = Date.now() - ORPHAN_AGE_MS;

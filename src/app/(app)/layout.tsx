@@ -9,11 +9,7 @@ import { AppShell } from "@/components/app-shell";
 
 export const instant = false;
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await connection();
   const session = await getSession();
   if (!session) {

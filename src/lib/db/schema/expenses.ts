@@ -3,7 +3,9 @@ import { businesses } from "./businesses";
 
 export const expenses = pgTable("expenses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  businessId: uuid("business_id").notNull().references(() => businesses.id),
+  businessId: uuid("business_id")
+    .notNull()
+    .references(() => businesses.id),
   label: text("label").notNull(),
   category: text("category").notNull(),
   amountPaise: bigint("amount_paise", { mode: "number" }).notNull(),

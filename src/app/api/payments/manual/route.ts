@@ -126,10 +126,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ data: { already: false, payment } });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Manual payment failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

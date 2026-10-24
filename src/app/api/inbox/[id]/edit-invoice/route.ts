@@ -15,10 +15,7 @@ type ItemPatch = {
   gstRatePct?: number;
 };
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return requireRole(
     req,
@@ -36,9 +33,7 @@ export async function POST(
       const [item] = await db
         .select()
         .from(inboxItems)
-        .where(
-          and(eq(inboxItems.id, id), eq(inboxItems.businessId, ctx.businessId)),
-        )
+        .where(and(eq(inboxItems.id, id), eq(inboxItems.businessId, ctx.businessId)))
         .limit(1);
       if (!item) {
         return NextResponse.json(
@@ -73,12 +68,7 @@ export async function POST(
             const [existing] = await tx
               .select()
               .from(invoiceItems)
-              .where(
-                and(
-                  eq(invoiceItems.id, patch.itemId),
-                  eq(invoiceItems.invoiceId, inv.id),
-                ),
-              )
+              .where(and(eq(invoiceItems.id, patch.itemId), eq(invoiceItems.invoiceId, inv.id)))
               .limit(1);
             if (!existing) continue;
 
@@ -106,10 +96,7 @@ export async function POST(
               }
             }
             if (Object.keys(updates).length === 0) continue;
-            await tx
-              .update(invoiceItems)
-              .set(updates)
-              .where(eq(invoiceItems.id, patch.itemId));
+            await tx.update(invoiceItems).set(updates).where(eq(invoiceItems.id, patch.itemId));
           }
 
           // Mark the inbox item resolved
@@ -119,10 +106,7 @@ export async function POST(
             .where(eq(inboxItems.id, item.id));
 
           // Clear disputed so ladder can resume
-          await tx
-            .update(invoices)
-            .set({ disputed: false })
-            .where(eq(invoices.id, inv.id));
+          await tx.update(invoices).set({ disputed: false }).where(eq(invoices.id, inv.id));
 
           await appendEventInTx(tx, {
             businessId: ctx.businessId,
@@ -140,10 +124,7 @@ export async function POST(
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Edit failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

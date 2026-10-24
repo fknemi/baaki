@@ -38,8 +38,7 @@ export default async function NewInvoicePage() {
     .where(eq(customers.businessId, member.businessId))
     .orderBy(customers.name);
 
-  const stateCode =
-    (biz.addressJson as { stateCode?: string } | null)?.stateCode ?? "27";
+  const stateCode = (biz.addressJson as { stateCode?: string } | null)?.stateCode ?? "27";
 
   return (
     <Wizard

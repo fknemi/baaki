@@ -12,8 +12,7 @@ export type TemplateVars = {
 
 export type RenderedMessage = { subject: string; body: string };
 
-const footer = (v: TemplateVars) =>
-  `Questions? Call ${v.ownerName}: ${v.ownerPhone}`;
+const footer = (v: TemplateVars) => `Questions? Call ${v.ownerName}: ${v.ownerPhone}`;
 
 export const templatesEN: Record<string, (v: TemplateVars) => RenderedMessage> = {
   headsUp: (v) => ({

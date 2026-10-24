@@ -1,6 +1,13 @@
 import {
-  bigserial, index, integer, jsonb, pgTable, text,
-  timestamp, uniqueIndex, uuid,
+  bigserial,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const events = pgTable(

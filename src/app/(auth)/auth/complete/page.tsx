@@ -43,11 +43,7 @@ export default function CompletePage() {
   const finish = useCallback(
     async (emailToUse: string) => {
       try {
-        await signInWithEmailLink(
-          getFirebaseAuth(),
-          emailToUse,
-          window.location.href,
-        );
+        await signInWithEmailLink(getFirebaseAuth(), emailToUse, window.location.href);
         window.localStorage.removeItem("emailForSignIn");
         setStatus("Signed in. Redirecting…");
         router.push(resolveNext());

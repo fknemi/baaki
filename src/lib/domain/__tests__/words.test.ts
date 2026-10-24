@@ -10,7 +10,9 @@ describe("numberToWordsIndian", () => {
     expect(numberToWordsIndian(1_00)).toBe("one rupees only");
   });
   it("includes paise when present", () => {
-    expect(numberToWordsIndian(12345)).toBe("one hundred twenty three rupees and forty five paise only");
+    expect(numberToWordsIndian(12345)).toBe(
+      "one hundred twenty three rupees and forty five paise only",
+    );
   });
   it("Indian grouping", () => {
     expect(numberToWordsIndian(1_00_000_00)).toBe("one lakh rupees only");

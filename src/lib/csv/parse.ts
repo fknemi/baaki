@@ -3,17 +3,10 @@ import type { BankLine } from "@/lib/domain/matcher";
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_ROWS = 5000;
 
-const ALLOWED_COLUMNS = new Set([
-  "date",
-  "description",
-  "credit_paise",
-  "debit_paise",
-  "ref",
-]);
+const ALLOWED_COLUMNS = new Set(["date", "description", "credit_paise", "debit_paise", "ref"]);
 
 export type ParseResult =
-  | { ok: true; lines: BankLine[] }
-  | { ok: false; error: string; code: string };
+  { ok: true; lines: BankLine[] } | { ok: false; error: string; code: string };
 
 function splitCSV(text: string): string[][] {
   const rows: string[][] = [];

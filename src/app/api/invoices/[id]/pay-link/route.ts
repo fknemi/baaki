@@ -5,10 +5,7 @@ import { db } from "@/lib/db/client";
 import { invoices } from "@/lib/db/schema";
 import { signPayToken } from "@/lib/auth/pay-token";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return requireRole(
     req,
@@ -25,8 +22,7 @@ export async function POST(
         );
       }
       const { token, payload } = signPayToken(inv.id, ctx.businessId, 30);
-      const base =
-        process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
+      const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
       return NextResponse.json({
         data: {
           token,

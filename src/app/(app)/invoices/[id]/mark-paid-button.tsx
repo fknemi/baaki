@@ -60,7 +60,10 @@ export function MarkPaidButton({
       </button>
 
       {open && (
-        <form onSubmit={submit} className="mt-2 space-y-2 rounded-lg bg-white p-3 ring-1 ring-[#E4E7EC]">
+        <form
+          onSubmit={submit}
+          className="mt-2 space-y-2 rounded-lg bg-white p-3 ring-1 ring-[#E4E7EC]"
+        >
           <input
             type="number"
             step="0.01"

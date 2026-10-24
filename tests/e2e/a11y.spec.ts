@@ -35,10 +35,7 @@ for (const route of ROUTES) {
         await page.addInitScript(
           ([l, scale]) => {
             window.localStorage.setItem("baaki.lang", l);
-            window.localStorage.setItem(
-              "baaki.textSize",
-              scale === "130%" ? "130" : "100",
-            );
+            window.localStorage.setItem("baaki.textSize", scale === "130%" ? "130" : "100");
           },
           [lang, vp.textScale] as const,
         );
@@ -49,10 +46,7 @@ for (const route of ROUTES) {
           .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
           .analyze();
 
-        expect(
-          results.violations,
-          `axe violations at ${route} · ${lang} · ${vp.name}`,
-        ).toEqual([]);
+        expect(results.violations, `axe violations at ${route} · ${lang} · ${vp.name}`).toEqual([]);
       });
     }
   }

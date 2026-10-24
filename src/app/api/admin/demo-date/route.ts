@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/require-role";
-import {
-  getDemoDateOverride,
-  setDemoDateOverride,
-  todayIST,
-} from "@/lib/domain/dates";
+import { getDemoDateOverride, setDemoDateOverride, todayIST } from "@/lib/domain/dates";
 
 export async function GET(req: NextRequest) {
-  return requireRole(
-    req,
-    async () => {
-      return NextResponse.json({
-        data: {
-          today: todayIST(),
-          override: getDemoDateOverride(),
-          envOverride: process.env.NEXT_PUBLIC_DEMO_TODAY ?? null,
-        },
-      });
-    },
-    ["owner", "accountant"],
-  );
+  return requireRole(req, async () => {
+    return NextResponse.json({
+      data: {
+        today: todayIST(),
+        override: getDemoDateOverride(),
+        envOverride: process.env.NEXT_PUBLIC_DEMO_TODAY ?? null,
+      },
+    });
+  }, ["owner", "accountant"]);
 }
 
 export async function POST(req: NextRequest) {

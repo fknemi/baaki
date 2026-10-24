@@ -75,28 +75,19 @@ export default function ChasePage() {
         {sorted.map((c, i) => {
           const pct = Math.round((c.score / maxScore) * 100);
           return (
-            <li
-              key={c.invoiceId}
-              className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]"
-            >
+            <li key={c.invoiceId} className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-xs text-[#5A6170]">#{i + 1}</div>
-                  <div className="mt-0.5 text-sm font-semibold">
-                    {c.customerName}
-                  </div>
+                  <div className="mt-0.5 text-sm font-semibold">{c.customerName}</div>
                   <div className="text-[10px] text-[#5A6170]">
                     {formatINR(c.amountPaise)} ·{" "}
-                    {c.daysOverdue > 0
-                      ? `${c.daysOverdue} days overdue`
-                      : "not yet due"}
+                    {c.daysOverdue > 0 ? `${c.daysOverdue} days overdue` : "not yet due"}
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] text-[#5A6170]">score</div>
-                  <div className="text-sm font-semibold tabular-nums">
-                    {c.score}
-                  </div>
+                  <div className="text-sm font-semibold tabular-nums">{c.score}</div>
                 </div>
               </div>
 
@@ -105,15 +96,10 @@ export default function ChasePage() {
                 role="img"
                 aria-label={`Score ${c.score} of ${maxScore}`}
               >
-                <div
-                  className="h-full rounded-full bg-[#0F5C4E]"
-                  style={{ width: `${pct}%` }}
-                />
+                <div className="h-full rounded-full bg-[#0F5C4E]" style={{ width: `${pct}%` }} />
               </div>
 
-              <p className="mt-3 text-[10px] leading-relaxed text-[#5A6170]">
-                {c.reason}
-              </p>
+              <p className="mt-3 text-[10px] leading-relaxed text-[#5A6170]">{c.reason}</p>
 
               <Link
                 href={`/invoices/${c.invoiceId}`}

@@ -2,9 +2,7 @@ import { GENESIS, canonicalEvent } from "./hashchain-common";
 
 async function sha256(s: string): Promise<string> {
   if (typeof crypto === "undefined" || !crypto.subtle) {
-    throw new Error(
-      "Client hash verification needs a secure context (https or localhost).",
-    );
+    throw new Error("Client hash verification needs a secure context (https or localhost).");
   }
   const bytes = new TextEncoder().encode(s);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -28,9 +26,7 @@ export type ClientVerifyResult =
   | { valid: true; eventCount: number; anchor: string }
   | { valid: false; failedAt: number; reason: string; anchor: string };
 
-export async function verifyChainClient(
-  events: ClientEvent[],
-): Promise<ClientVerifyResult> {
+export async function verifyChainClient(events: ClientEvent[]): Promise<ClientVerifyResult> {
   let expectedPrev = await sha256(GENESIS);
   let expectedSeq = 1;
 

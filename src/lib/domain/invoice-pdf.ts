@@ -1,5 +1,4 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { formatINR } from "./money";
 import { numberToWordsIndian } from "./words";
 import type { InvoiceView } from "@/lib/db/queries/invoices";
 
@@ -19,15 +18,10 @@ export async function renderInvoicePdf(inv: InvoiceView): Promise<Uint8Array> {
   let y = 800;
 
   const inr = (paise: number) =>
-    "Rs. " + (paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    "Rs. " +
+    (paise / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const text = (
-    s: string,
-    x: number,
-    size = 10,
-    useBold = false,
-    color = rgb(0.1, 0.11, 0.14),
-  ) => {
+  const text = (s: string, x: number, size = 10, useBold = false, color = rgb(0.1, 0.11, 0.14)) => {
     page.drawText(s, { x, y, size, font: useBold ? bold : font, color });
   };
 
@@ -102,7 +96,12 @@ export async function renderInvoicePdf(inv: InvoiceView): Promise<Uint8Array> {
   const posLine = `Place of supply: ${inv.placeOfSupplyStateCode}`;
   const rcLine = `Reverse charge: ${inv.reverseCharge ? "Yes" : "No"}`;
   page.drawText(posLine, { x: R - font.widthOfTextAtSize(posLine, 9), y: rightY, size: 9, font });
-  page.drawText(rcLine, { x: R - font.widthOfTextAtSize(rcLine, 9), y: rightY - 12, size: 9, font });
+  page.drawText(rcLine, {
+    x: R - font.widthOfTextAtSize(rcLine, 9),
+    y: rightY - 12,
+    size: 9,
+    font,
+  });
 
   y -= 24;
   rule(y);
@@ -135,9 +134,7 @@ export async function renderInvoicePdf(inv: InvoiceView): Promise<Uint8Array> {
   y -= 16;
 
   // Totals
-  const totalRows: [string, number][] = [
-    ["Taxable", inv.totals.taxablePaise],
-  ];
+  const totalRows: [string, number][] = [["Taxable", inv.totals.taxablePaise]];
   if (inv.totals.hasTax && !inv.totals.isInterState) {
     totalRows.push(["CGST", inv.totals.cgstPaise]);
     totalRows.push(["SGST", inv.totals.sgstPaise]);

@@ -16,21 +16,10 @@ export type CustomerStat = {
  * Single source of truth for both /api/forecast, /api/dashboard, /api/chase,
  * and /api/customers. Spec §2.8.
  */
-export async function loadCustomerStats(
-  businessId: string,
-): Promise<CustomerStat[]> {
-  const custRows = await db
-    .select()
-    .from(customers)
-    .where(eq(customers.businessId, businessId));
-  const invRows = await db
-    .select()
-    .from(invoices)
-    .where(eq(invoices.businessId, businessId));
-  const payRows = await db
-    .select()
-    .from(payments)
-    .where(eq(payments.businessId, businessId));
+export async function loadCustomerStats(businessId: string): Promise<CustomerStat[]> {
+  const custRows = await db.select().from(customers).where(eq(customers.businessId, businessId));
+  const invRows = await db.select().from(invoices).where(eq(invoices.businessId, businessId));
+  const payRows = await db.select().from(payments).where(eq(payments.businessId, businessId));
 
   const invById = new Map(invRows.map((i) => [i.id, i] as const));
   const byCustomer = new Map<string, Array<{ dueOn: string; paidOn: string }>>();

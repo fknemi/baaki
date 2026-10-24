@@ -84,7 +84,10 @@ export function PaymentsClient() {
   }
 
   useEffect(() => {
-    reloadConfirmed();
+    // reloadConfirmed is an async callback — setState fires after its
+    // internal awaits, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void reloadConfirmed();
   }, []);
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -184,9 +187,7 @@ export function PaymentsClient() {
     });
   }
 
-  const hasTds = data?.lines.some((r) =>
-    r.proposals.some((p) => p.flags.includes("tdsShortfall")),
-  );
+  const hasTds = data?.lines.some((r) => r.proposals.some((p) => p.flags.includes("tdsShortfall")));
 
   const visibleLines = data?.lines.filter((r) => !ignoredIds.has(r.lineId)) ?? [];
 
@@ -232,14 +233,13 @@ export function PaymentsClient() {
 
       {hasTds && (
         <StuckBox>
-          A shortfall of exactly 2% of the taxable value usually means the
-          customer deducted TDS. Ask them for Form 16A or the TDS certificate
-          before writing off the difference.
+          A shortfall of exactly 2% of the taxable value usually means the customer deducted TDS.
+          Ask them for Form 16A or the TDS certificate before writing off the difference.
         </StuckBox>
       )}
 
       {data && visibleLines.length === 0 && (
-        <p className="rounded-lg bg-white p-4 text-xs text-muted-foreground ring-1 ring-[#E4E7EC]">
+        <p className="text-muted-foreground rounded-lg bg-white p-4 text-xs ring-1 ring-[#E4E7EC]">
           {data.lines.length === 0
             ? "No lines found in this statement."
             : "All lines have been confirmed or ignored."}
@@ -259,15 +259,13 @@ export function PaymentsClient() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-muted-foreground text-xs">
                       {row.line.date} · {row.line.ref}
                     </div>
-                    <div className="text-sm font-medium">
-                      {row.line.description}
-                    </div>
+                    <div className="text-sm font-medium">{row.line.description}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <div className="tabular-nums font-semibold">
+                    <div className="font-semibold tabular-nums">
                       {formatINR(row.line.creditPaise)}
                     </div>
                     {!isDone && (
@@ -283,14 +281,10 @@ export function PaymentsClient() {
                 </div>
 
                 {isDone ? (
-                  <p className="mt-2 text-xs text-[#067647]">
-                    ✓ Confirmed. See payments below.
-                  </p>
+                  <p className="mt-2 text-xs text-[#067647]">✓ Confirmed. See payments below.</p>
                 ) : row.proposals.length === 0 ? (
                   <div className="mt-2 flex items-center justify-between">
-                    <p className="text-xs italic text-muted-foreground">
-                      No proposals.
-                    </p>
+                    <p className="text-muted-foreground text-xs italic">No proposals.</p>
                     <button
                       onClick={() => openChangeMatch(row)}
                       disabled={busy}
@@ -303,16 +297,12 @@ export function PaymentsClient() {
                   <ul className="mt-3 space-y-2">
                     {row.proposals.map((p, i) => {
                       const hasFlags = p.flags.length > 0;
-                      const canConfirm =
-                        p.invoiceIds.length > 0 && !p.flags.includes("duplicate");
+                      const canConfirm = p.invoiceIds.length > 0 && !p.flags.includes("duplicate");
                       return (
-                        <li
-                          key={i}
-                          className="rounded-lg border border-[#E4E7EC] p-3"
-                        >
+                        <li key={i} className="rounded-lg border border-[#E4E7EC] p-3">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-muted-foreground text-xs">
                                 Confidence {(p.confidence * 100).toFixed(0)}%
                               </div>
                               <div className="mt-1 text-xs">{p.reason}</div>
@@ -365,20 +355,13 @@ export function PaymentsClient() {
         <div className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
           <h2 className="text-sm font-semibold">Confirmed payments</h2>
           {confirmed.length === 0 ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              No payments confirmed yet.
-            </p>
+            <p className="text-muted-foreground mt-2 text-xs">No payments confirmed yet.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {confirmed.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center justify-between text-xs"
-                >
+                <li key={p.id} className="flex items-center justify-between text-xs">
                   <div>
-                    <div className="font-medium tabular-nums">
-                      {formatINR(p.amountPaise)}
-                    </div>
+                    <div className="font-medium tabular-nums">{formatINR(p.amountPaise)}</div>
                     <div className="text-muted-foreground">
                       {p.paidOn} · {p.reference ?? "—"}
                     </div>
@@ -414,7 +397,7 @@ export function PaymentsClient() {
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Pick an invoice</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-xs">
                   {changeMatchFor.line.date} · {changeMatchFor.line.description} ·{" "}
                   {formatINR(changeMatchFor.line.creditPaise)}
                 </p>
@@ -427,35 +410,27 @@ export function PaymentsClient() {
                 ✕
               </button>
             </div>
-            {loadingInvoices && (
-              <p className="mt-4 text-xs text-muted-foreground">Loading…</p>
-            )}
+            {loadingInvoices && <p className="text-muted-foreground mt-4 text-xs">Loading…</p>}
             {!loadingInvoices && openInvoices && openInvoices.length === 0 && (
-              <p className="mt-4 text-xs text-muted-foreground">
-                No open invoices.
-              </p>
+              <p className="text-muted-foreground mt-4 text-xs">No open invoices.</p>
             )}
             {!loadingInvoices && openInvoices && openInvoices.length > 0 && (
               <ul className="mt-4 max-h-[60vh] space-y-2 overflow-y-auto">
                 {openInvoices.map((inv) => (
                   <li key={inv.id}>
                     <button
-                      onClick={() =>
-                        changeMatchFor && pickInvoice(changeMatchFor, inv.id)
-                      }
+                      onClick={() => changeMatchFor && pickInvoice(changeMatchFor, inv.id)}
                       disabled={busy}
                       className="w-full rounded-lg border border-[#E4E7EC] p-3 text-left hover:bg-[#F7F8FA] disabled:opacity-50"
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-xs font-mono text-[#175CD3]">
-                            {inv.number}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="font-mono text-xs text-[#175CD3]">{inv.number}</div>
+                          <div className="text-muted-foreground text-xs">
                             {inv.customerName ?? "—"}
                           </div>
                         </div>
-                        <div className="tabular-nums text-xs font-semibold">
+                        <div className="text-xs font-semibold tabular-nums">
                           {formatINR(inv.outstandingPaise)}
                         </div>
                       </div>

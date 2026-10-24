@@ -2,19 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth/require-role";
 import postgres from "postgres";
 
-type JSONValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JSONValue[]
-  | { [key: string]: JSONValue };
+type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
 
 export async function POST(req: NextRequest) {
-  if (
-    process.env.NODE_ENV === "production" &&
-    process.env.ALLOW_TAMPER_ENDPOINT !== "true"
-  ) {
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_TAMPER_ENDPOINT !== "true") {
     return NextResponse.json(
       { error: { code: "FORBIDDEN", message: "Tamper endpoint disabled." } },
       { status: 403 },
@@ -24,9 +15,7 @@ export async function POST(req: NextRequest) {
   return requireRole(
     req,
     async (req, ctx) => {
-      const body = (await req
-        .json()
-        .catch(() => ({}))) as {
+      const body = (await req.json().catch(() => ({}))) as {
         entityId?: string;
         chainSeq?: number;
         payload?: JSONValue;
@@ -91,10 +80,7 @@ export async function POST(req: NextRequest) {
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Tamper failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       } finally {
         await sql.end();
       }

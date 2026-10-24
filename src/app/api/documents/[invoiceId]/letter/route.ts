@@ -11,14 +11,9 @@ export async function GET(
   return requireRole(
     req,
     async (req, ctx) => {
-      const includeInterest =
-        req.nextUrl.searchParams.get("includeInterest") === "true";
+      const includeInterest = req.nextUrl.searchParams.get("includeInterest") === "true";
 
-      const payload = await loadLetterPayload(
-        invoiceId,
-        ctx.businessId,
-        includeInterest,
-      );
+      const payload = await loadLetterPayload(invoiceId, ctx.businessId, includeInterest);
       if (!payload) {
         return NextResponse.json(
           { error: { code: "NOT_FOUND", message: "Invoice not found." } },

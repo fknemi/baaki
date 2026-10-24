@@ -18,9 +18,7 @@ export function renderInvoiceAscii(inv: InvoiceView): string {
   lines.push(`${inv.number} · ${trunc(inv.customer.name, 30)}`);
   lines.push(`Due ${inv.dueDate} · ${inv.daysOverdue}d overdue`);
   lines.push("─".repeat(width));
-  lines.push(
-    pad("Item", 24) + pad("Qty", 6, "right") + pad("Taxable", 14, "right"),
-  );
+  lines.push(pad("Item", 24) + pad("Qty", 6, "right") + pad("Taxable", 14, "right"));
   lines.push("─".repeat(width));
 
   for (const it of inv.items) {
@@ -33,31 +31,18 @@ export function renderInvoiceAscii(inv: InvoiceView): string {
   }
 
   lines.push("─".repeat(width));
-  lines.push(
-    pad("Taxable", 30) + pad(formatINR(inv.totals.taxablePaise), 14, "right"),
-  );
+  lines.push(pad("Taxable", 30) + pad(formatINR(inv.totals.taxablePaise), 14, "right"));
   if (inv.totals.hasTax && !inv.totals.isInterState) {
-    lines.push(
-      pad("CGST", 30) + pad(formatINR(inv.totals.cgstPaise), 14, "right"),
-    );
-    lines.push(
-      pad("SGST", 30) + pad(formatINR(inv.totals.sgstPaise), 14, "right"),
-    );
+    lines.push(pad("CGST", 30) + pad(formatINR(inv.totals.cgstPaise), 14, "right"));
+    lines.push(pad("SGST", 30) + pad(formatINR(inv.totals.sgstPaise), 14, "right"));
   }
   if (inv.totals.hasTax && inv.totals.isInterState) {
-    lines.push(
-      pad("IGST", 30) + pad(formatINR(inv.totals.igstPaise), 14, "right"),
-    );
+    lines.push(pad("IGST", 30) + pad(formatINR(inv.totals.igstPaise), 14, "right"));
   }
   if (inv.totals.roundOffPaise !== 0) {
-    lines.push(
-      pad("Round off", 30) +
-        pad(formatINRDelta(inv.totals.roundOffPaise), 14, "right"),
-    );
+    lines.push(pad("Round off", 30) + pad(formatINRDelta(inv.totals.roundOffPaise), 14, "right"));
   }
-  lines.push(
-    pad("Total", 30) + pad(formatINR(inv.totals.totalPaise), 14, "right"),
-  );
+  lines.push(pad("Total", 30) + pad(formatINR(inv.totals.totalPaise), 14, "right"));
   lines.push("─".repeat(width));
   lines.push(`Pay by: ${inv.dueDate}`);
   lines.push(`UPI: ${inv.business.upiId ?? "—"}`);

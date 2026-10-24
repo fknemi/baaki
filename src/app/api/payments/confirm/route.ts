@@ -52,8 +52,7 @@ export async function POST(req: NextRequest) {
           {
             error: {
               code: "BAD_REQUEST",
-              message:
-                "lineHash, line, invoiceIds, splitAmountsPaise required (equal lengths).",
+              message: "lineHash, line, invoiceIds, splitAmountsPaise required (equal lengths).",
             },
           },
           { status: 400 },
@@ -112,12 +111,7 @@ export async function POST(req: NextRequest) {
       const invRows = await db
         .select()
         .from(invoices)
-        .where(
-          and(
-            eq(invoices.businessId, ctx.businessId),
-            inArray(invoices.id, invoiceIds),
-          ),
-        );
+        .where(and(eq(invoices.businessId, ctx.businessId), inArray(invoices.id, invoiceIds)));
       if (invRows.length !== invoiceIds.length) {
         return NextResponse.json(
           {
@@ -222,10 +216,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ data: { already: false, payments: inserted } });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Confirm failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

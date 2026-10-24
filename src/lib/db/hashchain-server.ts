@@ -35,22 +35,14 @@ export type StoredEvent = {
   hash: string;
 };
 
-export async function appendEventInTx(
-  tx: Tx,
-  input: AppendEventInput,
-): Promise<StoredEvent> {
+export async function appendEventInTx(tx: Tx, input: AppendEventInput): Promise<StoredEvent> {
   const lockKey = `${input.businessId}:${input.entityId}`;
   await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`);
 
   const [last] = await tx
     .select()
     .from(events)
-    .where(
-      and(
-        eq(events.businessId, input.businessId),
-        eq(events.entityId, input.entityId),
-      ),
-    )
+    .where(and(eq(events.businessId, input.businessId), eq(events.entityId, input.entityId)))
     .orderBy(desc(events.chainSeq))
     .limit(1);
 
@@ -94,9 +86,7 @@ export async function appendEventInTx(
   };
 }
 
-export async function appendEvent(
-  input: AppendEventInput,
-): Promise<StoredEvent> {
+export async function appendEvent(input: AppendEventInput): Promise<StoredEvent> {
   return db.transaction((tx) => appendEventInTx(tx, input));
 }
 
@@ -107,9 +97,7 @@ export async function listEntityEvents(
   const rows = await db
     .select()
     .from(events)
-    .where(
-      and(eq(events.businessId, businessId), eq(events.entityId, entityId)),
-    )
+    .where(and(eq(events.businessId, businessId), eq(events.entityId, entityId)))
     .orderBy(asc(events.chainSeq));
 
   return rows.map((r) => ({

@@ -6,8 +6,7 @@ import { db } from "@/lib/db/client";
 import { evidenceFiles } from "@/lib/db/schema";
 import { s3, BUCKET } from "@/lib/integrations/r2";
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SHA_RE = /^[a-f0-9]{64}$/;
 
 export async function POST(req: NextRequest) {
@@ -70,9 +69,7 @@ export async function POST(req: NextRequest) {
       let bytes: Uint8Array;
       let contentType = "application/octet-stream";
       try {
-        const obj = await s3.send(
-          new GetObjectCommand({ Bucket: BUCKET, Key: storageKey }),
-        );
+        const obj = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: storageKey }));
         if (!obj.Body) throw new Error("empty");
         bytes = await obj.Body.transformToByteArray();
         contentType = obj.ContentType ?? contentType;

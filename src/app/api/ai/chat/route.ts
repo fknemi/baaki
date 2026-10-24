@@ -16,9 +16,7 @@ export async function POST(req: NextRequest) {
       const body = (await req.json().catch(() => ({}))) as {
         messages?: Incoming[];
       };
-      const messages = Array.isArray(body.messages)
-        ? body.messages.slice(-10)
-        : [];
+      const messages = Array.isArray(body.messages) ? body.messages.slice(-10) : [];
       if (messages.length === 0) {
         return new Response(
           JSON.stringify({
@@ -41,13 +39,9 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const glossaryText = glossary
-        .map((g) => `- ${g.term}: ${g.meaning}`)
-        .join("\n");
+      const glossaryText = glossary.map((g) => `- ${g.term}: ${g.meaning}`).join("\n");
       const faqText = faq.map((f) => `Q: ${f.q}\nA: ${f.answer}`).join("\n\n");
-      const ladderText = config.ladder
-        .map((s) => `- day ${s.day}: ${s.key}`)
-        .join("\n");
+      const ladderText = config.ladder.map((s) => `- day ${s.day}: ${s.key}`).join("\n");
       const configText = `GST rates allowed (%): ${config.gstRatesPct.join(", ")}
 TDS candidate shortfall percentages: ${config.tdsCandidateShortfallsPct.join(", ")}
 Escalation ladder (days offset from due date):
@@ -86,9 +80,7 @@ ${faqText}`;
 
           const send = (payload: object) => {
             if (closed) return;
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify(payload)}\n\n`),
-            );
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
           };
           const finish = () => {
             if (closed) return;

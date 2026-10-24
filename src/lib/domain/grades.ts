@@ -26,7 +26,7 @@ export function gradeCustomer(history: PaymentHistoryEntry[]): GradeResult {
     };
   }
 
-  const onTime = paid.filter((h) => (h.paidOn! <= h.dueOn)).length;
+  const onTime = paid.filter((h) => h.paidOn! <= h.dueOn).length;
   const pctOnTime = Math.round((onTime / paid.length) * 100);
 
   const totalLate = paid.reduce(

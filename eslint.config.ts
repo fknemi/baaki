@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     },
     rules: {
       "import/no-cycle": ["error", { maxDepth: 10, ignoreExternal: true }],
+      "react-hooks/set-state-in-effect": "warn",
     },
   },
 

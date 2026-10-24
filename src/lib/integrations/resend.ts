@@ -10,8 +10,7 @@ export type EmailAttachment = {
 };
 
 export type SendResult =
-  | { sent: true; id: string }
-  | { sent: false; error: string; simulated?: boolean };
+  { sent: true; id: string } | { sent: false; error: string; simulated?: boolean };
 
 export async function sendEmail({
   to,

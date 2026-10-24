@@ -30,10 +30,7 @@ export async function POST(req: Request) {
         });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Reset failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

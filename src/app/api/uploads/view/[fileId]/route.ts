@@ -12,10 +12,7 @@ import { s3, BUCKET } from "@/lib/integrations/r2";
  * Used by the evidence pack (and anywhere else) to open an attachment
  * by id without exposing raw storage keys in the browser.
  */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ fileId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params;
   return requireRole(
     req,
@@ -23,12 +20,7 @@ export async function GET(
       const [file] = await db
         .select()
         .from(evidenceFiles)
-        .where(
-          and(
-            eq(evidenceFiles.id, fileId),
-            eq(evidenceFiles.businessId, ctx.businessId),
-          ),
-        )
+        .where(and(eq(evidenceFiles.id, fileId), eq(evidenceFiles.businessId, ctx.businessId)))
         .limit(1);
       if (!file) {
         return NextResponse.json(

@@ -7,10 +7,7 @@ import { db } from "@/lib/db/client";
 import { evidenceFiles } from "@/lib/db/schema";
 import { s3, BUCKET } from "@/lib/integrations/r2";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ fileId: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
   const { fileId } = await params;
   return requireRole(
     req,
@@ -18,12 +15,7 @@ export async function GET(
       const [file] = await db
         .select()
         .from(evidenceFiles)
-        .where(
-          and(
-            eq(evidenceFiles.id, fileId),
-            eq(evidenceFiles.businessId, ctx.businessId),
-          ),
-        )
+        .where(and(eq(evidenceFiles.id, fileId), eq(evidenceFiles.businessId, ctx.businessId)))
         .limit(1);
 
       if (!file) {

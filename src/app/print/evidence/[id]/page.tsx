@@ -28,11 +28,7 @@ function titleCase(s: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export default async function EvidencePage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function EvidencePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
   if (!session?.userId) redirect(`/login?next=/print/evidence/${id}`);
@@ -78,9 +74,7 @@ export default async function EvidencePage({
 
       {/* COVER PAGE */}
       <section>
-        <h1 style={{ fontSize: "20pt", fontWeight: 700, textAlign: "center" }}>
-          Evidence Pack
-        </h1>
+        <h1 style={{ fontSize: "20pt", fontWeight: 700, textAlign: "center" }}>Evidence Pack</h1>
         <p
           style={{
             textAlign: "center",
@@ -134,9 +128,7 @@ export default async function EvidencePage({
             </tr>
             <tr>
               <td style={{ fontWeight: 600 }}>Outstanding</td>
-              <td style={{ fontWeight: 600 }}>
-                {formatINR(data.invoice.outstandingPaise)}
-              </td>
+              <td style={{ fontWeight: 600 }}>{formatINR(data.invoice.outstandingPaise)}</td>
             </tr>
             <tr>
               <td style={{ fontWeight: 600 }}>Days overdue</td>
@@ -164,8 +156,7 @@ export default async function EvidencePage({
       <section>
         <h2 style={{ fontSize: "14pt", fontWeight: 600 }}>1. Invoice summary</h2>
         <p style={{ fontSize: "10pt", color: "#5A6170" }}>
-          Full tax-invoice copy is available at{" "}
-          <code>/print/invoice/{data.invoice.id}</code>.
+          Full tax-invoice copy is available at <code>/print/invoice/{data.invoice.id}</code>.
         </p>
         <table style={{ marginTop: 8 }}>
           <thead>
@@ -247,9 +238,7 @@ export default async function EvidencePage({
               <tbody>
                 {data.reminders.map((r) => (
                   <tr key={r.id}>
-                    <td style={{ fontSize: "9pt" }}>
-                      {r.sentAt ? r.sentAt.slice(0, 10) : "—"}
-                    </td>
+                    <td style={{ fontSize: "9pt" }}>{r.sentAt ? r.sentAt.slice(0, 10) : "—"}</td>
                     <td style={{ fontSize: "9pt" }}>{r.stageKey}</td>
                     <td style={{ fontSize: "9pt" }}>{r.channel}</td>
                     <td style={{ fontSize: "9pt" }}>{r.status}</td>
@@ -282,9 +271,7 @@ export default async function EvidencePage({
                   <tr key={p.id}>
                     <td>{p.paidOn}</td>
                     <td className="num">{formatINR(p.amountPaise)}</td>
-                    <td style={{ fontSize: "9pt" }}>
-                      {p.reference ?? "—"}
-                    </td>
+                    <td style={{ fontSize: "9pt" }}>{p.reference ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -313,14 +300,10 @@ export default async function EvidencePage({
               <tbody>
                 {data.messages.map((m) => (
                   <tr key={m.id}>
-                    <td style={{ fontSize: "9pt" }}>
-                      {m.createdAt.slice(0, 10)}
-                    </td>
+                    <td style={{ fontSize: "9pt" }}>{m.createdAt.slice(0, 10)}</td>
                     <td style={{ fontSize: "9pt" }}>{titleCase(m.type)}</td>
                     <td style={{ fontSize: "9pt" }}>{titleCase(m.status)}</td>
-                    <td style={{ fontSize: "9pt" }}>
-                      {m.message ?? m.reference ?? "—"}
-                    </td>
+                    <td style={{ fontSize: "9pt" }}>{m.message ?? m.reference ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -350,9 +333,7 @@ export default async function EvidencePage({
               <tbody>
                 {data.attachments.map((f) => (
                   <tr key={f.id}>
-                    <td style={{ fontSize: "9pt" }}>
-                      {f.createdAt.slice(0, 10)}
-                    </td>
+                    <td style={{ fontSize: "9pt" }}>{f.createdAt.slice(0, 10)}</td>
                     <td style={{ fontSize: "9pt" }}>{f.mime}</td>
                     <td className="num" style={{ fontSize: "9pt" }}>
                       {(f.sizeBytes / 1024).toFixed(1)} KB
@@ -366,10 +347,7 @@ export default async function EvidencePage({
                     >
                       {f.sha256.slice(0, 16)}…
                     </td>
-                    <td
-                      className="no-print"
-                      style={{ fontSize: "9pt" }}
-                    >
+                    <td className="no-print" style={{ fontSize: "9pt" }}>
                       <a
                         href={`/api/uploads/view/${f.id}`}
                         target="_blank"
@@ -394,8 +372,8 @@ export default async function EvidencePage({
                 marginTop: 8,
               }}
             >
-              Open links are session-validated and serve a 60-second signed
-              URL to the file. They are hidden when printing.
+              Open links are session-validated and serve a 60-second signed URL to the file. They
+              are hidden when printing.
             </p>
           </section>
         </>
@@ -406,12 +384,9 @@ export default async function EvidencePage({
         <>
           <section className="page-break" />
           <section>
-            <h2 style={{ fontSize: "14pt", fontWeight: 600 }}>
-              7. Demand letter
-            </h2>
+            <h2 style={{ fontSize: "14pt", fontWeight: 600 }}>7. Demand letter</h2>
             <p style={{ fontSize: "10pt", color: "#5A6170", marginTop: 4 }}>
-              Generated on {data.demandLetter.generatedOn} · Pay by{" "}
-              {data.demandLetter.payByDate}
+              Generated on {data.demandLetter.generatedOn} · Pay by {data.demandLetter.payByDate}
             </p>
 
             <table style={{ marginTop: 8 }}>
@@ -428,9 +403,7 @@ export default async function EvidencePage({
                 </tr>
                 <tr>
                   <td>Balance demanded at generation</td>
-                  <td style={{ fontWeight: 600 }}>
-                    {formatINR(data.demandLetter.balancePaise)}
-                  </td>
+                  <td style={{ fontWeight: 600 }}>{formatINR(data.demandLetter.balancePaise)}</td>
                 </tr>
                 <tr>
                   <td>Pay-by date</td>
@@ -438,9 +411,7 @@ export default async function EvidencePage({
                 </tr>
                 <tr>
                   <td>MSMED interest included</td>
-                  <td>
-                    {data.demandLetter.includeInterest ? "Yes" : "No"}
-                  </td>
+                  <td>{data.demandLetter.includeInterest ? "Yes" : "No"}</td>
                 </tr>
               </tbody>
             </table>
@@ -472,8 +443,7 @@ export default async function EvidencePage({
       )}
 
       <div className="footer">
-        Generated {data.generatedAt} · {data.business.name} ·{" "}
-        {data.invoice.number}
+        Generated {data.generatedAt} · {data.business.name} · {data.invoice.number}
       </div>
     </div>
   );

@@ -8,10 +8,7 @@ import { verifyPayToken } from "@/lib/auth/pay-token";
 
 const oneDayAgo = () => new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ token: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const payload = verifyPayToken(token);
   if (!payload) {
@@ -26,11 +23,7 @@ export async function POST(
     paidOn?: string;
   };
 
-  const [inv] = await db
-    .select()
-    .from(invoices)
-    .where(eq(invoices.id, payload.invoiceId))
-    .limit(1);
+  const [inv] = await db.select().from(invoices).where(eq(invoices.id, payload.invoiceId)).limit(1);
   if (!inv || inv.businessId !== payload.businessId) {
     return NextResponse.json(
       { error: { code: "NOT_FOUND", message: "Invoice missing." } },
@@ -42,12 +35,7 @@ export async function POST(
   const [recent] = await db
     .select({ id: inboxItems.id })
     .from(inboxItems)
-    .where(
-      and(
-        eq(inboxItems.invoiceId, inv.id),
-        gte(inboxItems.createdAt, oneDayAgo()),
-      ),
-    )
+    .where(and(eq(inboxItems.invoiceId, inv.id), gte(inboxItems.createdAt, oneDayAgo())))
     .limit(1);
   if (recent) {
     return NextResponse.json(
@@ -60,10 +48,7 @@ export async function POST(
   try {
     await db.transaction(async (tx) => {
       // Pause the ladder while the claim is open
-      await tx
-        .update(invoices)
-        .set({ disputed: true })
-        .where(eq(invoices.id, inv.id));
+      await tx.update(invoices).set({ disputed: true }).where(eq(invoices.id, inv.id));
 
       const [item] = await tx
         .insert(inboxItems)
@@ -95,9 +80,6 @@ export async function POST(
     return NextResponse.json({ data: { ok: true } });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed";
-    return NextResponse.json(
-      { error: { code: "INTERNAL", message: msg } },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
   }
 }

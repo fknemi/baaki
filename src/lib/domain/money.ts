@@ -1,72 +1,71 @@
 const RUPEES_INPUT_RE = /^\d{1,9}(\.\d{1,2})?$/;
 
 const INR = new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 export function isPaise(n: unknown): n is number {
-    return typeof n === "number" && Number.isInteger(n);
+  return typeof n === "number" && Number.isInteger(n);
 }
 
 export function assertPaise(n: unknown, label = "paise"): asserts n is number {
-    if (!isPaise(n)) {
-        throw new TypeError(`${label} must be integer paise, got ${String(n)}`);
-    }
-    if (n < 0) {
-        throw new RangeError(`${label} must be non-negative, got ${n}`);
-    }
+  if (!isPaise(n)) {
+    throw new TypeError(`${label} must be integer paise, got ${String(n)}`);
+  }
+  if (n < 0) {
+    throw new RangeError(`${label} must be non-negative, got ${n}`);
+  }
 }
 
 /** The one place rupees become paise. Lint bans `* 100` outside this file. */
 export function toPaise(rupees: number): number {
-    if (typeof rupees !== "number" || !Number.isFinite(rupees)) {
-        throw new TypeError(`toPaise: expected finite number, got ${String(rupees)}`);
-    }
-    const paise = Math.round(rupees * 100);
-    if (!Number.isSafeInteger(paise)) {
-        throw new RangeError(`toPaise: overflow, got ${paise}`);
-    }
-    return paise;
+  if (typeof rupees !== "number" || !Number.isFinite(rupees)) {
+    throw new TypeError(`toPaise: expected finite number, got ${String(rupees)}`);
+  }
+  const paise = Math.round(rupees * 100);
+  if (!Number.isSafeInteger(paise)) {
+    throw new RangeError(`toPaise: overflow, got ${paise}`);
+  }
+  return paise;
 }
 
 /** Strict parse of a user-typed rupee string. No float drift. */
 export function parseRupeeInput(input: string): number {
-    if (typeof input !== "string") throw new TypeError("parseRupeeInput: expected string");
-    const s = input.trim();
-    if (!RUPEES_INPUT_RE.test(s)) {
-        throw new RangeError(`parseRupeeInput: invalid rupee amount "${input}"`);
-    }
-    const [whole, frac = ""] = s.split(".");
-    const paise = Number(whole! + frac.padEnd(2, "0"));
-    if (!Number.isSafeInteger(paise)) {
-        throw new RangeError(`parseRupeeInput: overflow for "${input}"`);
-    }
-    return paise;
+  if (typeof input !== "string") throw new TypeError("parseRupeeInput: expected string");
+  const s = input.trim();
+  if (!RUPEES_INPUT_RE.test(s)) {
+    throw new RangeError(`parseRupeeInput: invalid rupee amount "${input}"`);
+  }
+  const [whole, frac = ""] = s.split(".");
+  const paise = Number(whole! + frac.padEnd(2, "0"));
+  if (!Number.isSafeInteger(paise)) {
+    throw new RangeError(`parseRupeeInput: overflow for "${input}"`);
+  }
+  return paise;
 }
 
 export function formatINR(paise: number): string {
-    assertPaise(paise);
-    return INR.format(paise / 100);
+  assertPaise(paise);
+  return INR.format(paise / 100);
 }
 
 export function sumPaise(values: number[]): number {
-    let total = 0;
-    for (const v of values) {
-        assertPaise(v);
-        total += v;
-    }
-    return total;
+  let total = 0;
+  for (const v of values) {
+    assertPaise(v);
+    total += v;
+  }
+  return total;
 }
 
 /** Section 170, CGST Act: < 50 paise ignored, >= 50 paise rounds up. */
 export function roundToRupee(paise: number): number {
-    assertPaise(paise);
-    return Math.round(paise / 100) * 100;
+  assertPaise(paise);
+  return Math.round(paise / 100) * 100;
 }
-
 
 /** Format signed paise (round-off, refunds). Accepts negatives. */
 export function formatINRDelta(paise: number): string {

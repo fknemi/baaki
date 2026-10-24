@@ -8,12 +8,6 @@ import { and, eq, sql } from "drizzle-orm";
 import { events } from "@/lib/db/schema";
 import { appendEventInTx } from "@/lib/db/hashchain-server";
 
-
-
-
-
-
-
 export type LetterPayload = {
   letterDate: string;
   payByDate: string;
@@ -72,11 +66,7 @@ export async function loadLetterPayload(
   const invoice = await getInvoiceWithTotals(invoiceId, businessId, today);
   if (!invoice) return null;
 
-  const [biz] = await db
-    .select()
-    .from(businesses)
-    .where(eq(businesses.id, businessId))
-    .limit(1);
+  const [biz] = await db.select().from(businesses).where(eq(businesses.id, businessId)).limit(1);
   if (!biz) return null;
 
   const [owner] = await db
@@ -87,20 +77,10 @@ export async function loadLetterPayload(
 
   const daysOverdue = Math.max(0, wholeDaysBetween(invoice.dueDate, today));
 
-  const msmed = msmedInterest(
-    invoice.outstandingPaise,
-    daysOverdue,
-    config.rbiBankRatePct,
-    {
-      udyamRegistered: biz.udyamRegistered,
-      udyamType: biz.udyamType as
-        | "micro"
-        | "small"
-        | "medium"
-        | null
-        | undefined,
-    },
-  );
+  const msmed = msmedInterest(invoice.outstandingPaise, daysOverdue, config.rbiBankRatePct, {
+    udyamRegistered: biz.udyamRegistered,
+    udyamType: biz.udyamType as "micro" | "small" | "medium" | null | undefined,
+  });
 
   const msmedLine = msmed.applicable
     ? `Under Section 16 of the MSMED Act 2006, you may be entitled to compound interest at three times the RBI bank rate (currently ${config.rbiBankRatePct}%).`
@@ -203,9 +183,7 @@ export async function logLetterGenerated(
   await db.transaction(async (tx) => {
     // Acquire the same advisory lock appendEventInTx will re-acquire.
     // pg_advisory_xact_lock is reentrant within the same tx, so no deadlock.
-    await tx.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtext(${`${businessId}:${invoiceId}`}))`,
-    );
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${`${businessId}:${invoiceId}`}))`);
 
     // Check under lock — no other transaction can be appending for this
     // entity right now.
@@ -220,9 +198,7 @@ export async function logLetterGenerated(
         ),
       );
 
-    const alreadyToday = existingRows.some(
-      (e) => e.atIso.toISOString().slice(0, 10) === today,
-    );
+    const alreadyToday = existingRows.some((e) => e.atIso.toISOString().slice(0, 10) === today);
     if (alreadyToday) return;
 
     await appendEventInTx(tx, {

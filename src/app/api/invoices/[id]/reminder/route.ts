@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { requireRole } from "@/lib/auth/require-role";
 import { db } from "@/lib/db/client";
-import {
-  invoices,
-  customers,
-  businesses,
-  users,
-  reminderLog,
-} from "@/lib/db/schema";
+import { invoices, customers, businesses, users, reminderLog } from "@/lib/db/schema";
 import { appendEventInTx } from "@/lib/db/hashchain-server";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { wholeDaysBetween, todayIST, atIso } from "@/lib/domain/dates";
@@ -17,10 +11,7 @@ import { renderInvoiceAscii } from "@/lib/domain/invoice-ascii";
 import { renderInvoicePdf } from "@/lib/domain/invoice-pdf";
 import { sendEmail } from "@/lib/integrations/resend";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   return requireRole(
@@ -199,10 +190,7 @@ export async function POST(
         return NextResponse.json({ data: result });
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Reminder failed";
-        return NextResponse.json(
-          { error: { code: "INTERNAL", message: msg } },
-          { status: 500 },
-        );
+        return NextResponse.json({ error: { code: "INTERNAL", message: msg } }, { status: 500 });
       }
     },
     ["owner", "accountant"],

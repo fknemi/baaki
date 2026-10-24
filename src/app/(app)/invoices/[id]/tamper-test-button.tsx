@@ -3,13 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function TamperTestButton({
-  invoiceId,
-  chainSeq,
-}: {
-  invoiceId: string;
-  chainSeq: number;
-}) {
+export function TamperTestButton({ invoiceId, chainSeq }: { invoiceId: string; chainSeq: number }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -39,11 +33,7 @@ export function TamperTestButton({
   }
 
   return (
-    <button
-      onClick={onClick}
-      disabled={busy}
-      className="text-xs text-red-600 underline"
-    >
+    <button onClick={onClick} disabled={busy} className="text-xs text-red-600 underline">
       (dev) Tamper event #{chainSeq}
     </button>
   );

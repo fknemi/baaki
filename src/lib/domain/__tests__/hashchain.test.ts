@@ -25,9 +25,7 @@ describe("hashchain", () => {
 
   it("mutated event fails at exact seq", () => {
     const chain = buildChain(10);
-    const mutated = chain.map((e, i) =>
-      i === 4 ? { ...e, payload: { tampered: true } } : e,
-    );
+    const mutated = chain.map((e, i) => (i === 4 ? { ...e, payload: { tampered: true } } : e));
     expect(verifyChain(mutated)).toEqual({ valid: false, failedAt: 5 });
   });
 

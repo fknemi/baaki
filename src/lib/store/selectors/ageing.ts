@@ -15,10 +15,7 @@ export type AgeingInput = {
 };
 
 /** Five buckets per spec §4.5. Sums to the overdue total for overdue buckets. */
-export function computeAgeing(
-  invoices: AgeingInput[],
-  today: string,
-): AgeingBucket[] {
+export function computeAgeing(invoices: AgeingInput[], today: string): AgeingBucket[] {
   const buckets: AgeingBucket[] = [
     { key: "not-due", label: "Not due", paise: 0, count: 0 },
     { key: "d1-30", label: "1-30", paise: 0, count: 0 },

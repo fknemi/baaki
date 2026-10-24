@@ -3,7 +3,9 @@ import { businesses } from "./businesses";
 
 export const evidenceFiles = pgTable("evidence_files", {
   id: uuid("id").primaryKey().defaultRandom(),
-  businessId: uuid("business_id").notNull().references(() => businesses.id),
+  businessId: uuid("business_id")
+    .notNull()
+    .references(() => businesses.id),
   entityType: text("entity_type").notNull(),
   entityId: uuid("entity_id").notNull(),
   storageKey: text("storage_key").notNull(),

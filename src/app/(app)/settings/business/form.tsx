@@ -32,20 +32,12 @@ export function BusinessProfileForm({ initial }: Props) {
   const [name, setName] = useState(initial.name);
   const [gstin, setGstin] = useState(initial.gstin ?? "");
   const [regType, setRegType] = useState(initial.registrationType);
-  const [turnover, setTurnover] = useState(
-    String(Math.round(initial.turnoverPaise / 100)),
-  );
-  const [everCrossed, setEverCrossed] = useState(
-    initial.everCrossedEinvoiceThreshold,
-  );
-  const [udyamRegistered, setUdyamRegistered] = useState(
-    initial.udyamRegistered,
-  );
+  const [turnover, setTurnover] = useState(String(Math.round(initial.turnoverPaise / 100)));
+  const [everCrossed, setEverCrossed] = useState(initial.everCrossedEinvoiceThreshold);
+  const [udyamRegistered, setUdyamRegistered] = useState(initial.udyamRegistered);
   const [udyamType, setUdyamType] = useState(initial.udyamType ?? "micro");
   const [upiId, setUpiId] = useState(initial.upiId ?? "");
-  const [buffer, setBuffer] = useState(
-    String(Math.round(initial.safetyBufferPaise / 100)),
-  );
+  const [buffer, setBuffer] = useState(String(Math.round(initial.safetyBufferPaise / 100)));
   const [line1, setLine1] = useState(initial.address.line1);
   const [city, setCity] = useState(initial.address.city);
   const [state, setState] = useState(initial.address.state);
@@ -110,14 +102,12 @@ export function BusinessProfileForm({ initial }: Props) {
             <input
               value={gstin}
               onChange={(e) => setGstin(e.target.value.toUpperCase())}
-              className={`rounded-lg border px-3 py-2 text-xs font-mono ${
+              className={`rounded-lg border px-3 py-2 font-mono text-xs ${
                 gstinValid ? "border-[#E4E7EC]" : "border-[#B42318]"
               }`}
             />
             {!gstinValid && gstin.length > 0 && (
-              <span className="text-[10px] text-[#B42318]">
-                Invalid GSTIN checksum
-              </span>
+              <span className="text-[10px] text-[#B42318]">Invalid GSTIN checksum</span>
             )}
             {gstinValid && gstin.length >= 14 && (
               <span className="text-[10px] text-[#067647]">
@@ -208,12 +198,7 @@ export function BusinessProfileForm({ initial }: Props) {
       <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
         <h3 className="text-sm font-semibold">Forecast</h3>
         <div className="mt-2 space-y-2 text-xs">
-          <Field
-            label="Safety buffer (₹)"
-            value={buffer}
-            onChange={setBuffer}
-            type="number"
-          />
+          <Field label="Safety buffer (₹)" value={buffer} onChange={setBuffer} type="number" />
         </div>
       </section>
 

@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { requireRole } from "@/lib/auth/require-role";
 import { checkRateLimit } from "@/lib/ai/rate-limit";
 import { getGenai, MODEL } from "@/lib/integrations/gemini";
 import { isValidGSTIN } from "@/lib/domain/gstin";
 import { computeTotals } from "@/lib/domain/gst";
-
 
 const s3 = new S3Client({
   region: "auto",
@@ -73,9 +68,7 @@ export async function POST(req: NextRequest) {
       let bytes: Uint8Array;
       let mime = "image/jpeg";
       try {
-        const obj = await s3.send(
-          new GetObjectCommand({ Bucket: bucket, Key: storageKey }),
-        );
+        const obj = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: storageKey }));
         if (!obj.Body) throw new Error("empty");
         bytes = await obj.Body.transformToByteArray();
         mime = obj.ContentType ?? mime;
@@ -148,10 +141,7 @@ export async function POST(req: NextRequest) {
           { stateCode: "27" },
         );
         const reportedTotal = Number(extracted.totalPaise ?? 0);
-        if (
-          reportedTotal > 0 &&
-          Math.abs(computedTotals.totalPaise - reportedTotal) > 100
-        ) {
+        if (reportedTotal > 0 && Math.abs(computedTotals.totalPaise - reportedTotal) > 100) {
           flags.push(
             `total_mismatch: computed=${computedTotals.totalPaise} reported=${reportedTotal}`,
           );

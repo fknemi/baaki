@@ -82,7 +82,6 @@ describe("roundToRupee — Section 170 vectors", () => {
   });
 });
 
-
 describe("toPaise — overflow", () => {
   it("throws RangeError when multiplying overflows", () => {
     expect(() => toPaise(1e300)).toThrow(RangeError);

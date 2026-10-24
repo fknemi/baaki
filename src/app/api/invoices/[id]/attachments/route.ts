@@ -4,10 +4,7 @@ import { requireRole } from "@/lib/auth/require-role";
 import { db } from "@/lib/db/client";
 import { evidenceFiles, invoices } from "@/lib/db/schema";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return requireRole(
     req,
@@ -15,9 +12,7 @@ export async function GET(
       const [inv] = await db
         .select({ id: invoices.id })
         .from(invoices)
-        .where(
-          and(eq(invoices.id, id), eq(invoices.businessId, ctx.businessId)),
-        )
+        .where(and(eq(invoices.id, id), eq(invoices.businessId, ctx.businessId)))
         .limit(1);
       if (!inv) {
         return NextResponse.json(
