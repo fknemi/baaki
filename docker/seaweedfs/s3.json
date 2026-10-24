@@ -1,0 +1,19 @@
+{
+  "identities": [
+    {
+      "name": "baaki",
+      "credentials": [
+        {
+          "accessKey": "baaki_access",
+          "secretKey": "baaki_secret_change_me_in_production"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ],
+  "cors": {
+    "allow_origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+    "allow_methods": ["GET", "PUT", "POST", "HEAD", "DELETE"],
+    "allow_headers": ["*"]
+  }
+}

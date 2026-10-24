@@ -9,8 +9,21 @@ export default async function SettingsPage() {
   if (!session) redirect("/login");
 
   const items = [
-    { href: "/settings/business", label: "Business profile", desc: "Name, GSTIN, Udyam, UPI ID" },
-    { href: "/settings/ladder", label: "Escalation ladder", desc: "6 stages · auto-send toggles" },
+    {
+      href: "/settings/business",
+      label: "Business profile",
+      desc: "Name, GSTIN, Udyam, UPI ID",
+    },
+    {
+      href: "/settings/ladder",
+      label: "Escalation ladder",
+      desc: "6 stages · auto-send toggles",
+    },
+    {
+      href: "/help",
+      label: "Help & AI assistant",
+      desc: "Ask about GST, receivables, or how Baaki works",
+    },
   ];
 
   return (
