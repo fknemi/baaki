@@ -26,8 +26,32 @@ export function addDays(yyyymmdd: string, days: number): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-/** Today in IST — YYYY-MM-DD. Uses local time but normalises to IST. */
+/** ISO 8601 timestamp for `at_iso` fields. Caller passes today + time. */
+export function atIso(today: string, hh = 10, mm = 0, ss = 0): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${today}T${pad(hh)}:${pad(mm)}:${pad(ss)}+05:30`;
+}
+
+// Runtime demo-date override. Set via /api/admin/demo-date.
+// Module-scoped so it persists across requests in the same process.
+// Works in `bun dev` and single-instance deploys; serverless multi-instance
+// would need per-request state (documented limitation).
+let _demoDateOverride: string | null = null;
+
+export function setDemoDateOverride(date: string | null): void {
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid demo date: ${date}`);
+  }
+  _demoDateOverride = date;
+}
+
+export function getDemoDateOverride(): string | null {
+  return _demoDateOverride;
+}
+
 export function todayIST(): string {
+  if (_demoDateOverride) return _demoDateOverride;
+
   const override = process.env.NEXT_PUBLIC_DEMO_TODAY;
   if (override && /^\d{4}-\d{2}-\d{2}$/.test(override)) return override;
 
@@ -38,10 +62,4 @@ export function todayIST(): string {
   const mm = String(ist.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(ist.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
-}
-
-/** ISO 8601 timestamp for `at_iso` fields. Caller passes today + time. */
-export function atIso(today: string, hh = 10, mm = 0, ss = 0): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${today}T${pad(hh)}:${pad(mm)}:${pad(ss)}+05:30`;
 }

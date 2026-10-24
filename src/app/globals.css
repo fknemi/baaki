@@ -118,20 +118,7 @@
 }
 
 
-html.contrast-high {
-  --bg: #000;
-  --surface: #1A1D23;
-  --ink: #FFF;
-  --ink-muted: #C4C8D0;
-  --border: #3A3F4A;
-}
-html.contrast-high body {
-  background: var(--bg);
-  color: var(--ink);
-}
-html.contrast-high .bg-white {
-  background: var(--surface);
-}
+
 
 @layer base {
   * {
@@ -143,4 +130,39 @@ html.contrast-high .bg-white {
   html {
     @apply font-sans;
   }
+}
+
+
+/* Focus ring — 3px amber, 2px offset, visible everywhere */
+*:focus-visible {
+  outline: 3px solid #F59E0B;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High-contrast mode (toggled via .contrast-high on <html>) */
+html.contrast-high {
+  filter: contrast(1.25) saturate(1.15);
+}
+
+html.contrast-high body {
+  background: #000;
+  color: #FFF;
+}
+
+html.contrast-high .bg-white {
+  background: #1A1D23;
+  color: #FFF;
 }

@@ -54,3 +54,4 @@ yarn-error.log*
 bun.lockb
 
 jsconfig.json
+*.bak
