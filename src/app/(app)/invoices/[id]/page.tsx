@@ -1,5 +1,6 @@
 export const instant = false;
 
+import { AttachmentsSection } from "@/components/attachments-section";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
@@ -70,16 +71,14 @@ function eventContext(e: StoredEvent): string | null {
       return stage ?? channel ?? null;
     }
     case "PAYMENT_CONFIRMED": {
-      const amt =
-        typeof p.amountPaise === "number" ? formatINR(p.amountPaise) : null;
+      const amt = typeof p.amountPaise === "number" ? formatINR(p.amountPaise) : null;
       const ref = typeof p.reference === "string" ? p.reference : null;
       if (amt && ref) return `${amt} · ${ref}`;
       return amt ?? null;
     }
     case "DISPUTE_RESOLVED":
     case "DISPUTE_REJECTED": {
-      const resolution =
-        typeof p.resolution === "string" ? p.resolution : null;
+      const resolution = typeof p.resolution === "string" ? p.resolution : null;
       const reply = typeof p.reply === "string" ? p.reply : null;
       if (resolution) return `resolution: ${resolution}`;
       return reply ? `reply: ${reply.slice(0, 40)}` : null;
@@ -114,11 +113,7 @@ function statusColorFor(status: string): string {
   return "text-[#5A6170]";
 }
 
-export default async function InvoiceDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
   if (!session) redirect("/login");
@@ -138,31 +133,25 @@ export default async function InvoiceDetailPage({
   return (
     <main className="space-y-4 p-4 pb-24">
       <div className="flex items-center justify-between">
-        <Link
-          href="/invoices"
-          className="text-xs text-muted-foreground underline"
-        >
+        <Link href="/invoices" className="text-muted-foreground text-xs underline">
           ← Back
         </Link>
-        <span className="font-mono text-xs text-muted-foreground">
-          {invoice.number}
-        </span>
+        <span className="text-muted-foreground font-mono text-xs">{invoice.number}</span>
       </div>
 
       {/* Header card */}
       <div className="rounded-xl bg-white p-5 ring-1 ring-[#E4E7EC]">
         <p className={`text-xs font-medium ${statusColor}`}>{statusLabel}</p>
         <h1 className="mt-1 text-lg font-semibold">{invoice.customer.name}</h1>
-        <p className="mt-2 tabular-nums text-3xl font-semibold">
+        <p className="mt-2 text-3xl font-semibold tabular-nums">
           {formatINR(invoice.outstandingPaise)}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           Due {invoice.dueDate} · Issued {invoice.invoiceDate}
         </p>
         {invoice.amountPaidPaise > 0 && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            Paid {formatINR(invoice.amountPaidPaise)} of{" "}
-            {formatINR(invoice.totals.totalPaise)}
+          <p className="text-muted-foreground mt-1 text-xs">
+            Paid {formatINR(invoice.amountPaidPaise)} of {formatINR(invoice.totals.totalPaise)}
           </p>
         )}
       </div>
@@ -172,7 +161,7 @@ export default async function InvoiceDetailPage({
         <h2 className="text-sm font-semibold">Items</h2>
         <table className="mt-3 w-full text-xs">
           <thead>
-            <tr className="text-left text-muted-foreground">
+            <tr className="text-muted-foreground text-left">
               <th className="py-1">Description</th>
               <th className="py-1 text-right">Qty</th>
               <th className="py-1 text-right">Rate</th>
@@ -182,22 +171,17 @@ export default async function InvoiceDetailPage({
           </thead>
           <tbody className="tabular-nums">
             {invoice.items.map((it) => {
-              const taxable =
-                Math.round(it.qty * it.ratePaise) - it.discountPaise;
+              const taxable = Math.round(it.qty * it.ratePaise) - it.discountPaise;
               return (
                 <tr key={it.id} className="border-t border-[#E4E7EC]">
                   <td className="py-2">
                     {it.description}
-                    <span className="ml-2 text-muted-foreground">
-                      HSN {it.hsnSac}
-                    </span>
+                    <span className="text-muted-foreground ml-2">HSN {it.hsnSac}</span>
                   </td>
                   <td className="py-2 text-right">
                     {it.qty} {it.unit}
                   </td>
-                  <td className="py-2 text-right">
-                    {formatINR(it.ratePaise)}
-                  </td>
+                  <td className="py-2 text-right">{formatINR(it.ratePaise)}</td>
                   <td className="py-2 text-right">{formatINR(taxable)}</td>
                   <td className="py-2 text-right">{it.gstRatePct}%</td>
                 </tr>
@@ -239,16 +223,17 @@ export default async function InvoiceDetailPage({
           </div>
         </dl>
 
-        <p className="mt-3 text-xs capitalize text-muted-foreground">
+        <p className="text-muted-foreground mt-3 text-xs capitalize">
           {numberToWordsIndian(invoice.totals.totalPaise)}
         </p>
       </div>
 
+      <AttachmentsSection invoiceId={invoice.id} />
       {/* Timeline */}
       <div className="rounded-xl bg-white p-5 ring-1 ring-[#E4E7EC]">
         <div className="flex items-baseline justify-between">
           <h2 className="text-sm font-semibold">Timeline</h2>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-muted-foreground text-[10px]">
             {events.length} event{events.length === 1 ? "" : "s"}
           </span>
         </div>
@@ -268,8 +253,7 @@ export default async function InvoiceDetailPage({
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{eventTitle(e.type)}</div>
                   <div className="text-muted-foreground">
-                    {e.actor.replace(/^user:/, "user ")} ·{" "}
-                    {e.atIso.slice(0, 10)}
+                    {e.actor.replace(/^user:/, "user ")} · {e.atIso.slice(0, 10)}
                     {ctx && (
                       <>
                         {" · "}
@@ -278,15 +262,13 @@ export default async function InvoiceDetailPage({
                     )}
                   </div>
                 </div>
-                <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
+                <span className="text-muted-foreground shrink-0 font-mono text-[10px]">
                   #{e.chainSeq}
                 </span>
               </li>
             );
           })}
-          {events.length === 0 && (
-            <p className="text-xs text-muted-foreground">No events yet.</p>
-          )}
+          {events.length === 0 && <p className="text-muted-foreground text-xs">No events yet.</p>}
         </ol>
       </div>
 
@@ -309,20 +291,14 @@ export default async function InvoiceDetailPage({
 
       {process.env.NODE_ENV !== "production" && events.length > 0 && (
         <div className="rounded-lg bg-red-50 p-3 ring-1 ring-red-200">
-          <p className="mb-2 text-xs font-semibold text-red-900">
-            Dev: tamper test
-          </p>
-          <TamperTestButton
-            invoiceId={invoice.id}
-            chainSeq={events.length}
-          />
+          <p className="mb-2 text-xs font-semibold text-red-900">Dev: tamper test</p>
+          <TamperTestButton invoiceId={invoice.id} chainSeq={events.length} />
         </div>
       )}
 
       {invoice.everCrossedEinvoiceThreshold && (
         <div className="rounded-lg bg-amber-50 p-3 text-xs text-amber-900 ring-1 ring-amber-200">
-          ℹ E-invoicing applies to your business (₹5 crore AATO threshold
-          crossed in a prior year).
+          ℹ E-invoicing applies to your business (₹5 crore AATO threshold crossed in a prior year).
         </div>
       )}
     </main>

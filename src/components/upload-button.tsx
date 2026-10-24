@@ -2,14 +2,25 @@
 
 import { useRef, useState } from "react";
 
+async function computeSha256(buffer: ArrayBuffer): Promise<string> {
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export function UploadButton({
   onUploaded,
-  accept = "image/jpeg,image/png,application/pdf",
+  accept = "image/jpeg,image/png,application/pdf,audio/mpeg,audio/wav",
   label = "Upload a photo",
+  entityType = "temp",
+  entityId = null,
 }: {
-  onUploaded: (storageKey: string) => void;
+  onUploaded: (storageKey: string, sha256: string) => void;
   accept?: string;
   label?: string;
+  entityType?: "temp" | "invoice" | "customer" | "business";
+  entityId?: string | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,14 +37,17 @@ export function UploadButton({
     setBusy(true);
     setError(null);
     try {
+      const buffer = await file.arrayBuffer();
+      const sha256 = await computeSha256(buffer);
+
       const presignRes = await fetch("/api/uploads/presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mime: file.type,
           sizeBytes: file.size,
-          entityType: "temp",
-          entityId: null,
+          entityType,
+          entityId,
         }),
       });
       const presignJson = await presignRes.json();
@@ -45,11 +59,11 @@ export function UploadButton({
       const putRes = await fetch(uploadUrl, {
         method: "PUT",
         headers: { "Content-Type": file.type },
-        body: file,
+        body: buffer,
       });
       if (!putRes.ok) throw new Error("Upload failed");
 
-      onUploaded(storageKey);
+      onUploaded(storageKey, sha256);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -65,7 +79,7 @@ export function UploadButton({
         disabled={busy}
         className="w-full rounded-lg bg-[#0F5C4E] px-4 py-3 text-sm font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50"
       >
-        {busy ? "Uploading…" : `📷 ${label}`}
+        {busy ? "Uploading…" : `📎 ${label}`}
       </button>
       <input
         ref={inputRef}

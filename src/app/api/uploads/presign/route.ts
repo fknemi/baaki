@@ -5,8 +5,15 @@ import { randomUUID } from "node:crypto";
 import { requireRole } from "@/lib/auth/require-role";
 import { s3, BUCKET } from "@/lib/integrations/r2";
 
-const ALLOWED_MIMES = ["image/jpeg", "image/png", "application/pdf"];
+const ALLOWED_MIMES = [
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+  "audio/mpeg",
+  "audio/wav",
+];
 const MAX_SIZE = 5 * 1024 * 1024;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
   return requireRole(
@@ -21,14 +28,17 @@ export async function POST(req: NextRequest) {
 
       const mime = String(body.mime ?? "");
       const sizeBytes = Number(body.sizeBytes ?? 0);
-      const entityType = String(body.entityType ?? "temp").replace(/[^a-z_-]/gi, "");
+      const entityType = String(body.entityType ?? "temp").replace(
+        /[^a-z_-]/gi,
+        "",
+      );
 
       if (!ALLOWED_MIMES.includes(mime)) {
         return NextResponse.json(
           {
             error: {
               code: "UNSUPPORTED_MEDIA_TYPE",
-              message: "Only JPEG, PNG, or PDF allowed.",
+              message: "Only JPEG, PNG, PDF, MP3, or WAV allowed.",
             },
           },
           { status: 415 },
@@ -46,8 +56,22 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const ext = mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : "pdf";
-      const storageKey = `${entityType}/${ctx.userId}/${randomUUID()}.${ext}`;
+      const ext =
+        mime === "image/jpeg"
+          ? "jpg"
+          : mime === "image/png"
+            ? "png"
+            : mime === "application/pdf"
+              ? "pdf"
+              : mime === "audio/mpeg"
+                ? "mp3"
+                : "wav";
+
+      // Keep entityId in the storage key so /confirm can insert a properly
+      // scoped evidence_files row without trusting client-supplied IDs.
+      const entityIdSafe =
+        body.entityId && UUID_RE.test(body.entityId) ? body.entityId : ctx.userId;
+      const storageKey = `${entityType}/${entityIdSafe}/${randomUUID()}.${ext}`;
 
       const command = new PutObjectCommand({
         Bucket: BUCKET,
