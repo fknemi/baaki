@@ -129,20 +129,20 @@ async function main() {
     ) VALUES (
       ${businessId}, ${userId}, 'Sharma Packaging',
       ${sql.json({
-        line1: "123 Industrial Area",
-        city: "Pune",
-        state: "Maharashtra",
-        stateCode: "27",
-        pincode: "411001",
-    })},
+          line1: "123 Industrial Area",
+          city: "Pune",
+          state: "Maharashtra",
+          stateCode: "27",
+          pincode: "411001",
+      })},
       '27AAPFU0939F1ZV', 'regular',
       420000000, false, true, 'micro',
       ${sql.json({
-        accountName: "Sharma Packaging",
-        accountNumberMasked: "XXXX XXXX 4821",
-        ifsc: "HDFC0001234",
-        bankName: "HDFC Bank",
-    })},
+          accountName: "Sharma Packaging",
+          accountNumberMasked: "XXXX XXXX 4821",
+          ifsc: "HDFC0001234",
+          bankName: "HDFC Bank",
+      })},
       'sharmapackaging@okokhdfcbank',
       30000000, 85000000,
       ${sql.json(["headsUp", "dueDate", "firm"])}
@@ -160,7 +160,7 @@ async function main() {
         {
             name: "Krishna Traders", pan: "BBBPK1234K", state: "27", stateName: "Maharashtra", city: "Pune", lang: "en",
             email: "fk.nemi.kf@gmail.com", phone: "+918357037152"
-        },  // ← real, for demo
+        },
         { name: "Patel Brothers", pan: "AABCP5678P", state: "24", stateName: "Gujarat", city: "Ahmedabad", lang: "hi" },
         { name: "Sunrise Agencies", pan: "AABCS9012S", state: "29", stateName: "Karnataka", city: "Bengaluru", lang: "en" },
         { name: "Mehta & Co", pan: "AABCM3456M", state: "27", stateName: "Maharashtra", city: "Mumbai", lang: "en" },
@@ -197,8 +197,6 @@ async function main() {
     // ─── Invoices ────────────────────────────────────────────────
     console.log("Seeding 40 invoices…");
 
-    // Distribution per spec §6.3: 8 paid, 5 part-paid, 6 due-soon,
-    // 14 overdue, 1 disputed, 2 draft, 4 sent — total 40.
     const invoicePlan = [
         ...Array(8).fill("paid"),
         ...Array(5).fill("part-paid"),
@@ -217,11 +215,8 @@ async function main() {
         const number = `INV/26-27/${String(seq++).padStart(4, "0")}`;
         const isDemo = number === "INV/26-27/0012";
 
-        // ── DEMO INVOICE (INV/26-27/0012) ────────────────────────
-        // Matches landing page + design doc: 3 items, ₹1,00,000 taxable,
-        // ₹1,18,000 total, no payment yet → outstanding = ₹1,18,000.
         if (isDemo) {
-            const custId = customerIds[0]; // Krishna Traders
+            const custId = customerIds[0];
             const invoiceId = randomUUID();
 
             await sql`
@@ -286,10 +281,9 @@ async function main() {
             continue;
         }
 
-        // ── OTHER INVOICES ───────────────────────────────────────
         const custId = customerIds[i % customerIds.length];
         const customer = customers[i % customers.length];
-        const amount = 25000 + i * 3000; // ₹25k, ₹28k, ₹31k, …
+        const amount = 25000 + i * 3000;
 
         let dueOffset;
         let paidPaise = 0;
@@ -379,6 +373,120 @@ async function main() {
         });
     }
 
+    // ─── Matcher fixtures (0041-0045) ───────────────────────────
+    // Fixed-amount invoices whose computed totals match the test cases
+    // in src/data/seed/bank-statement.csv. Everything is designed so
+    // computeTotals produces exact whole-rupee totals with no round-off.
+    console.log("Seeding matcher fixtures 0041-0045…");
+
+    async function seedFixture({ seq, customerIdx, description, taxablePaise }) {
+        const custId = customerIds[customerIdx];
+        const customer = customers[customerIdx];
+        const number = `INV/26-27/${String(seq).padStart(4, "0")}`;
+        const invoiceId = randomUUID();
+
+        await sql`
+      INSERT INTO invoices (
+        id, business_id, customer_id, number, invoice_date, due_date,
+        place_of_supply_state_code, status, amount_paid_paise, disputed
+      ) VALUES (
+        ${invoiceId}, ${businessId}, ${custId}, ${number},
+        '2026-10-02', '2026-11-01',
+        ${customer.state}, 'sent', 0, false
+      )
+    `;
+
+        const [item] = await sql`
+      INSERT INTO invoice_items (
+        invoice_id, description, hsn_sac, qty, unit,
+        rate_paise, discount_paise, gst_rate_pct
+      ) VALUES (
+        ${invoiceId}, ${description}, '4819', 1, 'lot',
+        ${taxablePaise}, 0, 18
+      )
+      RETURNING description, hsn_sac, qty, unit, rate_paise, discount_paise, gst_rate_pct
+    `;
+
+        const totals = computeTotals(
+            [{
+                qty: Number(item.qty),
+                ratePaise: item.rate_paise,
+                discountPaise: item.discount_paise,
+                gstRatePct: Number(item.gst_rate_pct),
+            }],
+            { stateCode: "27", registrationType: "regular" },
+            { stateCode: customer.state },
+        );
+
+        await insertInvoiceCreatedEvent({
+            businessId,
+            invoiceId,
+            actor: `user:${userId}`,
+            atIso: "2026-10-02T10:00:00+05:30",
+            number,
+            customerId: custId,
+            items: [{
+                description: item.description,
+                hsnSac: item.hsn_sac,
+                qty: Number(item.qty),
+                unit: item.unit,
+                ratePaise: item.rate_paise,
+                discountPaise: item.discount_paise,
+                gstRatePct: Number(item.gst_rate_pct),
+            }],
+            totals,
+        });
+
+        return { number, invoiceId, totals };
+    }
+
+    // 0041 — Patel Brothers (inter-state, 18% IGST). ₹60,000 taxable → ₹70,800 total.
+    const fx41 = await seedFixture({
+        seq: 41, customerIdx: 1,
+        description: "Matcher fixture: partial payment target",
+        taxablePaise: 6_000_000,
+    });
+
+    // 0042 — Sunrise Agencies (inter-state). ₹35,000 taxable → ₹41,300 total.
+    const fx42 = await seedFixture({
+        seq: 42, customerIdx: 2,
+        description: "Matcher fixture: multi-invoice part 1",
+        taxablePaise: 3_500_000,
+    });
+
+    // 0043 — Sunrise Agencies (inter-state). ₹20,000 taxable → ₹23,600 total.
+    // 0042 + 0043 = ₹64,900 → multi-invoice test case.
+    const fx43 = await seedFixture({
+        seq: 43, customerIdx: 2,
+        description: "Matcher fixture: multi-invoice part 2",
+        taxablePaise: 2_000_000,
+    });
+
+    // 0044 — Mehta & Co (intra-state). ₹70,000 taxable → ₹82,600 total.
+    // 2% TDS = ₹1,400 → test credit ₹81,200.
+    const fx44 = await seedFixture({
+        seq: 44, customerIdx: 3,
+        description: "Matcher fixture: TDS target",
+        taxablePaise: 7_000_000,
+    });
+
+    // 0045 — Royal Industries (intra-state). ₹20,000 taxable → ₹23,600 total.
+    // Test credit ₹30,000 → overpayment.
+    const fx45 = await seedFixture({
+        seq: 45, customerIdx: 4,
+        description: "Matcher fixture: overpayment target",
+        taxablePaise: 2_000_000,
+    });
+
+    console.log("  Fixture totals (paise):");
+    console.log(`    0041  total ${fx41.totals.totalPaise}  part target`);
+    console.log(`    0042  total ${fx42.totals.totalPaise}  multi part 1`);
+    console.log(`    0043  total ${fx43.totals.totalPaise}  multi part 2`);
+    console.log(`    0042+0043 = ${fx42.totals.totalPaise + fx43.totals.totalPaise}  multi test`);
+    console.log(`    0044  total ${fx44.totals.totalPaise}  taxable ${fx44.totals.taxablePaise}`);
+    console.log(`          2% TDS shortfall = ${Math.round(fx44.totals.taxablePaise * 2 / 100)}  → credit ${fx44.totals.totalPaise - Math.round(fx44.totals.taxablePaise * 2 / 100)}`);
+    console.log(`    0045  total ${fx45.totals.totalPaise}  overpayment target (credit > this)`);
+
     // ─── Expenses ────────────────────────────────────────────────
     console.log("Seeding expenses…");
     const expenseRows = [
@@ -414,12 +522,12 @@ async function main() {
     console.log(`  Business:    Sharma Packaging (${businessId})`);
     console.log(`  Owner:       Rakesh Sharma (${userId})`);
     console.log(`  Customers:   ${customers.length}`);
-    console.log(`  Invoices:    ${invoiceCount}`);
+    console.log(`  Invoices:    ${invoiceCount} (40 base + 5 matcher fixtures)`);
     console.log(`  Items:       ${itemCount}`);
     console.log(`  Events:      ${eventCount} (INVOICE_CREATED per invoice)`);
     console.log(`  Expenses:    ${expenseRows.length}`);
     console.log("");
-    console.log("Demo invoice: INV/26-27/0012 · ₹1,18,000 total · ₹98,000 outstanding");
+    console.log("Demo invoice: INV/26-27/0012 · ₹1,18,000 total · ₹1,18,000 outstanding");
 }
 
 try {
