@@ -96,4 +96,23 @@ describe("computeForecast", () => {
         const baseline = computeForecast(baseInput);
         expect(modified.rows).not.toEqual(baseline.rows);
     });
+
+    it("invoice from 20-day-late customer lands 20 days after due", () => {
+  const input: ForecastInput = {
+    ...baseInput,
+    today: "2026-11-01",
+    invoices: [
+      { id: "ix", customerId: "cx", outstandingPaise: 1_000_000, dueDate: "2026-11-01" },
+    ],
+    customers: [{ id: "cx", avgDaysLate: 20 }],
+    expenses: [],
+  };
+  const { rows } = computeForecast(input);
+  // 2026-11-01 + 20 days = 2026-11-21. Week 1 = 11-01→11-07, ..., week 4 = 11-22→11-28.
+  // 11-21 is in week 3 (11-15→11-21).
+  const week3 = rows[2]!;
+  expect(week3.inflowPaise).toBe(1_000_000);
+  expect(rows[0]!.inflowPaise).toBe(0);
+  expect(rows[1]!.inflowPaise).toBe(0);
+});
 });

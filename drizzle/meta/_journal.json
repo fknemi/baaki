@@ -5,64 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1792627084203,
-      "tag": "0000_init",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1792627104953,
-      "tag": "0001_admin_roles_triggers",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1792698588616,
-      "tag": "0002_full_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1792698597376,
-      "tag": "0003_full_grants",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1792698652452,
-      "tag": "0004_full_grants",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1792704497526,
-      "tag": "0005_chain_seq",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1792713204117,
-      "tag": "0006_snooze_auto_send",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1792717223814,
-      "tag": "0007_user_email",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1792717391986,
-      "tag": "0008_user_email",
+      "when": 1792747134263,
+      "tag": "0000_adorable_barracuda",
       "breakpoints": true
     }
   ]

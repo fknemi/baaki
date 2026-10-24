@@ -9,10 +9,18 @@ import { computeTotals } from "../src/lib/domain/gst.ts";
 
 const sql = postgres(process.env.DATABASE_URL, { prepare: false, max: 5 });
 
-// ═══════════════════════════════════════════════════════════════════
-// Hash chain helpers — MUST match src/lib/db/hashchain-server.ts
-// ═══════════════════════════════════════════════════════════════════
+// ─── addDays (matches src/lib/domain/dates.ts) ──────────────────────
+function addDays(yyyymmdd, days) {
+    const [y, m, d] = yyyymmdd.split("-").map(Number);
+    const ms = Date.UTC(y, m - 1, d) + days * 86_400_000;
+    const dt = new Date(ms);
+    const yyyy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getUTCDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+}
 
+// ─── Hash chain helpers — MUST match src/lib/db/hashchain-server.ts ──
 function sha256(s) {
     return createHash("sha256").update(s).digest("hex");
 }
@@ -20,18 +28,14 @@ function sha256(s) {
 function canonicalJson(v) {
     if (v === null) return "null";
     if (typeof v !== "object") return JSON.stringify(v);
-    if (Array.isArray(v)) {
-        return "[" + v.map(canonicalJson).join(",") + "]";
-    }
+    if (Array.isArray(v)) return "[" + v.map(canonicalJson).join(",") + "]";
     const keys = Object.keys(v).sort();
     return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJson(v[k])).join(",") + "}";
 }
 
 function canonicalTime(iso) {
     const d = typeof iso === "string" ? new Date(iso) : iso;
-    return new Date(Math.floor(d.getTime() / 1000) * 1000)
-        .toISOString()
-        .replace(".000Z", "Z");
+    return new Date(Math.floor(d.getTime() / 1000) * 1000).toISOString().replace(".000Z", "Z");
 }
 
 function genesisHash() {
@@ -51,14 +55,7 @@ function computeHash(prevHash, evt) {
 }
 
 async function insertInvoiceCreatedEvent({
-    businessId,
-    invoiceId,
-    actor,
-    atIso,
-    number,
-    customerId,
-    items,
-    totals,
+    businessId, invoiceId, actor, atIso, number, customerId, items, totals,
 }) {
     const prevHash = genesisHash();
     const evt = {
@@ -78,14 +75,34 @@ async function insertInvoiceCreatedEvent({
       (${businessId}, 'invoice', ${invoiceId}, 'INVOICE_CREATED', ${actor},
        ${new Date(atIso)}, ${sql.json(evt.payload)}, ${prevHash}, ${hash}, 1)
   `;
+    return { hash, chainSeq: 1 };
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// GSTIN mod-36 checksum (mirrors src/lib/domain/gstin.ts)
-// ═══════════════════════════════════════════════════════════════════
+async function insertPaymentConfirmedEvent({
+    businessId, invoiceId, actor, atIso, amountPaise, paidOn, reference, prevEventHash,
+}) {
+    const evt = {
+        seq: 2,
+        type: "PAYMENT_CONFIRMED",
+        entityId: invoiceId,
+        actor,
+        atIso,
+        payload: { amountPaise, paidOn, reference, seeded: true },
+    };
+    const hash = computeHash(prevEventHash, evt);
 
+    await sql`
+    INSERT INTO events
+      (business_id, entity_type, entity_id, type, actor, at_iso, payload, prev_hash, hash, chain_seq)
+    VALUES
+      (${businessId}, 'invoice', ${invoiceId}, 'PAYMENT_CONFIRMED', ${actor},
+       ${new Date(atIso)}, ${sql.json(evt.payload)}, ${prevEventHash}, ${hash}, 2)
+  `;
+    return { hash, chainSeq: 2 };
+}
+
+// ─── GSTIN mod-36 checksum ─────────────────────────────────────────
 const CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
 function gstin(first14) {
     let sum = 0;
     for (let i = 0; i < 14; i++) {
@@ -97,9 +114,6 @@ function gstin(first14) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Seed
-// ═══════════════════════════════════════════════════════════════════
-
 async function main() {
     console.log("Clearing existing data…");
     await sql`
@@ -128,21 +142,10 @@ async function main() {
       auto_send_stages
     ) VALUES (
       ${businessId}, ${userId}, 'Sharma Packaging',
-      ${sql.json({
-          line1: "123 Industrial Area",
-          city: "Pune",
-          state: "Maharashtra",
-          stateCode: "27",
-          pincode: "411001",
-      })},
+      ${sql.json({ line1: "123 Industrial Area", city: "Pune", state: "Maharashtra", stateCode: "27", pincode: "411001" })},
       '27AAPFU0939F1ZV', 'regular',
       420000000, false, true, 'micro',
-      ${sql.json({
-          accountName: "Sharma Packaging",
-          accountNumberMasked: "XXXX XXXX 4821",
-          ifsc: "HDFC0001234",
-          bankName: "HDFC Bank",
-      })},
+      ${sql.json({ accountName: "Sharma Packaging", accountNumberMasked: "XXXX XXXX 4821", ifsc: "HDFC0001234", bankName: "HDFC Bank" })},
       'sharmapackaging@okokhdfcbank',
       30000000, 85000000,
       ${sql.json(["headsUp", "dueDate", "firm"])}
@@ -155,12 +158,12 @@ async function main() {
   `;
 
     // ─── Customers ───────────────────────────────────────────────
+    // Paid latency per customer — becomes historical record in `payments`,
+    // from which forecast/route.ts derives avgDaysLate per spec §2.8.
     console.log("Seeding 12 customers…");
+    const customerPaidLatency = [0, 12, 18, 0, 10, 0, 8, 0, 20, 0, 14, 0];
     const customers = [
-        {
-            name: "Krishna Traders", pan: "BBBPK1234K", state: "27", stateName: "Maharashtra", city: "Pune", lang: "en",
-            email: "fk.nemi.kf@gmail.com", phone: "+918357037152"
-        },
+        { name: "Krishna Traders", pan: "BBBPK1234K", state: "27", stateName: "Maharashtra", city: "Pune", lang: "en", email: "fk.nemi.kf@gmail.com", phone: "+918357037152" },
         { name: "Patel Brothers", pan: "AABCP5678P", state: "24", stateName: "Gujarat", city: "Ahmedabad", lang: "hi" },
         { name: "Sunrise Agencies", pan: "AABCS9012S", state: "29", stateName: "Karnataka", city: "Bengaluru", lang: "en" },
         { name: "Mehta & Co", pan: "AABCM3456M", state: "27", stateName: "Maharashtra", city: "Mumbai", lang: "en" },
@@ -188,8 +191,7 @@ async function main() {
         city, phone_masked, email, credit_days, preferred_language, pay_token
       ) VALUES (
         ${id}, ${businessId}, ${c.name}, ${g}, ${c.state}, ${c.stateName},
-        ${c.city}, ${phone}, ${email},
-        30, ${c.lang}, ${payToken}
+        ${c.city}, ${phone}, ${email}, 30, ${c.lang}, ${payToken}
       )
     `;
     }
@@ -207,7 +209,10 @@ async function main() {
         ...Array(4).fill("sent"),
     ];
 
-    const today = new Date("2026-11-01");
+    // Anchor: prefer NEXT_PUBLIC_DEMO_TODAY (so seed and app stay in sync),
+    // fall back to 2026-11-01 which is what the design doc assumes.
+    const todayStr = process.env.NEXT_PUBLIC_DEMO_TODAY ?? "2026-11-01";
+    const today = new Date(todayStr + "T00:00:00Z");
     let seq = 1;
 
     for (let i = 0; i < invoicePlan.length; i++) {
@@ -218,6 +223,7 @@ async function main() {
         if (isDemo) {
             const custId = customerIds[0];
             const invoiceId = randomUUID();
+            const dueDateStr = "2026-11-01";
 
             await sql`
         INSERT INTO invoices (
@@ -225,8 +231,7 @@ async function main() {
           place_of_supply_state_code, status, amount_paid_paise, disputed
         ) VALUES (
           ${invoiceId}, ${businessId}, ${custId}, ${number},
-          '2026-10-02', '2026-11-01',
-          '27', 'sent', 0, false
+          '2026-10-02', ${dueDateStr}, '27', 'sent', 0, false
         )
       `;
 
@@ -239,40 +244,22 @@ async function main() {
             const insertedItems = await sql`
         INSERT INTO invoice_items (
           invoice_id, description, hsn_sac, qty, unit, rate_paise, discount_paise, gst_rate_pct
-        ) VALUES ${sql(
-                demoItems.map((it) => [
-                    invoiceId, it.description, it.hsnSac, it.qty, it.unit,
-                    it.ratePaise, it.discountPaise, it.gstRatePct,
-                ]),
-            )}
+        ) VALUES ${sql(demoItems.map((it) => [invoiceId, it.description, it.hsnSac, it.qty, it.unit, it.ratePaise, it.discountPaise, it.gstRatePct]))}
         RETURNING description, hsn_sac, qty, unit, rate_paise, discount_paise, gst_rate_pct
       `;
 
             const totals = computeTotals(
-                insertedItems.map((it) => ({
-                    qty: Number(it.qty),
-                    ratePaise: it.rate_paise,
-                    discountPaise: it.discount_paise,
-                    gstRatePct: Number(it.gst_rate_pct),
-                })),
+                insertedItems.map((it) => ({ qty: Number(it.qty), ratePaise: it.rate_paise, discountPaise: it.discount_paise, gstRatePct: Number(it.gst_rate_pct) })),
                 { stateCode: "27", registrationType: "regular" },
                 { stateCode: "27" },
             );
 
             await insertInvoiceCreatedEvent({
-                businessId,
-                invoiceId,
-                actor: `user:${userId}`,
-                atIso: "2026-10-02T10:00:00+05:30",
-                number,
-                customerId: custId,
+                businessId, invoiceId, actor: `user:${userId}`,
+                atIso: "2026-10-02T10:00:00+05:30", number, customerId: custId,
                 items: insertedItems.map((it) => ({
-                    description: it.description,
-                    hsnSac: it.hsn_sac,
-                    qty: Number(it.qty),
-                    unit: it.unit,
-                    ratePaise: it.rate_paise,
-                    discountPaise: it.discount_paise,
+                    description: it.description, hsnSac: it.hsn_sac, qty: Number(it.qty),
+                    unit: it.unit, ratePaise: it.rate_paise, discountPaise: it.discount_paise,
                     gstRatePct: Number(it.gst_rate_pct),
                 })),
                 totals,
@@ -285,17 +272,28 @@ async function main() {
         const customer = customers[i % customers.length];
         const amount = 25000 + i * 3000;
 
+        // Compute item + precomputed totals BEFORE kind branch, so `paid` can
+        // use the real rounded total (avoids paidPaise = amount*100 drift).
+        const qty = 100;
+        const ratePaise = Math.floor((amount * 100) / 1.18 / qty);
+        const precomputedTotals = computeTotals(
+            [{ qty, ratePaise, discountPaise: 0, gstRatePct: 18 }],
+            { stateCode: "27", registrationType: "regular" },
+            { stateCode: customer.state },
+        );
+
         let dueOffset;
         let paidPaise = 0;
         let status = "sent";
 
         if (kind === "paid") {
             dueOffset = -45 - i;
-            paidPaise = amount * 100;
+            paidPaise = precomputedTotals.totalPaise;
+            status = "paid";
         } else if (kind === "part-paid") {
             dueOffset = -20 - i;
-            paidPaise = Math.floor(amount * 100 * 0.4);
-            status = "sent";
+            paidPaise = Math.floor(precomputedTotals.totalPaise * 0.4);
+            // NOTE: status stays "sent" — part-paid is derived from amount_paid < total
         } else if (kind === "due-soon") {
             dueOffset = 3 + (i % 5);
         } else if (kind === "overdue") {
@@ -310,9 +308,9 @@ async function main() {
         }
 
         const invoiceDate = new Date(today);
-        invoiceDate.setDate(today.getDate() + dueOffset - 30);
+        invoiceDate.setUTCDate(today.getUTCDate() + dueOffset - 30);
         const dueDate = new Date(today);
-        dueDate.setDate(today.getDate() + dueOffset);
+        dueDate.setUTCDate(today.getUTCDate() + dueOffset);
 
         const invoiceDateStr = invoiceDate.toISOString().split("T")[0];
         const dueDateStr = dueDate.toISOString().split("T")[0];
@@ -330,53 +328,61 @@ async function main() {
       )
     `;
 
-        const qty = 100;
-        const ratePaise = Math.floor((amount * 100) / 1.18 / qty);
         const [item] = await sql`
       INSERT INTO invoice_items (
         invoice_id, description, hsn_sac, qty, unit, rate_paise, discount_paise, gst_rate_pct
       ) VALUES (
-        ${invoiceId}, 'Corrugated box 12x12', '4819', 100, 'pcs',
+        ${invoiceId}, 'Corrugated box 12x12', '4819', ${qty}, 'pcs',
         ${ratePaise}, 0, 18
       )
       RETURNING description, hsn_sac, qty, unit, rate_paise, discount_paise, gst_rate_pct
     `;
 
         const totals = computeTotals(
-            [{
-                qty: Number(item.qty),
-                ratePaise: item.rate_paise,
-                discountPaise: item.discount_paise,
-                gstRatePct: Number(item.gst_rate_pct),
-            }],
+            [{ qty: Number(item.qty), ratePaise: item.rate_paise, discountPaise: item.discount_paise, gstRatePct: Number(item.gst_rate_pct) }],
             { stateCode: "27", registrationType: "regular" },
             { stateCode: customer.state },
         );
 
-        await insertInvoiceCreatedEvent({
-            businessId,
-            invoiceId,
-            actor: `user:${userId}`,
+        const createdEvent = await insertInvoiceCreatedEvent({
+            businessId, invoiceId, actor: `user:${userId}`,
             atIso: `${invoiceDateStr}T10:00:00+05:30`,
-            number,
-            customerId: custId,
+            number, customerId: custId,
             items: [{
-                description: item.description,
-                hsnSac: item.hsn_sac,
-                qty: Number(item.qty),
-                unit: item.unit,
-                ratePaise: item.rate_paise,
-                discountPaise: item.discount_paise,
-                gstRatePct: Number(item.gst_rate_pct),
+                description: item.description, hsnSac: item.hsn_sac, qty: Number(item.qty),
+                unit: item.unit, ratePaise: item.rate_paise,
+                discountPaise: item.discount_paise, gstRatePct: Number(item.gst_rate_pct),
             }],
             totals,
         });
+
+        // ─── Insert payments + PAYMENT_CONFIRMED events for paid / part-paid ──
+        // paid_on = due_date + customerPaidLatency[idx]. This is the historical
+        // record that /api/forecast derives avgDaysLate from (spec §2.8).
+        if (kind === "paid" || kind === "part-paid") {
+            const custIdx = i % customers.length;
+            const daysLate = customerPaidLatency[custIdx];
+            const paidOn = addDays(dueDateStr, daysLate);
+            const reference = `seed-${number}`;
+
+            await sql`
+        INSERT INTO payments (
+          business_id, invoice_id, amount_paise, paid_on, reference, idempotency_key
+        ) VALUES (
+          ${businessId}, ${invoiceId}, ${paidPaise}, ${paidOn}, ${reference}, ${reference}
+        )
+      `;
+
+            await insertPaymentConfirmedEvent({
+                businessId, invoiceId, actor: `user:${userId}`,
+                atIso: `${paidOn}T10:00:00+05:30`,
+                amountPaise: paidPaise, paidOn, reference,
+                prevEventHash: createdEvent.hash,
+            });
+        }
     }
 
     // ─── Matcher fixtures (0041-0045) ───────────────────────────
-    // Fixed-amount invoices whose computed totals match the test cases
-    // in src/data/seed/bank-statement.csv. Everything is designed so
-    // computeTotals produces exact whole-rupee totals with no round-off.
     console.log("Seeding matcher fixtures 0041-0045…");
 
     async function seedFixture({ seq, customerIdx, description, taxablePaise }) {
@@ -398,8 +404,7 @@ async function main() {
 
         const [item] = await sql`
       INSERT INTO invoice_items (
-        invoice_id, description, hsn_sac, qty, unit,
-        rate_paise, discount_paise, gst_rate_pct
+        invoice_id, description, hsn_sac, qty, unit, rate_paise, discount_paise, gst_rate_pct
       ) VALUES (
         ${invoiceId}, ${description}, '4819', 1, 'lot',
         ${taxablePaise}, 0, 18
@@ -408,31 +413,18 @@ async function main() {
     `;
 
         const totals = computeTotals(
-            [{
-                qty: Number(item.qty),
-                ratePaise: item.rate_paise,
-                discountPaise: item.discount_paise,
-                gstRatePct: Number(item.gst_rate_pct),
-            }],
+            [{ qty: Number(item.qty), ratePaise: item.rate_paise, discountPaise: item.discount_paise, gstRatePct: Number(item.gst_rate_pct) }],
             { stateCode: "27", registrationType: "regular" },
             { stateCode: customer.state },
         );
 
         await insertInvoiceCreatedEvent({
-            businessId,
-            invoiceId,
-            actor: `user:${userId}`,
-            atIso: "2026-10-02T10:00:00+05:30",
-            number,
-            customerId: custId,
+            businessId, invoiceId, actor: `user:${userId}`,
+            atIso: "2026-10-02T10:00:00+05:30", number, customerId: custId,
             items: [{
-                description: item.description,
-                hsnSac: item.hsn_sac,
-                qty: Number(item.qty),
-                unit: item.unit,
-                ratePaise: item.rate_paise,
-                discountPaise: item.discount_paise,
-                gstRatePct: Number(item.gst_rate_pct),
+                description: item.description, hsnSac: item.hsn_sac, qty: Number(item.qty),
+                unit: item.unit, ratePaise: item.rate_paise,
+                discountPaise: item.discount_paise, gstRatePct: Number(item.gst_rate_pct),
             }],
             totals,
         });
@@ -440,43 +432,11 @@ async function main() {
         return { number, invoiceId, totals };
     }
 
-    // 0041 — Patel Brothers (inter-state, 18% IGST). ₹60,000 taxable → ₹70,800 total.
-    const fx41 = await seedFixture({
-        seq: 41, customerIdx: 1,
-        description: "Matcher fixture: partial payment target",
-        taxablePaise: 6_000_000,
-    });
-
-    // 0042 — Sunrise Agencies (inter-state). ₹35,000 taxable → ₹41,300 total.
-    const fx42 = await seedFixture({
-        seq: 42, customerIdx: 2,
-        description: "Matcher fixture: multi-invoice part 1",
-        taxablePaise: 3_500_000,
-    });
-
-    // 0043 — Sunrise Agencies (inter-state). ₹20,000 taxable → ₹23,600 total.
-    // 0042 + 0043 = ₹64,900 → multi-invoice test case.
-    const fx43 = await seedFixture({
-        seq: 43, customerIdx: 2,
-        description: "Matcher fixture: multi-invoice part 2",
-        taxablePaise: 2_000_000,
-    });
-
-    // 0044 — Mehta & Co (intra-state). ₹70,000 taxable → ₹82,600 total.
-    // 2% TDS = ₹1,400 → test credit ₹81,200.
-    const fx44 = await seedFixture({
-        seq: 44, customerIdx: 3,
-        description: "Matcher fixture: TDS target",
-        taxablePaise: 7_000_000,
-    });
-
-    // 0045 — Royal Industries (intra-state). ₹20,000 taxable → ₹23,600 total.
-    // Test credit ₹30,000 → overpayment.
-    const fx45 = await seedFixture({
-        seq: 45, customerIdx: 4,
-        description: "Matcher fixture: overpayment target",
-        taxablePaise: 2_000_000,
-    });
+    const fx41 = await seedFixture({ seq: 41, customerIdx: 1, description: "Matcher fixture: partial payment target", taxablePaise: 6_000_000 });
+    const fx42 = await seedFixture({ seq: 42, customerIdx: 2, description: "Matcher fixture: multi-invoice part 1", taxablePaise: 3_500_000 });
+    const fx43 = await seedFixture({ seq: 43, customerIdx: 2, description: "Matcher fixture: multi-invoice part 2", taxablePaise: 2_000_000 });
+    const fx44 = await seedFixture({ seq: 44, customerIdx: 3, description: "Matcher fixture: TDS target", taxablePaise: 7_000_000 });
+    const fx45 = await seedFixture({ seq: 45, customerIdx: 4, description: "Matcher fixture: overpayment target", taxablePaise: 2_000_000 });
 
     console.log("  Fixture totals (paise):");
     console.log(`    0041  total ${fx41.totals.totalPaise}  part target`);
@@ -484,11 +444,14 @@ async function main() {
     console.log(`    0043  total ${fx43.totals.totalPaise}  multi part 2`);
     console.log(`    0042+0043 = ${fx42.totals.totalPaise + fx43.totals.totalPaise}  multi test`);
     console.log(`    0044  total ${fx44.totals.totalPaise}  taxable ${fx44.totals.taxablePaise}`);
-    console.log(`          2% TDS shortfall = ${Math.round(fx44.totals.taxablePaise * 2 / 100)}  → credit ${fx44.totals.totalPaise - Math.round(fx44.totals.taxablePaise * 2 / 100)}`);
+    console.log(`          2% TDS shortfall = ${Math.round((fx44.totals.taxablePaise * 2) / 100)}  → credit ${fx44.totals.totalPaise - Math.round((fx44.totals.taxablePaise * 2) / 100)}`);
     console.log(`    0045  total ${fx45.totals.totalPaise}  overpayment target (credit > this)`);
 
     // ─── Expenses ────────────────────────────────────────────────
     console.log("Seeding expenses…");
+    // "Diwali stock buildup" is the week-6 lever — a real festival-season purchase
+    // that produces the cash dip the design doc targets. Tune up/down if the
+    // breach week drifts from 6.
     const expenseRows = [
         { label: "Salaries", category: "salary", amount: 480000, due: "2026-11-01" },
         { label: "Rent", category: "rent", amount: 85000, due: "2026-11-05" },
@@ -498,6 +461,7 @@ async function main() {
         { label: "Ink supplier", category: "supplier", amount: 35000, due: "2026-12-03" },
         { label: "Dec Salaries", category: "salary", amount: 480000, due: "2026-12-01" },
         { label: "Dec Rent", category: "rent", amount: 85000, due: "2026-12-05" },
+        { label: "Diwali stock buildup", category: "supplier", amount: 1200000, due: "2026-12-07" },
         { label: "Paper reorder (week 6 force)", category: "supplier", amount: 600000, due: "2026-12-08" },
         { label: "Dec Electricity", category: "utility", amount: 22000, due: "2026-12-10" },
         { label: "Dec GST", category: "gst", amount: 120000, due: "2026-12-20" },
@@ -517,6 +481,16 @@ async function main() {
     const [{ count: invoiceCount }] = await sql`SELECT COUNT(*)::int FROM invoices`;
     const [{ count: itemCount }] = await sql`SELECT COUNT(*)::int FROM invoice_items`;
     const [{ count: eventCount }] = await sql`SELECT COUNT(*)::int FROM events`;
+    const [{ count: paymentCount }] = await sql`SELECT COUNT(*)::int FROM payments`;
+
+    // Idempotent app-role grants.
+    await sql`GRANT USAGE ON SCHEMA public TO baaki_app`;
+    await sql`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO baaki_app`;
+    await sql`GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO baaki_app`;
+    await sql`REVOKE UPDATE, DELETE ON events FROM baaki_app`;
+    await sql`GRANT SELECT, INSERT ON events TO baaki_app`;
+    await sql`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO baaki_app`;
+    await sql`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO baaki_app`;
 
     console.log("Seed complete.");
     console.log(`  Business:    Sharma Packaging (${businessId})`);
@@ -524,10 +498,12 @@ async function main() {
     console.log(`  Customers:   ${customers.length}`);
     console.log(`  Invoices:    ${invoiceCount} (40 base + 5 matcher fixtures)`);
     console.log(`  Items:       ${itemCount}`);
-    console.log(`  Events:      ${eventCount} (INVOICE_CREATED per invoice)`);
+    console.log(`  Payments:    ${paymentCount} (seeded for paid/part-paid invoices)`);
+    console.log(`  Events:      ${eventCount} (INVOICE_CREATED + PAYMENT_CONFIRMED)`);
     console.log(`  Expenses:    ${expenseRows.length}`);
     console.log("");
     console.log("Demo invoice: INV/26-27/0012 · ₹1,18,000 total · ₹1,18,000 outstanding");
+    console.log("Anchor date: " + todayStr);
 }
 
 try {

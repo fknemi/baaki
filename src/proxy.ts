@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 
+// Verified: this matches the cookie set by /api/auth/demo and /api/auth/session
 const SESSION_COOKIE = "baaki_session";
 
-/** Publicly reachable without a session. Everything else requires auth. */
+/** Publicly reachable without a session. */
 const PUBLIC_PREFIXES = [
-  "/",                      // landing page
   "/login",
   "/signup",
   "/forgot-password",
-  "/auth/",                 // email-link, reset, verify
-  "/pay/",                  // customer payment links
-  "/print/",                // public A4 documents
-  "/api/auth/",             // session / logout / me
-  "/api/pay/",              // customer link backend
-  "/api/cron/",             // cron jobs use CRON_SECRET, not session
+  "/auth/", // email-link, reset, verify
+  "/pay/", // customer payment links
+  "/print/", // public A4 documents
+  "/api/auth/", // session / logout / me
+  "/api/pay/", // customer link backend
+  "/api/cron/", // cron jobs use CRON_SECRET, not session
 ];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Exact match for "/" — landing is public
   if (pathname === "/") return NextResponse.next();
 
-  // Any prefix match → public
-  if (PUBLIC_PREFIXES.some((p) => p !== "/" && pathname.startsWith(p))) {
+  if (PUBLIC_PREFIXES.some((p) => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Everything else requires a session cookie
   const hasCookie = req.cookies.has(SESSION_COOKIE);
+
   if (!hasCookie) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
@@ -42,7 +40,11 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // Cookie present — pass pathname via header so (app)/layout can preserve
+  // ?next=<path> if the session turns out to be stale.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
