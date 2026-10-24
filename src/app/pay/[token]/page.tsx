@@ -1,3 +1,11 @@
-export default function Page() {
-  return <div className="text-muted-foreground p-8 text-sm">TODO: /pay/[token]</div>;
+// src/app/pay/[token]/page.tsx
+import { Suspense } from "react";
+import PayClient from "./client";
+
+export default function PayPage() {
+    return (
+        <Suspense fallback={<main className="mx-auto max-w-md p-6 text-center text-xs text-[#5A6170]">Loading…</main>}>
+            <PayClient />
+        </Suspense>
+    );
 }

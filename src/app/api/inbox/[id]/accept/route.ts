@@ -65,9 +65,16 @@ export async function POST(
             .where(eq(inboxItems.id, item.id));
 
           if (item.type === "dispute") {
+            const credit = Math.max(0, Number(body.creditNoteAmountPaise ?? 0));
             await tx
               .update(invoices)
-              .set({ disputed: false })
+              .set({
+                disputed: false,
+                // Treat the credit note as an offset to outstanding. Simpler
+                // than a separate credit_note_paise column; the event log
+                // preserves the distinction for audit.
+                amountPaidPaise: inv.amountPaidPaise + credit,
+              })
               .where(eq(invoices.id, inv.id));
 
             await appendEventInTx(tx, {
@@ -80,10 +87,11 @@ export async function POST(
               payload: {
                 inboxItemId: item.id,
                 resolution: "accepted",
-                creditNoteAmountPaise: body.creditNoteAmountPaise ?? 0,
+                creditNoteAmountPaise: credit,
               },
             });
           } else {
+            // ─── already_paid path ─────────────────────────────────────
             const total = await getInvoiceWithTotals(
               inv.id,
               ctx.businessId,
@@ -92,7 +100,11 @@ export async function POST(
             if (total) {
               await tx
                 .update(invoices)
-                .set({ amountPaidPaise: total.totals.totalPaise })
+                .set({
+                  amountPaidPaise: total.totals.totalPaise,
+                  status: "paid",
+                  disputed: false,
+                })
                 .where(eq(invoices.id, inv.id));
             }
 
