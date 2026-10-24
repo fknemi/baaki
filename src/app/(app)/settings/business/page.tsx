@@ -46,6 +46,10 @@ export default async function BusinessSettingsPage() {
     bankName?: string;
   } | null;
 
+  const paymentMethods = Array.isArray(biz.paymentMethods)
+    ? (biz.paymentMethods as string[])
+    : ["upi"];
+
   return (
     <main className="space-y-4 p-4 pb-24">
       <h1 className="text-xl font-semibold">Business profile</h1>
@@ -76,6 +80,7 @@ export default async function BusinessSettingsPage() {
                 bankName: bankJson.bankName ?? "",
               }
             : null,
+          paymentMethods,
         }}
       />
     </main>

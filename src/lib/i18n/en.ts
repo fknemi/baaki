@@ -1,25 +1,43 @@
-export const en = {
-  nav_dashboard: "Dashboard",
-  nav_invoices: "Invoices",
-  nav_followups: "Follow-ups",
-  nav_forecast: "Forecast",
-  nav_more: "More",
-  nav_settings: "Settings",
-  nav_help: "Help",
-  settings_title: "Settings",
-  settings_language: "Language",
-  settings_language_en: "English",
-  settings_language_hi: "हिंदी",
-  settings_text_size: "Text size",
-  settings_text_size_100: "100%",
-  settings_text_size_115: "115%",
-  settings_text_size_130: "130%",
-  settings_high_contrast: "High contrast",
-  settings_demo_date: "Demo date",
-  settings_demo_today: "Set to today",
-  settings_demo_plus7: "+7",
-  settings_demo_plus15: "+15",
-  settings_demo_plus30: "+30",
-};
+// src/lib/i18n/en.ts
+const en = {
+    common: {
+        save: 'Save',
+        cancel: 'Cancel',
+        delete: 'Delete',
+        loading: 'Loading…',
+    },
+    nav: {
+        dashboard: 'Dashboard',
+        invoices: 'Invoices',
+        customers: 'Customers',
+        payments: 'Payments',
+        settings: 'Settings',
+        signOut: 'Sign out',
+    },
+    dashboard: {
+        greeting: 'Hello, {name}',
+        totalOutstanding: 'Total outstanding',
+        invoicesOverdue: 'Overdue: {count}',
+    },
 
-export type I18nKey = keyof typeof en;
+    settings: {
+        language: 'Language',
+        language_en: 'English',
+        language_hi: 'Hindi',
+        text_size: 'Text size',
+        text_size_100: '100%',
+        text_size_115: '115%',
+        text_size_130: '130%',
+        high_contrast: 'High contrast',
+        demo_date: 'Demo date',
+        demo_plus7: '+7 days',
+        demo_plus15: '+15 days',
+        demo_plus30: '+30 days',
+        demo_today: 'Today',
+    },
+} as const;
+export type Dict = typeof en;        // literal types, used for TKey
+export type DictShape = {            // string types, used for translations
+    [K in keyof Dict]: { [J in keyof Dict[K]]: string }
+};
+export default en;

@@ -4,21 +4,27 @@ import { db } from "@/lib/db/client";
 import { businesses, invoices, users } from "@/lib/db/schema";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { todayIST } from "@/lib/domain/dates";
-import { verifyPayToken, decodePayTokenUnverified } from "@/lib/auth/pay-token";
+import {
+  verifyPayToken,
+  decodePayTokenUnverified,
+} from "@/lib/auth/pay-token";
 
 const friendly404 = (
   msg = "This link is no longer valid. Please contact the business that sent it.",
-) => NextResponse.json({ error: { code: "NOT_FOUND", message: msg } }, { status: 404 });
+) =>
+  NextResponse.json(
+    { error: { code: "NOT_FOUND", message: msg } },
+    { status: 404 },
+  );
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ token: string }> },
+) {
   const { token } = await params;
   const payload = verifyPayToken(token);
 
   if (!payload) {
-    // Signature invalid or expired. Try to decode (unverified) so the 404
-    // still gives the customer a human contact — the businessId is one of
-    // the few claims we can trust even from a corrupt token because
-    // tampering with it produces an unrecognizable UUID that matches no row.
     const fallback = decodePayTokenUnverified(token);
     if (fallback.businessId) {
       const [biz] = await db
@@ -41,7 +47,11 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     return friendly404();
   }
 
-  const [inv] = await db.select().from(invoices).where(eq(invoices.id, payload.invoiceId)).limit(1);
+  const [inv] = await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.id, payload.invoiceId))
+    .limit(1);
   if (!inv || inv.businessId !== payload.businessId) {
     return friendly404();
   }
@@ -50,6 +60,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     .select({
       name: businesses.name,
       upiId: businesses.upiId,
+      bankJson: businesses.bankJson,
+      paymentMethods: businesses.paymentMethods,
       ownerPhone: users.phoneE164,
     })
     .from(businesses)
@@ -61,6 +73,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
   const today = todayIST();
   const view = await getInvoiceWithTotals(inv.id, inv.businessId, today);
   if (!view) return friendly404();
+
+  const bankJson = biz.bankJson as {
+    accountName?: string;
+    accountNumberMasked?: string;
+    ifsc?: string;
+    bankName?: string;
+  } | null;
+
+  const methods = Array.isArray(biz.paymentMethods)
+    ? (biz.paymentMethods as string[])
+    : ["upi"];
 
   return NextResponse.json({
     data: {
@@ -82,6 +105,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
         name: biz.name,
         upiId: biz.upiId,
         phone: biz.ownerPhone,
+        bank:
+          bankJson?.accountNumberMasked && methods.includes("bank")
+            ? {
+                accountName: bankJson.accountName ?? "",
+                accountNumberMasked: bankJson.accountNumberMasked,
+                ifsc: bankJson.ifsc ?? "",
+                bankName: bankJson.bankName ?? "",
+              }
+            : null,
+        paymentMethods: methods,
       },
     },
   });

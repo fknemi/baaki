@@ -1,25 +1,40 @@
-import type { I18nKey } from "./en";
+// src/lib/i18n/hi.ts
+import type { DictShape } from './en';
 
-export const hi: Record<I18nKey, string> = {
-  nav_dashboard: "डैशबोर्ड",
-  nav_invoices: "इनवॉइस",
-  nav_followups: "फ़ॉलो-अप",
-  nav_forecast: "पूर्वानुमान",
-  nav_more: "अधिक",
-  nav_settings: "सेटिंग्स",
-  nav_help: "सहायता",
-  settings_title: "सेटिंग्स",
-  settings_language: "भाषा",
-  settings_language_en: "English",
-  settings_language_hi: "हिंदी",
-  settings_text_size: "पाठ आकार",
-  settings_text_size_100: "100%",
-  settings_text_size_115: "115%",
-  settings_text_size_130: "130%",
-  settings_high_contrast: "उच्च कंट्रास्ट",
-  settings_demo_date: "डेमो तारीख",
-  settings_demo_today: "आज पर सेट करें",
-  settings_demo_plus7: "+7",
-  settings_demo_plus15: "+15",
-  settings_demo_plus30: "+30",
-};
+const hi: DictShape = {
+    common: {
+        save: 'सहेजें',
+        cancel: 'रद्द करें',
+        delete: 'हटाएं',
+        loading: 'लोड हो रहा है…',
+    },
+    nav: {
+        dashboard: 'डैशबोर्ड',
+        invoices: 'इनवॉइस',
+        customers: 'ग्राहक',
+        payments: 'भुगतान',
+        settings: 'सेटिंग्स',
+        signOut: 'साइन आउट',
+    },
+    dashboard: {
+        greeting: 'नमस्ते, {name}',
+        totalOutstanding: 'कुल बकाया',
+        invoicesOverdue: 'अतिदेय: {count}',
+    },
+    settings: {
+        language: 'भाषा',
+        language_en: 'अंग्रेज़ी',
+        language_hi: 'हिन्दी',
+        text_size: 'टेक्स्ट आकार',
+        text_size_100: '100%',
+        text_size_115: '115%',
+        text_size_130: '130%',
+        high_contrast: 'हाई कंट्रास्ट',
+        demo_date: 'डेमो तारीख',
+        demo_plus7: '+7 दिन',
+        demo_plus15: '+15 दिन',
+        demo_plus30: '+30 दिन',
+        demo_today: 'आज',
+    },
+}
+export default hi;

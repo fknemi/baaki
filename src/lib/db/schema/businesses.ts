@@ -3,9 +3,7 @@ import { users } from "./users";
 
 export const businesses = pgTable("businesses", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => users.id),
+  ownerId: uuid("owner_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   addressJson: jsonb("address_json").notNull(),
   gstin: text("gstin"),
@@ -20,5 +18,6 @@ export const businesses = pgTable("businesses", {
   openingCashPaise: bigint("opening_cash_paise", { mode: "number" }).notNull(),
   ladderOverride: jsonb("ladder_override"),
   autoSendStages: jsonb("auto_send_stages").notNull().default(["headsUp", "dueDate"]),
+  paymentMethods: jsonb("payment_methods").notNull().default(["upi"]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
