@@ -1,1 +1,25 @@
-export {};
+export const en = {
+  nav_dashboard: "Dashboard",
+  nav_invoices: "Invoices",
+  nav_followups: "Follow-ups",
+  nav_forecast: "Forecast",
+  nav_more: "More",
+  nav_settings: "Settings",
+  nav_help: "Help",
+  settings_title: "Settings",
+  settings_language: "Language",
+  settings_language_en: "English",
+  settings_language_hi: "हिंदी",
+  settings_text_size: "Text size",
+  settings_text_size_100: "100%",
+  settings_text_size_115: "115%",
+  settings_text_size_130: "130%",
+  settings_high_contrast: "High contrast",
+  settings_demo_date: "Demo date",
+  settings_demo_today: "Set to today",
+  settings_demo_plus7: "+7",
+  settings_demo_plus15: "+15",
+  settings_demo_plus30: "+30",
+};
+
+export type I18nKey = keyof typeof en;

@@ -6,7 +6,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 
-const ALLOWED_LEGAL_NOTICE_FILE = "src/app/print/letter/[id]/page.tsx";
+const ALLOWED_LEGAL_NOTICE_FILE = "src/lib/documents/disclaimer.ts";
 const FORBIDDEN = ["court", "emblem", "seal"];
 const LEGAL_NOTICE = "legal notice";
 

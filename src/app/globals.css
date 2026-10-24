@@ -117,6 +117,22 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+
+html.contrast-high {
+  --bg: #000;
+  --surface: #1A1D23;
+  --ink: #FFF;
+  --ink-muted: #C4C8D0;
+  --border: #3A3F4A;
+}
+html.contrast-high body {
+  background: var(--bg);
+  color: var(--ink);
+}
+html.contrast-high .bg-white {
+  background: var(--surface);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -1,1 +1,25 @@
-export {};
+import type { I18nKey } from "./en";
+
+export const hi: Record<I18nKey, string> = {
+  nav_dashboard: "डैशबोर्ड",
+  nav_invoices: "इनवॉइस",
+  nav_followups: "फ़ॉलो-अप",
+  nav_forecast: "पूर्वानुमान",
+  nav_more: "अधिक",
+  nav_settings: "सेटिंग्स",
+  nav_help: "सहायता",
+  settings_title: "सेटिंग्स",
+  settings_language: "भाषा",
+  settings_language_en: "English",
+  settings_language_hi: "हिंदी",
+  settings_text_size: "पाठ आकार",
+  settings_text_size_100: "100%",
+  settings_text_size_115: "115%",
+  settings_text_size_130: "130%",
+  settings_high_contrast: "उच्च कंट्रास्ट",
+  settings_demo_date: "डेमो तारीख",
+  settings_demo_today: "आज पर सेट करें",
+  settings_demo_plus7: "+7",
+  settings_demo_plus15: "+15",
+  settings_demo_plus30: "+30",
+};
