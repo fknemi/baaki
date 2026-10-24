@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/button";
 
 // ── Config ──────────────────────────────────────────────────────
 const HIDE_BUSINESS_ON = ["/"];
-const HIDE_LOGO_ON = ["/dashboard"]; // ← add paths here
-const HIDE_LANG_ON = ["/dashboard"]; // ← add paths here
+const HIDE_LOGO_ON = ["/dashboard", "/customers", "/invoices", "/invoice", "/forecast", "/forecast"]
+const HIDE_LANG_ON = ["/dashboard", "/customers", "/invoices", "/invoice", "/forecast", "/forecast"]
 
 const MENU_LINKS_PUBLIC = [
     { label: "Home", href: "/" },
@@ -137,7 +137,7 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
                 {showBusiness && (
                     <span>
                         {business!.name}
-                        {business!.city && ` • ${business!.city}`}
+                        {business!.city && ` · ${business!.city}`}
                     </span>
                 )}
 
