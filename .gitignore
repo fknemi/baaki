@@ -55,3 +55,5 @@ bun.lockb
 
 jsconfig.json
 *.bak
+
+zen-baaki-firebase-adminsdk-*.json

@@ -16,16 +16,13 @@ let _auth: Auth | null = null;
 let _googleProvider: GoogleAuthProvider | null = null;
 
 /**
- * Lazy accessor — never call this at module scope.
- * getAuth() eagerly validates the API key, so calling it during
- * static prerendering throws auth/invalid-api-key.
- * Only call inside useEffect / event handlers (browser only).
+ * Client-only. Never call at module scope — getAuth() eagerly validates
+ * the API key and throws auth/invalid-api-key during SSR/prerender.
+ * Call inside useEffect or an event handler.
  */
 export function getFirebaseAuth(): Auth {
   if (typeof window === "undefined") {
-    throw new Error(
-      "getFirebaseAuth() is client-only. Move the call inside useEffect or an event handler.",
-    );
+    throw new Error("getFirebaseAuth() is client-only.");
   }
   if (!_auth) _auth = getAuth(getFirebaseApp());
   return _auth;
