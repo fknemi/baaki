@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull, lte } from "drizzle-orm";
 import { requireRole } from "@/lib/auth/require-role";
 import { db } from "@/lib/db/client";
-import { businesses, expenses, invoices } from "@/lib/db/schema";
+import { businesses, expenses, invoices, payments } from "@/lib/db/schema";
 import { getInvoiceWithTotals } from "@/lib/db/queries/invoices";
 import { loadCustomerStats } from "@/lib/db/queries/customers";
-import { todayIST, addDays } from "@/lib/domain/dates";
-import { computeForecast, type ForecastInput } from "@/lib/domain/forecast";
+import {
+  todayIST,
+  addDays,
+  wholeDaysBetween,
+  effectiveDueDate,
+  isPaidForCurrentPeriod,
+} from "@/lib/domain/dates";
+import {
+  computeForecast,
+  projectExpenseOccurrences,
+  type ForecastInput,
+} from "@/lib/domain/forecast";
 import { rankChase, type ForecastGapInfo } from "@/lib/domain/priority";
 import { computeDashboard } from "@/lib/store/selectors/dashboard";
+
+const HORIZON_WEEKS = 13;
 
 function computeGapInvoiceIds(
   openInvoices: Array<{
@@ -38,9 +50,12 @@ function computeGapInvoiceIds(
 export async function GET(req: NextRequest) {
   return requireRole(
     req,
-    async (req, ctx) => {
+    async (_req, ctx) => {
       const today = todayIST();
+      const horizonEnd = addDays(today, HORIZON_WEEKS * 7);
+      const asOfDate = new Date(`${today}T00:00:00`);
 
+      // ── 1. Business ──────────────────────────────────────────
       const [biz] = await db
         .select()
         .from(businesses)
@@ -53,16 +68,108 @@ export async function GET(req: NextRequest) {
         );
       }
 
-      const stats = await loadCustomerStats(ctx.businessId);
-      const avgByCustomer = new Map(stats.map((s) => [s.id, s.avgDaysLate]));
-
+      // ── 2. Invoices that existed as of `today` ───────────────
+      // An invoice filed on Oct 24 doesn't exist on Oct 22 and must
+      // not show up in any card.
       const invRows = await db
         .select()
         .from(invoices)
-        .where(eq(invoices.businessId, ctx.businessId));
-      const openStatuses = new Set(["sent", "part_paid", "disputed"]);
-      const openInvoices = invRows.filter((i) => openStatuses.has(i.status));
+        .where(
+          and(
+            eq(invoices.businessId, ctx.businessId),
+            lte(invoices.invoiceDate, today),
+          ),
+        );
 
+      // ── 3. Payments made by `today` ──────────────────────────
+      // A payment recorded on Oct 24 must not reduce outstanding on Oct 22.
+      const paymentRows = await db
+        .select()
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, ctx.businessId),
+            isNotNull(payments.invoiceId),
+            isNotNull(payments.paidOn),
+            lte(payments.paidOn, today),
+          ),
+        );
+
+      const paidAsOfByInvoice = new Map<string, number>();
+      for (const p of paymentRows) {
+        if (!p.invoiceId || !p.paidOn) continue;
+        paidAsOfByInvoice.set(
+          p.invoiceId,
+          (paidAsOfByInvoice.get(p.invoiceId) ?? 0) + p.amountPaise,
+        );
+      }
+
+      // ── 3b. Cash in bank as of `today` ──────────────────────
+      // Opening balance + every payment received on or before `today`.
+      // Separate query on purpose: `paymentRows` above only includes
+      // payments linked to an invoice, but cash received is cash received.
+      const receivedRows = await db
+        .select({ amountPaise: payments.amountPaise })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.businessId, ctx.businessId),
+            isNotNull(payments.paidOn),
+            lte(payments.paidOn, today),
+          ),
+        );
+      const cashAsOfPaise =
+        biz.openingCashPaise +
+        receivedRows.reduce((sum, p) => sum + p.amountPaise, 0);
+
+      // ── 4. As-of customer stats ─────────────────────────────
+      // loadCustomerStats derives avgDaysLate/pctOnTime from ALL payments
+      // (including future ones). Recompute from as-of payments so chase
+      // ordering and forecast lateness reflect only what's happened by
+      // the selected date.
+      const customerBase = await loadCustomerStats(ctx.businessId);
+      const invoiceById = new Map(invRows.map((i) => [i.id, i]));
+
+      const latenessByCustomer = new Map<string, number[]>();
+      const onTimeByCustomer = new Map<string, number>();
+      const totalPaidByCustomer = new Map<string, number>();
+
+      for (const p of paymentRows) {
+        if (!p.invoiceId || !p.paidOn) continue;
+        const inv = invoiceById.get(p.invoiceId);
+        if (!inv) continue; // payment references a future invoice — skip
+        const days = wholeDaysBetween(inv.dueDate, p.paidOn);
+        const list = latenessByCustomer.get(inv.customerId) ?? [];
+        list.push(days);
+        latenessByCustomer.set(inv.customerId, list);
+        totalPaidByCustomer.set(
+          inv.customerId,
+          (totalPaidByCustomer.get(inv.customerId) ?? 0) + 1,
+        );
+        if (days <= 0) {
+          onTimeByCustomer.set(
+            inv.customerId,
+            (onTimeByCustomer.get(inv.customerId) ?? 0) + 1,
+          );
+        }
+      }
+
+      const asOfStats = customerBase.map((s) => {
+        const latenesses = latenessByCustomer.get(s.id) ?? [];
+        const total = totalPaidByCustomer.get(s.id) ?? 0;
+        const onTime = onTimeByCustomer.get(s.id) ?? 0;
+        const avgDaysLate =
+          latenesses.length === 0
+            ? 0
+            : Math.round(
+                latenesses.reduce((a, b) => a + b, 0) / latenesses.length,
+              );
+        const pctOnTime = total === 0 ? 0 : Math.round((onTime / total) * 100);
+        return { id: s.id, name: s.name, avgDaysLate, pctOnTime };
+      });
+      const avgByCustomer = new Map(asOfStats.map((s) => [s.id, s.avgDaysLate]));
+
+      // ── 5. As-of outstanding per invoice ────────────────────
       type OpenInv = {
         id: string;
         customerId: string;
@@ -70,44 +177,65 @@ export async function GET(req: NextRequest) {
         outstandingPaise: number;
       };
       const withOutstanding: OpenInv[] = [];
-      for (const inv of openInvoices) {
+
+      for (const inv of invRows) {
+        if (inv.status === "cancelled" || inv.status === "draft") continue;
+
         const view = await getInvoiceWithTotals(inv.id, ctx.businessId, today);
-        if (!view || view.outstandingPaise <= 0) continue;
+        if (!view) continue;
+
+        const paidSoFar = paidAsOfByInvoice.get(inv.id) ?? 0;
+        const outstandingAsOf = Math.max(
+          0,
+          view.totals.totalPaise - paidSoFar,
+        );
+        if (outstandingAsOf <= 0) continue; // fully paid by `today`
+
         withOutstanding.push({
           id: inv.id,
           customerId: inv.customerId,
           dueDate: inv.dueDate,
-          outstandingPaise: view.outstandingPaise,
+          outstandingPaise: outstandingAsOf,
         });
       }
 
+      // ── 6. Expenses as of `today` ───────────────────────────
       const expRows = await db
         .select()
         .from(expenses)
         .where(eq(expenses.businessId, ctx.businessId));
+
+      // Forecast needs one occurrence per period across the horizon.
       const forecastExpenses = expRows
-        .filter((e) => e.dueDate && !e.paid)
-        .map((e) => ({
-          id: e.id,
-          amountPaise: e.amountPaise,
-          dueDate: e.dueDate as string,
+        .flatMap((e) => projectExpenseOccurrences(e, today, horizonEnd, today))
+        .map((o) => ({
+          id: o.id,
+          amountPaise: o.amountPaise,
+          dueDate: o.date,
         }));
 
+      // ── 7. Forecast ─────────────────────────────────────────
+      // Starts from cash as of `today`, not the static opening balance.
       const forecastInput: ForecastInput = {
-        openingCashPaise: biz.openingCashPaise,
+        openingCashPaise: cashAsOfPaise,
         safetyBufferPaise: biz.safetyBufferPaise,
         invoices: withOutstanding,
-        customers: stats.map((s) => ({ id: s.id, avgDaysLate: s.avgDaysLate })),
+        customers: asOfStats.map((s) => ({
+          id: s.id,
+          avgDaysLate: s.avgDaysLate,
+        })),
         expenses: forecastExpenses,
         today,
-        weeks: 13,
+        weeks: HORIZON_WEEKS,
       };
+
       const forecastResult = computeForecast(forecastInput);
       const lowestPointPaise = forecastResult.rows.reduce(
         (min, r) => (r.closingPaise < min ? r.closingPaise : min),
-        biz.openingCashPaise,
+        cashAsOfPaise,
       );
 
+      // ── 8. Gap → chase ──────────────────────────────────────
       const gapInvoiceIds = computeGapInvoiceIds(
         withOutstanding,
         avgByCustomer,
@@ -124,7 +252,7 @@ export async function GET(req: NextRequest) {
           amountPaise: i.outstandingPaise,
           dueDate: i.dueDate,
         })),
-        stats.map((s) => ({
+        asOfStats.map((s) => ({
           id: s.id,
           name: s.name,
           avgDaysLate: s.avgDaysLate,
@@ -135,16 +263,20 @@ export async function GET(req: NextRequest) {
         5,
       );
 
+      // ── 9. Dashboard aggregates ─────────────────────────────
       const dash = computeDashboard({
         today,
-        openingCashPaise: biz.openingCashPaise,
+        openingCashPaise: cashAsOfPaise,
         safetyBufferPaise: biz.safetyBufferPaise,
         invoices: withOutstanding,
-        customers: stats.map((s) => ({ id: s.id, avgDaysLate: s.avgDaysLate })),
+        customers: asOfStats.map((s) => ({
+          id: s.id,
+          avgDaysLate: s.avgDaysLate,
+        })),
         expenses: expRows.map((e) => ({
-          dueDate: e.dueDate,
+          dueDate: effectiveDueDate(e, asOfDate),
           amountPaise: e.amountPaise,
-          paid: e.paid,
+          paid: isPaidForCurrentPeriod(e, asOfDate),
         })),
         forecast: {
           breachWeek: forecastResult.breachWeek,
@@ -156,6 +288,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         data: {
           ...dash,
+          // Explicit override so the card moves with the selected date
+          // regardless of what the selector does with openingCashPaise.
+          cashInBankPaise: cashAsOfPaise,
           openingCashPaise: biz.openingCashPaise,
           safetyBufferPaise: biz.safetyBufferPaise,
         },

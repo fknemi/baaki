@@ -75,7 +75,7 @@ export default async function LetterPage({
           box-sizing: border-box;
         }
 
-        /* ── White card ── */
+        /* ── White card (A4 proportions, capped at 794px on every screen) ── */
         .print-page {
           font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
           font-size: 13px;
@@ -276,8 +276,18 @@ export default async function LetterPage({
           margin-top: 20px;
         }
 
-        /* ── Mobile ── */
-        @media (max-width: 520px) {
+        /* ─── Responsive ladder ─────────────────────────────────────────
+           Tailwind default breakpoints: sm=640 md=768 lg=1024 xl=1280.
+           The A4 sheet stays capped at 794px wide on every screen — that's
+           what makes it read as paper rather than a stretched app panel.
+           What grows is (a) the gray shell padding around it and (b) the
+           sheet's interior typography at modest increments, so it feels
+           like a physical page sitting on a larger desk at every size.
+           The @media print block at the bottom overrides ALL of these
+           because it's in physical pt units and comes last in source. */
+
+        /* Mobile — stack every two-column section, tighten padding */
+        @media (max-width: 639px) {
           .letter-shell { padding: 8px; padding-top: 64px; }
           .print-page   { padding: 20px 16px; border-radius: 4px;
                           box-shadow: 0 2px 12px rgba(0,0,0,0.06); font-size: 12px; }
@@ -289,7 +299,40 @@ export default async function LetterPage({
           .ltr-total-box { min-width: 0; width: 100%; }
         }
 
-        /* ── Print ── */
+        /* md — more shell breathing room, sheet interior one step up */
+        @media (min-width: 768px) {
+          .letter-shell { padding: 24px; padding-top: 88px; }
+          .print-page   { padding: 40px 44px; font-size: 13.5px;
+                          box-shadow: 0 6px 32px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.05); }
+          .ltr-sender-name   { font-size: 17px; }
+          .ltr-title         { font-size: 19px; }
+          .ltr-to-name       { font-size: 15px; }
+          .ltr-subject       { font-size: 13.5px; }
+          .ltr-table td      { font-size: 12.5px; padding: 9px 8px; }
+          .ltr-total-amount  { font-size: 17px; }
+          .ltr-msmed         { font-size: 12.5px; }
+          .ltr-bank          { font-size: 12.5px; }
+        }
+
+        /* lg — bigger shell margin, more generous sheet padding */
+        @media (min-width: 1024px) {
+          .letter-shell { padding: 32px; padding-top: 96px; }
+          .print-page   { padding: 44px 48px; font-size: 14px;
+                          box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.06); }
+          .ltr-title         { font-size: 20px; }
+          .ltr-table td      { font-size: 13px; }
+          .ltr-total-amount  { font-size: 17.5px; }
+        }
+
+        /* xl — cap the breathing room; sheet stays 794px wide */
+        @media (min-width: 1280px) {
+          .letter-shell { padding: 40px; padding-top: 104px; }
+          .print-page   { padding: 48px 52px; font-size: 14.5px;
+                          box-shadow: 0 12px 48px rgba(0,0,0,0.14), 0 4px 8px rgba(0,0,0,0.06); }
+          .ltr-sender-name { font-size: 18px; }
+        }
+
+        /* ── Print — overrides everything above via physical pt units ── */
         @media print {
           html, body { background: #fff !important; margin: 0; padding: 0; }
           .letter-shell {

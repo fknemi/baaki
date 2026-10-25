@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { formatINR } from "@/lib/domain/money";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,19 @@ type Recurrence = (typeof RECURRENCES)[number];
 
 const fieldSurface =
   "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20";
+
+// Container query so money text shrinks when its card is narrow.
+// `cqw` = % of the nearest container's inline size, so each card
+// responds to its own width (not the viewport).
+const CONTAINER = { containerType: "inline-size" } as CSSProperties;
+const MONEY_SUMMARY: CSSProperties = {
+  // 18px floor · 10% of container width · 28px ceiling
+  fontSize: "clamp(1.125rem, 10cqw, 1.75rem)",
+};
+const MONEY_ROW: CSSProperties = {
+  // 16px floor · 7% of container width · 24px ceiling
+  fontSize: "clamp(1rem, 7cqw, 1.5rem)",
+};
 
 type Expense = {
   id: string;
@@ -158,22 +172,34 @@ export default function ExpensesSettingsPage() {
         <div className="flex w-[90vw] flex-col items-center justify-center gap-4">
           {/* ── Summary ── */}
           <div className="flex w-full flex-row gap-4">
-            <Card className="relative w-full !gap-0 !rounded-none !border-[#FFF]/10 !bg-transparent !py-3">
-              <CardHeader className="!gap-4">
+            <Card
+              className="relative w-full !gap-0 !rounded-none !border-[#FFF]/10 !bg-transparent !py-3"
+              style={CONTAINER}
+            >
+              <CardHeader className="flex flex-col items-start justify-around h-full">
                 <CardDescription className="font-heading text-lg !leading-tight !text-[#fff]">
                   unpaid
                 </CardDescription>
-                <CardDescription className="font-heading text-xl !leading-tight !text-[#fff] tabular-nums">
+                <CardDescription
+                  className="font-heading !leading-tight !text-[#fff] tabular-nums whitespace-nowrap"
+                  style={MONEY_SUMMARY}
+                >
                   {formatINR(totals.unpaid)}
                 </CardDescription>
               </CardHeader>
             </Card>
-            <Card className="relative w-full !gap-0 !rounded-none !border-[#FFF]/10 !bg-transparent !py-3">
-              <CardHeader className="!gap-4">
+            <Card
+              className="relative w-full !gap-0 !rounded-none !border-[#FFF]/10 !bg-transparent !py-3"
+              style={CONTAINER}
+            >
+              <CardHeader className="flex flex-col items-start justify-around h-full">
                 <CardDescription className="font-heading text-lg !leading-tight !text-[#fff]">
                   monthly recurring
                 </CardDescription>
-                <CardDescription className="font-heading text-xl !leading-tight !text-[#fff] tabular-nums">
+                <CardDescription
+                  className="font-heading !leading-tight !text-[#fff] tabular-nums whitespace-nowrap"
+                  style={MONEY_SUMMARY}
+                >
                   {formatINR(totals.monthly)}
                 </CardDescription>
               </CardHeader>
@@ -218,7 +244,10 @@ export default function ExpensesSettingsPage() {
                   <div className="flex w-full flex-col">
                     {filtered.map((e, idx) => (
                       <Fragment key={e.id}>
-                        <div className="flex w-full flex-row items-start justify-between gap-3 py-3">
+                        <div
+                          className="flex w-full flex-row items-start justify-between gap-3 py-3"
+                          style={CONTAINER}
+                        >
                           <div className="flex min-w-0 flex-col gap-1">
                             <div className="flex items-center gap-2">
                               <h3
@@ -273,7 +302,10 @@ export default function ExpensesSettingsPage() {
                           </div>
 
                           <div className="flex shrink-0 flex-col items-end gap-1">
-                            <span className="whitespace-nowrap text-base tabular-nums text-white font-heading">
+                            <span
+                              className="whitespace-nowrap tabular-nums text-white font-heading"
+                              style={MONEY_ROW}
+                            >
                               {formatINR(e.amountPaise)}
                             </span>
 

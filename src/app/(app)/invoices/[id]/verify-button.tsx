@@ -27,8 +27,18 @@ type Combined = {
 };
 
 // ─── outline icons ───────────────────────────────────────────────────────────
+// Three ladders: shield (trigger), sm (result headings), tiny (inline fine
+// print). All capped at h-4 (16px) on lg/xl — going to h-5 was oversized,
+// the same bug we hit on the invoice-detail action icons.
 
-function IconShieldCheck({ className = "h-3.5 w-3.5" }: { className?: string }) {
+const ICON_SHIELD =
+  "h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+const ICON_SM =
+  "h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+const ICON_TINY =
+  "h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4";
+
+function IconShieldCheck({ className = ICON_SHIELD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -46,7 +56,7 @@ function IconShieldCheck({ className = "h-3.5 w-3.5" }: { className?: string }) 
   );
 }
 
-function IconCheck({ className = "h-3 w-3" }: { className?: string }) {
+function IconCheck({ className = ICON_SM }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -63,7 +73,7 @@ function IconCheck({ className = "h-3 w-3" }: { className?: string }) {
   );
 }
 
-function IconX({ className = "h-3 w-3" }: { className?: string }) {
+function IconX({ className = ICON_SM }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -81,7 +91,7 @@ function IconX({ className = "h-3 w-3" }: { className?: string }) {
   );
 }
 
-function IconAlert({ className = "h-3 w-3" }: { className?: string }) {
+function IconAlert({ className = ICON_SM }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -150,11 +160,11 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
     // self-start keeps this trigger's height matched to its grid siblings
     // even after the result panel below expands — see mark-paid-button.tsx
     // for the full explanation of why this matters in a 2-col grid.
-    <div className="self-start space-y-2">
+    <div className="self-start space-y-2 sm:space-y-2 md:space-y-2.5 lg:space-y-3 xl:space-y-3">
       <button
         onClick={onClick}
         disabled={busy}
-        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-4 text-xs font-medium text-white hover:bg-white/5 disabled:opacity-50"
+        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-center text-xs font-medium text-white hover:bg-white/5 disabled:opacity-50 sm:h-11 sm:gap-1.5 sm:rounded-lg sm:px-4 sm:text-sm md:h-12 md:gap-2 md:rounded-xl md:px-4 md:text-base lg:h-12 lg:gap-2 lg:rounded-xl lg:px-5 lg:text-base xl:h-14 xl:gap-2.5 xl:rounded-xl xl:px-6 xl:text-lg"
       >
         <IconShieldCheck />
         {busy ? "Verifying on server and this device…" : "Verify this record"}
@@ -162,38 +172,38 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
 
       {result && (
         <div
-          className={`rounded-lg border p-3 text-xs ${
+          className={`rounded-lg border p-3 text-xs sm:rounded-lg sm:p-3 sm:text-xs md:rounded-xl md:p-4 md:text-sm lg:rounded-xl lg:p-4 lg:text-sm xl:rounded-xl xl:p-5 xl:text-base ${
             isGreen
               ? "border-[#067647]/40 bg-[#067647]/10 text-white"
               : "border-[#B42318]/40 bg-[#B42318]/10 text-white"
           }`}
         >
           {result.server.valid ? (
-            <p className="flex items-center gap-1.5 font-semibold">
-              <IconCheck className="h-3 w-3 shrink-0 text-[#4ADE80]" />
+            <p className="flex items-center gap-1.5 font-semibold sm:gap-1.5 md:gap-2 lg:gap-2 xl:gap-2.5">
+              <IconCheck className={`${ICON_SM} shrink-0 text-[#4ADE80]`} />
               Chain verified, totals match
             </p>
           ) : chainBroken ? (
-            <p className="flex items-center gap-1.5 font-semibold">
-              <IconX className="h-3 w-3 shrink-0 text-[#FF9B8F]" />
+            <p className="flex items-center gap-1.5 font-semibold sm:gap-1.5 md:gap-2 lg:gap-2 xl:gap-2.5">
+              <IconX className={`${ICON_SM} shrink-0 text-[#FF9B8F]`} />
               Chain broken
             </p>
           ) : (
-            <p className="flex items-center gap-1.5 font-semibold">
-              <IconAlert className="h-3 w-3 shrink-0 text-[#FBBF24]" />
+            <p className="flex items-center gap-1.5 font-semibold sm:gap-1.5 md:gap-2 lg:gap-2 xl:gap-2.5">
+              <IconAlert className={`${ICON_SM} shrink-0 text-[#FBBF24]`} />
               Totals differ from the recorded event
             </p>
           )}
 
           {result.server.chain.valid ? (
-            <p className="mt-1 text-white italic">
+            <p className="mt-1 italic text-white sm:mt-1 md:mt-1.5 lg:mt-1.5 xl:mt-2">
               {result.server.chain.eventCount} event
               {result.server.chain.eventCount === 1 ? "" : "s"} verified on server
             </p>
           ) : (
-            <p className="mt-1 font-mono text-white">
+            <p className="mt-1 break-words font-mono text-white sm:mt-1 md:mt-1.5 lg:mt-1.5 xl:mt-2">
               Server: failed at chain_seq{" "}
-              <span className="rounded bg-[#B42318]/40 px-1 py-0.5 font-bold text-white">
+              <span className="rounded bg-[#B42318]/40 px-1 py-0.5 font-bold text-white sm:px-1 md:px-1.5 lg:px-1.5 xl:px-2">
                 {result.server.chain.failedAt}
               </span>{" "}
               — {result.server.chain.reason}
@@ -201,21 +211,21 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
           )}
 
           {totalsDrift && result.server.discrepancies.length > 0 && (
-            <ul className="mt-1 max-h-48 list-disc overflow-y-auto pl-4 pr-1 font-mono text-white">
+            <ul className="mt-1 max-h-48 list-disc overflow-y-auto pl-4 pr-1 font-mono text-white sm:mt-1 md:mt-1.5 md:max-h-56 md:pl-5 lg:mt-1.5 lg:pl-5 xl:mt-2 xl:max-h-64 xl:pl-6">
               {result.server.discrepancies.map((d, i) => (
-                <li key={i}>{d}</li>
+                <li key={i} className="break-words">{d}</li>
               ))}
             </ul>
           )}
 
-          <div className="mt-2 border-t border-white/10 pt-2">
+          <div className="mt-2 border-t border-white/10 pt-2 sm:mt-2 sm:pt-2 md:mt-2.5 md:pt-2.5 lg:mt-3 lg:pt-3 xl:mt-3 xl:pt-3">
             {result.clientError ? (
-              <p className="text-[10px] italic text-white">
+              <p className="text-[10px] italic text-white sm:text-[11px] md:text-xs lg:text-xs xl:text-sm">
                 Client verification unavailable: {result.clientError}
               </p>
             ) : result.client?.valid && clientMatches ? (
-              <p className="flex items-start gap-1.5 text-[10px] text-white">
-                <IconCheck className="mt-0.5 h-2.5 w-2.5 shrink-0 text-[#4ADE80]" />
+              <p className="flex items-start gap-1.5 text-[10px] text-white sm:gap-1.5 sm:text-[11px] md:gap-2 md:text-xs lg:gap-2 lg:text-xs xl:gap-2 xl:text-sm">
+                <IconCheck className={`${ICON_TINY} mt-0.5 shrink-0 text-[#4ADE80]`} />
                 <span>
                   Independently recomputed on this device. Anchors match:
                   <span className="ml-1 font-mono">
@@ -224,17 +234,17 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
                 </span>
               </p>
             ) : result.client?.valid ? (
-              <p className="flex items-start gap-1.5 font-mono text-[10px] text-white">
-                <IconAlert className="mt-0.5 h-2.5 w-2.5 shrink-0 text-[#FBBF24]" />
-                <span>
+              <p className="flex items-start gap-1.5 font-mono text-[10px] text-white sm:gap-1.5 sm:text-[11px] md:gap-2 md:text-xs lg:gap-2 lg:text-xs xl:gap-2 xl:text-sm">
+                <IconAlert className={`${ICON_TINY} mt-0.5 shrink-0 text-[#FBBF24]`} />
+                <span className="break-all">
                   Anchor mismatch. Server: {result.server.anchor.slice(0, 12)}…
                   Device: {result.client.anchor.slice(0, 12)}…
                 </span>
               </p>
             ) : result.client ? (
-              <p className="flex items-start gap-1.5 font-mono text-[10px] text-white">
-                <IconX className="mt-0.5 h-2.5 w-2.5 shrink-0 text-[#FF9B8F]" />
-                <span>
+              <p className="flex items-start gap-1.5 font-mono text-[10px] text-white sm:gap-1.5 sm:text-[11px] md:gap-2 md:text-xs lg:gap-2 lg:text-xs xl:gap-2 xl:text-sm">
+                <IconX className={`${ICON_TINY} mt-0.5 shrink-0 text-[#FF9B8F]`} />
+                <span className="break-words">
                   Client recompute failed at chain_seq {result.client.failedAt} —{" "}
                   {result.client.reason}
                 </span>
@@ -242,13 +252,17 @@ export function VerifyButton({ invoiceId }: { invoiceId: string }) {
             ) : null}
           </div>
 
-          <p className="mt-1 break-all font-mono text-[10px] text-white opacity-70">
+          <p className="mt-1 break-all font-mono text-[10px] text-white opacity-70 sm:mt-1 sm:text-[11px] md:mt-1.5 md:text-xs lg:mt-1.5 lg:text-xs xl:mt-2 xl:text-sm">
             anchor: {result.server.anchor.slice(0, 40)}…
           </p>
         </div>
       )}
 
-      {error && <p className="text-xs text-[#FF9B8F]">{error}</p>}
+      {error && (
+        <p className="text-xs text-[#FF9B8F] sm:text-xs md:text-sm lg:text-sm xl:text-base">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

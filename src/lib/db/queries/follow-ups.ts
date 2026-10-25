@@ -20,16 +20,11 @@ export type FollowUpItem = {
     dueDate: string;
     daysOverdue: number;
     stage: { day: number; key: string } | null;
-    // `message` stays as the customer's stored-preference language, so any
-    // existing caller reading item.message keeps working unchanged. The two
-    // fields below are new: both language variants, computed once here so
-    // the client can switch the preview instantly with no extra request —
-    // renderReminder only builds message text, it never touches invoice
-    // data (totals, items, GST), so this doesn't risk "converting" anything
-    // about the invoice itself.
     message: { subject: string; body: string } | null;
     messageEn: { subject: string; body: string } | null;
     messageHi: { subject: string; body: string } | null;
+    // NEW: Pass all possible stage messages so the client can preview them instantly
+    allMessages: Record<string, { en: { subject: string; body: string }; hi: { subject: string; body: string } }>;
     sentStageKeys: string[];
     alreadySentChannels: string[];
     snoozedUntil: string | null;
@@ -45,23 +40,12 @@ export type FollowUpsResult = {
 
 type TemplateVars = Parameters<typeof renderReminder>[2];
 
-// Combines the stored Latin name with its transliterated Devanagari form,
-// e.g. "Rajesh Kumar (राजेश कुमार)". Used only in the Hindi render, for
-// both the customer's name and the business/owner name, so a reader gets
-// the phonetic Hindi rendering alongside the name as the business/customer
-// actually has it on file — instead of silently replacing one with the
-// other, which risks the transliteration being wrong with no way to tell.
-// See lib/domain/transliterate.ts for what the transliteration can and
-// can't do well.
 function withHindiAlongside(name: string): string {
     if (!name) return name;
     const hindi = transliterateToHindi(name);
     return `${name} (${hindi})`;
 }
 
-// English render keeps names exactly as stored — no parenthetical, since
-// injecting Hindi script into an English sentence would look like noise
-// rather than a helpful addition.
 function renderBothLanguages(
     stageKey: string,
     vars: TemplateVars,
@@ -139,7 +123,7 @@ export async function getFollowUps(businessId: string, today: string): Promise<F
 
         const daysOverdue = Math.max(0, wholeDaysBetween(inv.dueDate, today));
 
-        const base: Omit<FollowUpItem, "message" | "messageEn" | "messageHi"> = {
+        const base: Omit<FollowUpItem, "message" | "messageEn" | "messageHi" | "allMessages"> = {
             invoiceId: inv.id,
             invoiceNumber: inv.number,
             customerId: cust.id,
@@ -167,7 +151,15 @@ export async function getFollowUps(businessId: string, today: string): Promise<F
             ownerPhone: owner.phoneE164,
         };
 
-        const both = stage ? renderBothLanguages(stage.key, templateVars) : null;
+        // Render all possibilities so the client can swap them out live
+        const allMessages = {
+            headsUp: renderBothLanguages("headsUp", templateVars),
+            dueDate: renderBothLanguages("dueDate", templateVars),
+            firm: renderBothLanguages("firm", templateVars),
+            finalCall: renderBothLanguages("finalCall", templateVars),
+        };
+
+        const both = stage ? allMessages[stage.key as keyof typeof allMessages] : null;
         const message = both ? (base.customerLanguage === "hi" ? both.hi : both.en) : null;
 
         const item: FollowUpItem = {
@@ -175,20 +167,19 @@ export async function getFollowUps(businessId: string, today: string): Promise<F
             message,
             messageEn: both?.en ?? null,
             messageHi: both?.hi ?? null,
+            allMessages,
         };
 
         // Categorize:
-        // 1. Snoozed (snoozedUntil >= today)
         if (inv.snoozedUntil && inv.snoozedUntil >= today) {
             result.snoozed.push(item);
             continue;
         }
-        // 2. Promised (promiseToPayDate >= today)
         if (inv.promiseToPayDate && inv.promiseToPayDate >= today) {
             result.promised.push(item);
             continue;
         }
-        // 3. Sent today (a reminder for this stage was sent today)
+        
         const sentTodayRows = reminders.filter(
             (r) => r.sentAt !== null && r.sentAt.toISOString().slice(0, 10) === today,
         );
@@ -197,28 +188,29 @@ export async function getFollowUps(businessId: string, today: string): Promise<F
             const latest = sentTodayRows.sort((a, b) => b.sentAt!.getTime() - a.sentAt!.getTime())[0]!;
             const sentStageDef = config.ladder.find((s) => s.key === latest.stageKey);
             const sentStage = sentStageDef ? { day: sentStageDef.day, key: sentStageDef.key } : null;
-            const sentBoth = sentStageDef ? renderBothLanguages(sentStageDef.key, templateVars) : null;
+            const sentBoth = sentStageDef ? allMessages[sentStageDef.key as keyof typeof allMessages] : null;
             const sentMessage = sentBoth
                 ? base.customerLanguage === "hi"
                     ? sentBoth.hi
                     : sentBoth.en
                 : null;
+            
             result.sentToday.push({
                 ...base,
                 stage: sentStage,
                 message: sentMessage,
                 messageEn: sentBoth?.en ?? null,
                 messageHi: sentBoth?.hi ?? null,
+                allMessages,
             });
             continue;
         }
-        // 4. Due today (stage not yet sent for this invoice)
+        
         if (stage) {
             result.dueToday.push(item);
         }
     }
 
-    // Sort dueToday by daysOverdue desc, then outstanding desc
     result.dueToday.sort((a, b) => {
         if (b.daysOverdue !== a.daysOverdue) return b.daysOverdue - a.daysOverdue;
         return b.outstandingPaise - a.outstandingPaise;

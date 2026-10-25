@@ -44,7 +44,11 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
         /* ══════════════════════════════════════════════════
            SCREEN — document / PDF-preview look
            ══════════════════════════════════════════════════ */
-        html, body { background: #e5e7eb; }
+        html, body {
+          margin: 0;
+          padding: 0;
+          background: #e5e7eb;
+        }
         * { box-sizing: border-box; }
 
         .evidence-shell {
@@ -54,15 +58,20 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
           padding-top: 72px;
         }
 
+        /* The "sheet" — A4 proportions at 794px max-width, same as the
+           invoice and letter pages. Never stretched beyond 794px, so it
+           always reads as a physical page rather than an app panel.
+           Responsive scaling happens via padding + font-size steps in
+           the ladder below, NOT via max-width growth. */
         .print-page {
-          max-width: 820px;
+          max-width: 794px;
           margin: 0 auto;
           background: #ffffff;
           color: #1A1D23;
           font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
           font-size: 13px;
           line-height: 1.5;
-          padding: 28px 24px;
+          padding: 32px 36px;
           border-radius: 6px;
           box-shadow:
             0 4px 24px rgba(0, 0, 0, 0.08),
@@ -241,10 +250,21 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
           padding: 0;
         }
 
-        /* ══════════════════════════════════════════════════
-           MOBILE ≤ 440px
-           ══════════════════════════════════════════════════ */
-        @media (max-width: 440px) {
+        /* ─── Responsive ladder ─────────────────────────────────────────
+           Same ladder as the invoice and letter pages.
+           Tailwind default breakpoints: sm=640 md=768 lg=1024 xl=1280.
+           Base (no query) is the "medium phone / small tablet" layout.
+           Mobile (< 640) tightens padding and stacks the URL lines.
+           md/lg/xl grow the shell padding and the sheet's interior
+           typography modestly so the preview reads like a physical
+           sheet sitting on a desk — the max-width stays capped at 794px
+           on every screen size, so it never stretches into an app panel.
+           Wide tables keep scrolling inside .table-wrap on small screens.
+           The @media print block at the bottom overrides ALL of these
+           because it's in physical pt units and comes last in source. */
+
+        /* Mobile — tighten padding, step type down */
+        @media (max-width: 639px) {
           .evidence-shell { padding: 8px; padding-top: 64px; }
           .print-page {
             padding: 20px 16px;
@@ -266,10 +286,54 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
           .print-page th,
           .print-page td { padding: 5px 6px; }
           .print-page code { font-size: 10px; padding: 1px 4px; }
+          /* label above link so the URL gets the full row to truncate in */
+          .url-line { flex-direction: column; align-items: stretch; gap: 2px; }
+        }
+
+        /* md — more breathing room, slightly larger sheet interior */
+        @media (min-width: 768px) {
+          .evidence-shell { padding: 24px; padding-top: 88px; }
+          .print-page {
+            padding: 36px 40px;
+            font-size: 13.5px;
+            box-shadow: 0 6px 32px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.05);
+          }
+          .print-page h1 { font-size: 23px; }
+          .cover h1 { font-size: 28px; }
+          .print-page h2 { font-size: 16px; }
+          .print-page table { font-size: 12.5px; }
+          .print-page th,
+          .print-page td { padding: 7px 10px; }
+          .cover-subtitle { font-size: 12.5px; }
+        }
+
+        /* lg — bigger shell margin, more generous sheet padding */
+        @media (min-width: 1024px) {
+          .evidence-shell { padding: 32px; padding-top: 96px; }
+          .print-page {
+            padding: 40px 44px;
+            font-size: 14px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.06);
+          }
+          .print-page h1 { font-size: 24px; }
+          .cover h1 { font-size: 30px; }
+          .print-page table { font-size: 13px; }
+        }
+
+        /* xl — cap the breathing room; sheet stays 794px wide but the
+           typography inside gets one last legibility step */
+        @media (min-width: 1280px) {
+          .evidence-shell { padding: 40px; padding-top: 104px; }
+          .print-page {
+            padding: 44px 48px;
+            font-size: 14.5px;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.14), 0 4px 8px rgba(0,0,0,0.06);
+          }
+          .cover h1 { font-size: 32px; }
         }
 
         /* ══════════════════════════════════════════════════
-           PRINT
+           PRINT — overrides everything above via physical pt units
            ══════════════════════════════════════════════════ */
         @page { size: A4; margin: 16mm; }
         @media print {
@@ -311,6 +375,7 @@ export default async function EvidencePage({ params }: { params: Promise<{ id: s
           .cover-table { max-width: none; font-size: 10pt; }
           .cover-label { font-size: 9pt; padding: 4pt 16pt 4pt 0; }
           .cover-value { font-size: 10pt; padding: 4pt 0; }
+          .cover-subtitle { font-size: 10pt; }
 
           /* Section tables */
           .print-page table { font-size: 10pt; }

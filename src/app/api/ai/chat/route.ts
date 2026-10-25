@@ -1,11 +1,20 @@
 import { NextRequest } from "next/server";
 import { requireRole } from "@/lib/auth/require-role";
-import { checkRateLimit } from "@/lib/ai/rate-limit";
+import { checkRateLimit, refundRateLimit } from "@/lib/ai/rate-limit";
+import {
+  acquireGeminiSlot,
+  releaseGeminiSlot,
+  parseRetryDelay,
+  isGemini429,
+} from "@/lib/ai/gemini-limiter";
 import { getGenai, MODEL, TIMEOUT_MS } from "@/lib/integrations/gemini";
 import { SYSTEM_PROMPT, scrubSensitive, matchFaq } from "@/lib/ai/prompt";
 import { config } from "@/lib/domain/config";
 import { faq } from "@/data/faq";
 import { glossary } from "@/data/glossary";
+
+const USER_BUCKET = "chat";
+const USER_LIMIT = 60;
 
 type Incoming = { role?: string; content?: string };
 
@@ -26,19 +35,50 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const { allowed } = await checkRateLimit(ctx.userId, "chat", 60);
+      // ── 1. Gemini quota (global) FIRST — if upstream is unavailable,
+      //    the user shouldn't pay for it out of their own budget.
+      const slot = await acquireGeminiSlot();
+      if (!slot.ok) {
+        return new Response(
+          JSON.stringify({
+            error: {
+              code: "AI_BUSY",
+              message:
+                slot.reason === "rpd"
+                  ? "AI hit its daily quota. Try again later."
+                  : `AI is busy — try again in ~${slot.retryAfterSeconds}s.`,
+            },
+          }),
+          {
+            status: 503,
+            headers: {
+              "Content-Type": "application/json",
+              "Retry-After": String(slot.retryAfterSeconds),
+            },
+          },
+        );
+      }
+
+      // ── 2. User quota — consumed only when we're about to call Gemini.
+      const { allowed } = await checkRateLimit(
+        ctx.userId,
+        USER_BUCKET,
+        USER_LIMIT,
+      );
       if (!allowed) {
+        await releaseGeminiSlot({ was429: false });
         return new Response(
           JSON.stringify({
             error: {
               code: "RATE_LIMITED",
-              message: "60 messages/hour. Try again later.",
+              message: `${USER_LIMIT} messages/hour. Try again later.`,
             },
           }),
           { status: 429, headers: { "Content-Type": "application/json" } },
         );
       }
 
+      // ── 3. Build system instruction ──
       const glossaryText = glossary.map((g) => `- ${g.term}: ${g.meaning}`).join("\n");
       const faqText = faq.map((f) => `Q: ${f.q}\nA: ${f.answer}`).join("\n\n");
       const ladderText = config.ladder.map((s) => `- day ${s.day}: ${s.key}`).join("\n");
@@ -73,10 +113,12 @@ ${faqText}`;
       const lastUser = String(messages[messages.length - 1]?.content ?? "");
       const encoder = new TextEncoder();
 
+      // ── 4. Stream with failure refunds ──
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
           let firstToken = false;
           let closed = false;
+          let refunded = false;
 
           const send = (payload: object) => {
             if (closed) return;
@@ -88,7 +130,22 @@ ${faqText}`;
             controller.enqueue(encoder.encode("data: [DONE]\n\n"));
             controller.close();
           };
+          const refund = async (was429: boolean, retry?: number) => {
+            if (refunded) return;
+            refunded = true;
+            try {
+              await releaseGeminiSlot({ was429, retryAfterSeconds: retry });
+              await refundRateLimit(ctx.userId, USER_BUCKET, 1);
+            } catch (e) {
+              console.error(
+                "[ai:chat] failed to release slot / refund:",
+                e instanceof Error ? e.message : e,
+              );
+            }
+          };
 
+          // Timeout fires only if we never received a first token.
+          // Send the FAQ fallback, close the stream, refund.
           const timeout = setTimeout(() => {
             if (!firstToken && !closed) {
               const fallback =
@@ -96,6 +153,7 @@ ${faqText}`;
                 "I'm having trouble reaching the AI service. Please try again in a moment.";
               send({ text: fallback });
               finish();
+              void refund(false);
             }
           }, TIMEOUT_MS);
 
@@ -120,13 +178,30 @@ ${faqText}`;
             clearTimeout(timeout);
             finish();
           } catch (err) {
-            console.error("[ai:chat] Gemini call failed:", err);
             clearTimeout(timeout);
+
+            const was429 = isGemini429(err);
+            const retry = was429 ? parseRetryDelay(err) ?? 60 : undefined;
+
+            // One-line log — the SDK's raw error is 2KB of JSON.
+            if (was429) {
+              console.warn(`[ai:chat] Gemini 429 (retry after ${retry}s)`);
+            } else {
+              const msg =
+                err instanceof Error
+                  ? err.message.slice(0, 200)
+                  : String(err).slice(0, 200);
+              console.error(`[ai:chat] Gemini error: ${msg}`);
+            }
+
+            // Send the fallback FIRST so the client sees a response even
+            // if the refund below is slow. Then close and refund.
             const fallback =
               matchFaq(lastUser, faq) ??
               "I'm having trouble reaching the AI service. Please try again in a moment.";
             send({ text: fallback });
             finish();
+            await refund(was429, retry);
           }
         },
       });

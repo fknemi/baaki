@@ -17,10 +17,18 @@ import { ReminderButton } from "./reminder-button";
 import { TamperTestButton } from "./tamper-test-button";
 
 // ─── outline icons ───────────────────────────────────────────────────────────
+// Two shared responsive ladders so every icon scales sm→md→lg→xl on its own.
+// Capped at 16px (h-4) — going to h-5 (20px) inside an h-11→h-14 button looked
+// oversized and visually unaligned with the button text.
+
+const ICON_STD =
+    "h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+const ICON_PRINT =
+    "h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
 
 type IconProps = { className?: string };
 
-function IconArrowLeft({ className = "h-3 w-3" }: IconProps) {
+function IconArrowLeft({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <line x1="19" y1="12" x2="5" y2="12" />
@@ -29,7 +37,7 @@ function IconArrowLeft({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconPencil({ className = "h-3 w-3" }: IconProps) {
+function IconPencil({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -37,7 +45,7 @@ function IconPencil({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconSend({ className = "h-3 w-3" }: IconProps) {
+function IconSend({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <line x1="22" y1="2" x2="11" y2="13" />
@@ -46,7 +54,7 @@ function IconSend({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconClock({ className = "h-3 w-3" }: IconProps) {
+function IconClock({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
@@ -55,7 +63,7 @@ function IconClock({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconCircleHalf({ className = "h-3 w-3" }: IconProps) {
+function IconCircleHalf({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
@@ -64,7 +72,7 @@ function IconCircleHalf({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconCheck({ className = "h-3 w-3" }: IconProps) {
+function IconCheck({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <polyline points="20 6 9 17 4 12" />
@@ -72,7 +80,7 @@ function IconCheck({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconX({ className = "h-3 w-3" }: IconProps) {
+function IconX({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -81,7 +89,7 @@ function IconX({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconFlag({ className = "h-3 w-3" }: IconProps) {
+function IconFlag({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
@@ -90,7 +98,7 @@ function IconFlag({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconAlert({ className = "h-3 w-3" }: IconProps) {
+function IconAlert({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
@@ -100,7 +108,7 @@ function IconAlert({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconMail({ className = "h-3 w-3" }: IconProps) {
+function IconMail({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -109,7 +117,7 @@ function IconMail({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconRupee({ className = "h-3 w-3" }: IconProps) {
+function IconRupee({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <path d="M6 3h12" />
@@ -120,7 +128,7 @@ function IconRupee({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconRefresh({ className = "h-3 w-3" }: IconProps) {
+function IconRefresh({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <polyline points="23 4 23 10 17 10" />
@@ -131,7 +139,7 @@ function IconRefresh({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconSettings({ className = "h-3 w-3" }: IconProps) {
+function IconSettings({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <circle cx="12" cy="12" r="3" />
@@ -140,7 +148,7 @@ function IconSettings({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconDot({ className = "h-3 w-3" }: IconProps) {
+function IconDot({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <circle cx="12" cy="12" r="1" />
@@ -148,7 +156,7 @@ function IconDot({ className = "h-3 w-3" }: IconProps) {
     );
 }
 
-function IconPrinter({ className = "h-3.5 w-3.5" }: IconProps) {
+function IconPrinter({ className = ICON_PRINT }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <polyline points="6 9 6 2 18 2 18 9" />
@@ -158,7 +166,7 @@ function IconPrinter({ className = "h-3.5 w-3.5" }: IconProps) {
     );
 }
 
-function IconInfo({ className = "h-3 w-3" }: IconProps) {
+function IconInfo({ className = ICON_STD }: IconProps) {
     return (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
             <circle cx="12" cy="12" r="10" />
@@ -181,7 +189,10 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 function StatusIcon({ status }: { status: string }) {
-    const cls = "h-3 w-3";
+    // Matches the label it sits next to: text-xs → sm → md → lg → xl.
+    // Capped at 16px (h-4) on md+ — same cap as ICON_STD.
+    const cls =
+        "h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
     switch (status) {
         case "draft": return <IconPencil className={cls} />;
         case "sent": return <IconSend className={cls} />;
@@ -195,7 +206,10 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 function EventIconFor({ type }: { type: string }) {
-    const cls = "h-2.5 w-2.5";
+    // Sits inside the timeline dot (h-5 → h-6 → h-6 → h-7 → h-8).
+    // Kept ~50% of the dot at every step so the glyph never fills the circle.
+    const cls =
+        "h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-3.5 md:w-3.5 lg:h-3.5 lg:w-3.5 xl:h-4 xl:w-4";
     switch (type) {
         case "INVOICE_CREATED": return <IconDot className={cls} />;
         case "INVOICE_SENT": return <IconSend className={cls} />;
@@ -287,7 +301,9 @@ function statusColorFor(status: string): string {
     return "text-white";
 }
 
-const CARD = "rounded-xl border border-white/10 p-5";
+// Card chrome scales padding, radius, and border together.
+const CARD =
+    "rounded-lg border border-white/10 p-3 sm:rounded-xl sm:p-4 md:rounded-xl md:p-5 lg:rounded-2xl lg:p-6 xl:rounded-2xl xl:p-6";
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -306,32 +322,31 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         : (STATUS_LABEL[invoice.status] ?? invoice.status);
     const statusColor = statusColorFor(invoice.status);
 
-    // Mirrors ALLOWED_TRANSITIONS in the DELETE route: only statuses that
-    // can become "cancelled" get a delete affordance. paid / disputed /
-    // cancelled themselves are excluded so the button can't appear next to
-    // an invoice whose delete would 409.
+    // Mirrors ALLOWED_TRANSITIONS in the DELETE route.
     const canDelete =
         invoice.status !== "paid" &&
         invoice.status !== "cancelled" &&
         invoice.status !== "disputed";
 
     return (
-        <main className="space-y-4 p-4 pb-24 pt-14">
+        <main className="mx-auto w-full max-w-md space-y-3 px-3 pb-24 pt-14 sm:max-w-xl sm:space-y-4 sm:px-4 sm:pb-24 sm:pt-16 md:max-w-2xl md:space-y-4 md:px-6 md:pb-28 md:pt-20 lg:max-w-3xl lg:space-y-5 lg:px-6 lg:pb-32 lg:pt-24 xl:max-w-4xl xl:space-y-5 xl:px-8 xl:pb-32 xl:pt-24">
             {/* Header card */}
             <div className={CARD}>
-                <p className={`flex items-center gap-1.5 text-xs font-medium ${statusColor}`}>
-                    {isOverdue ? <IconAlert className="h-3 w-3" /> : <StatusIcon status={invoice.status} />}
+                <p className={`flex items-center gap-1.5 text-xs font-medium sm:gap-1.5 sm:text-sm md:gap-2 md:text-sm lg:gap-2 lg:text-base xl:gap-2.5 xl:text-base ${statusColor}`}>
+                    {isOverdue ? <IconAlert /> : <StatusIcon status={invoice.status} />}
                     {statusLabel}
                 </p>
-                <h1 className="mt-1 text-lg font-semibold text-white">{invoice.customer.name}</h1>
-                <p className="mt-2 text-3xl font-semibold tabular-nums text-white">
+                <h1 className="mt-1 text-lg font-semibold text-white sm:mt-1 sm:text-xl md:mt-1.5 md:text-2xl lg:mt-2 lg:text-2xl xl:mt-2 xl:text-3xl">
+                    {invoice.customer.name}
+                </h1>
+                <p className="mt-2 text-3xl font-semibold tabular-nums text-white sm:mt-2 sm:text-3xl md:mt-2.5 md:text-4xl lg:mt-3 lg:text-4xl xl:mt-3 xl:text-5xl">
                     {formatINR(invoice.outstandingPaise)}
                 </p>
-                <p className="mt-1 text-xs text-white italic">
+                <p className="mt-1 text-[11px] italic text-white sm:mt-1 sm:text-xs md:mt-1.5 md:text-sm lg:mt-2 lg:text-sm xl:mt-2 xl:text-base">
                     Due {invoice.dueDate} · Issued {invoice.invoiceDate}
                 </p>
                 {invoice.amountPaidPaise > 0 && (
-                    <p className="mt-1 text-xs text-white italic">
+                    <p className="mt-1 text-[11px] italic text-white sm:mt-1 sm:text-xs md:mt-1.5 md:text-sm lg:mt-2 lg:text-sm xl:mt-2 xl:text-base">
                         Paid {formatINR(invoice.amountPaidPaise)} of {formatINR(invoice.totals.totalPaise)}
                     </p>
                 )}
@@ -339,16 +354,20 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
             {/* Items + tax */}
             <div className={CARD}>
-                <h2 className="text-sm font-semibold text-white">Items</h2>
-                <div className="mt-3 max-h-96 overflow-y-auto pr-1">
-                    <table className="w-full text-xs">
+                <h2 className="text-sm font-semibold text-white sm:text-base md:text-lg lg:text-lg xl:text-xl">Items</h2>
+
+                {/* overflow-auto (not -y) so very narrow phones horizontally
+                    scroll the 5-column table instead of squashing; sticky
+                    thead still works on the vertical axis. */}
+                <div className="mt-3 max-h-96 overflow-auto pr-1 sm:mt-3 sm:pr-1 md:mt-4 md:pr-1.5 lg:mt-4 lg:pr-2 xl:mt-5 xl:pr-2">
+                    <table className="w-full text-[11px] sm:text-xs md:text-sm lg:text-sm xl:text-base">
                         <thead className="sticky top-0 bg-[#192221]">
-                            <tr className="text-white italic text-left">
-                                <th className="py-1">Description</th>
-                                <th className="py-1 text-right">Qty</th>
-                                <th className="py-1 text-right">Rate</th>
-                                <th className="py-1 text-right">Taxable</th>
-                                <th className="py-1 text-right">GST</th>
+                            <tr className="text-left italic text-white">
+                                <th className="py-1 sm:py-1 md:py-1.5 lg:py-1.5 xl:py-2">Description</th>
+                                <th className="py-1 text-right sm:py-1 md:py-1.5 lg:py-1.5 xl:py-2">Qty</th>
+                                <th className="py-1 text-right sm:py-1 md:py-1.5 lg:py-1.5 xl:py-2">Rate</th>
+                                <th className="py-1 text-right sm:py-1 md:py-1.5 lg:py-1.5 xl:py-2">Taxable</th>
+                                <th className="py-1 text-right sm:py-1 md:py-1.5 lg:py-1.5 xl:py-2">GST</th>
                             </tr>
                         </thead>
                         <tbody className="tabular-nums">
@@ -356,20 +375,20 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                                 const taxable = Math.round(it.qty * it.ratePaise) - it.discountPaise;
                                 return (
                                     <tr key={it.id} className="border-t border-white/10">
-                                        <td className="py-2 text-white">
-                                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                        <td className="py-2 text-white sm:py-2 md:py-2.5 lg:py-3 xl:py-3">
+                                            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 sm:gap-x-2 md:gap-x-2.5 lg:gap-x-3 xl:gap-x-3">
                                                 <span className="break-words">{it.description}</span>
-                                                <span className="whitespace-nowrap text-white italic">
+                                                <span className="whitespace-nowrap italic text-white">
                                                     HSN {it.hsnSac}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="py-2 text-right text-white">
+                                        <td className="py-2 text-right text-white sm:py-2 md:py-2.5 lg:py-3 xl:py-3">
                                             {it.qty} {it.unit}
                                         </td>
-                                        <td className="py-2 text-right text-white">{formatINR(it.ratePaise)}</td>
-                                        <td className="py-2 text-right text-white">{formatINR(taxable)}</td>
-                                        <td className="py-2 text-right text-white">{it.gstRatePct}%</td>
+                                        <td className="py-2 text-right text-white sm:py-2 md:py-2.5 lg:py-3 xl:py-3">{formatINR(it.ratePaise)}</td>
+                                        <td className="py-2 text-right text-white sm:py-2 md:py-2.5 lg:py-3 xl:py-3">{formatINR(taxable)}</td>
+                                        <td className="py-2 text-right text-white sm:py-2 md:py-2.5 lg:py-3 xl:py-3">{it.gstRatePct}%</td>
                                     </tr>
                                 );
                             })}
@@ -377,40 +396,42 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                     </table>
                 </div>
 
-                <dl className="mt-4 space-y-1 border-t border-white/10 pt-3 text-sm tabular-nums">
+                <dl className="mt-4 space-y-1 border-t border-white/10 pt-3 text-sm tabular-nums sm:mt-4 sm:space-y-1 sm:pt-3 sm:text-sm md:mt-5 md:space-y-1.5 md:pt-4 md:text-base lg:mt-5 lg:space-y-1.5 lg:pt-4 lg:text-base xl:mt-6 xl:space-y-2 xl:pt-5 xl:text-lg">
                     <div className="flex justify-between">
-                        <dt className="text-white italic">Taxable</dt>
+                        <dt className="italic text-white">Taxable</dt>
                         <dd className="text-white">{formatINR(invoice.totals.taxablePaise)}</dd>
                     </div>
                     {invoice.totals.hasTax && !invoice.totals.isInterState && (
                         <>
                             <div className="flex justify-between">
-                                <dt className="text-white italic">CGST</dt>
+                                <dt className="italic text-white">CGST</dt>
                                 <dd className="text-white">{formatINR(invoice.totals.cgstPaise)}</dd>
                             </div>
                             <div className="flex justify-between">
-                                <dt className="text-white italic">SGST</dt>
+                                <dt className="italic text-white">SGST</dt>
                                 <dd className="text-white">{formatINR(invoice.totals.sgstPaise)}</dd>
                             </div>
                         </>
                     )}
                     {invoice.totals.hasTax && invoice.totals.isInterState && (
                         <div className="flex justify-between">
-                            <dt className="text-white italic">IGST</dt>
+                            <dt className="italic text-white">IGST</dt>
                             <dd className="text-white">{formatINR(invoice.totals.igstPaise)}</dd>
                         </div>
                     )}
                     <div className="flex justify-between">
-                        <dt className="text-white italic">Round off</dt>
+                        <dt className="italic text-white">Round off</dt>
                         <dd className="text-white">{formatINRDelta(invoice.totals.roundOffPaise)}</dd>
                     </div>
-                    <div className="flex justify-between border-t border-white/10 pt-2 font-semibold">
+                    <div className="flex justify-between border-t border-white/10 pt-2 font-semibold sm:pt-2 md:pt-2.5 lg:pt-3 xl:pt-3">
                         <dt className="text-white">Total</dt>
-                        <dd className="text-white">{formatINR(invoice.totals.totalPaise)}</dd>
+                        <dd className="text-base text-white sm:text-base md:text-lg lg:text-lg xl:text-xl">
+                            {formatINR(invoice.totals.totalPaise)}
+                        </dd>
                     </div>
                 </dl>
 
-                <p className="mt-3 text-xs text-white italic capitalize">
+                <p className="mt-3 text-[11px] italic capitalize text-white sm:mt-3 sm:text-xs md:mt-3 md:text-sm lg:mt-4 lg:text-sm xl:mt-4 xl:text-base">
                     {numberToWordsIndian(invoice.totals.totalPaise)}
                 </p>
             </div>
@@ -420,26 +441,26 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             {/* Timeline */}
             <div className={CARD}>
                 <div className="flex items-baseline justify-between">
-                    <h2 className="text-sm font-semibold text-white">Timeline</h2>
-                    <span className="text-[10px] text-white italic">
+                    <h2 className="text-sm font-semibold text-white sm:text-base md:text-lg lg:text-lg xl:text-xl">Timeline</h2>
+                    <span className="text-[10px] italic text-white sm:text-xs md:text-sm lg:text-sm xl:text-base">
                         {events.length} event{events.length === 1 ? "" : "s"}
                     </span>
                 </div>
-                <ol className="mt-3 max-h-96 space-y-3 overflow-y-auto pr-1">
+                <ol className="mt-3 max-h-96 space-y-3 overflow-y-auto pr-1 sm:mt-3 sm:space-y-3 sm:pr-1 md:mt-4 md:space-y-3.5 md:pr-1.5 lg:mt-4 lg:space-y-4 lg:pr-2 xl:mt-5 xl:space-y-4 xl:pr-2">
                     {events.map((e) => {
                         const ctx = eventContext(e);
                         const color = EVENT_COLOR[e.type] ?? "text-white/60 bg-white/10";
                         return (
-                            <li key={e.chainSeq} className="flex gap-3 text-xs">
+                            <li key={e.chainSeq} className="flex gap-2 text-xs sm:gap-3 sm:text-sm md:gap-3 md:text-base lg:gap-4 lg:text-base xl:gap-4 xl:text-lg">
                                 <span
-                                    className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${color}`}
+                                    className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full sm:mt-0.5 sm:h-6 sm:w-6 md:mt-1 md:h-6 md:w-6 lg:mt-1 lg:h-7 lg:w-7 xl:mt-1 xl:h-8 xl:w-8 ${color}`}
                                     aria-hidden="true"
                                 >
                                     <EventIconFor type={e.type} />
                                 </span>
                                 <div className="min-w-0 flex-1">
                                     <div className="font-medium text-white">{eventTitle(e.type)}</div>
-                                    <div className="text-white italic">
+                                    <div className="italic text-white">
                                         {e.actor.replace(/^user:/, "user ")} · {e.atIso.slice(0, 10)}
                                         {ctx && (
                                             <>
@@ -449,48 +470,38 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                                         )}
                                     </div>
                                 </div>
-                                <span className="shrink-0 font-mono text-[10px] text-white italic">
+                                <span className="shrink-0 font-mono text-[10px] italic text-white sm:text-xs md:text-sm lg:text-sm xl:text-base">
                                     #{e.chainSeq}
                                 </span>
                             </li>
                         );
                     })}
                     {events.length === 0 && (
-                        <p className="text-xs text-white italic">No events yet.</p>
+                        <p className="text-xs italic text-white sm:text-sm md:text-base lg:text-base xl:text-lg">No events yet.</p>
                     )}
                 </ol>
             </div>
 
             {/* Actions
-                items-start: without it, a flex/grid row stretches every
-                cell in that row to match its tallest sibling by default.
-                ReminderButton, MarkPaidButton, and VerifyButton each
-                conditionally render a form/result panel *below* their
-                trigger, inside the same grid cell — once one of those
-                expands, items-stretch (the default) would pull its row
-                sibling's wrapper to match that new height even though the
-                sibling's own button never changed. items-start pins every
-                cell to the top of its row so only trigger buttons
-                participate in height-matching; each trigger also carries
-                an explicit h-11 so label length (1 line vs 2) can't make
-                triggers different heights from each other either. */}
-            <div className="grid grid-cols-2 items-start gap-2">
+                items-start pins cells to the top of the row so a child
+                button that conditionally expands (Reminder / MarkPaid /
+                Verify) can't drag its row sibling's height.
+                2 → 3 columns on md once the container has room. */}
+            <div className="grid grid-cols-2 items-start gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-3 lg:grid-cols-3 lg:gap-4 xl:grid-cols-3 xl:gap-4">
                 <Link
                     href={`/print/invoice/${invoice.id}`}
                     target="_blank"
-                    className="flex h-11 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-4 text-center text-sm font-medium text-white hover:bg-white/5"
+                    className="flex h-11 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-center text-sm font-medium text-white hover:bg-white/5 sm:h-11 sm:gap-1.5 sm:rounded-lg sm:px-4 sm:text-sm md:h-12 md:gap-2 md:rounded-xl md:px-4 md:text-base lg:h-12 lg:gap-2 lg:rounded-xl lg:px-5 lg:text-base xl:h-14 xl:gap-2.5 xl:rounded-xl xl:px-6 xl:text-lg"
                 >
                     <IconPrinter />
                     Print invoice
                 </Link>
                 <CopyPayLinkButton invoiceId={invoice.id} />
-
                 <ReminderButton invoiceId={invoice.id} />
                 <DemandLetterButton
                     invoiceId={invoice.id}
                     daysOverdue={invoice.daysOverdue}
                 />
-
                 <MarkPaidButton
                     invoiceId={invoice.id}
                     outstandingRupees={(invoice.outstandingPaise / 100).toFixed(2)}
@@ -503,9 +514,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
                 Kept out of the main action grid so a destructive action
                 isn't adjacent to daily-use buttons. */}
             {canDelete && (
-                <div className="rounded-lg border border-[#B42318]/40 bg-[#B42318]/5 p-3">
-                    <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-white">
-                        <IconAlert className="h-3 w-3 text-[#FF9B8F]" />
+                <div className="rounded-lg border border-[#B42318]/40 bg-[#B42318]/5 p-3 sm:rounded-lg sm:p-4 md:rounded-xl md:p-4 lg:rounded-xl lg:p-5 xl:rounded-xl xl:p-5">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-white sm:mb-2 sm:gap-1.5 sm:text-sm md:mb-2.5 md:gap-2 md:text-sm lg:mb-3 lg:gap-2 lg:text-base xl:mb-3 xl:gap-2.5 xl:text-base">
+                        <IconAlert className={`${ICON_STD} text-[#FF9B8F]`} />
                         Danger zone
                     </p>
                     <DeleteInvoiceButton
@@ -516,9 +527,9 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             )}
 
             {process.env.NODE_ENV !== "production" && events.length > 0 && (
-                <div className="rounded-lg border border-[#B42318]/40 bg-[#B42318]/10 p-3">
-                    <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-white">
-                        <IconAlert className="h-3 w-3 text-[#FF9B8F]" />
+                <div className="rounded-lg border border-[#B42318]/40 bg-[#B42318]/10 p-3 sm:rounded-lg sm:p-4 md:rounded-xl md:p-4 lg:rounded-xl lg:p-5 xl:rounded-xl xl:p-5">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-white sm:mb-2 sm:gap-1.5 sm:text-sm md:mb-2.5 md:gap-2 md:text-sm lg:mb-3 lg:gap-2 lg:text-base xl:mb-3 xl:gap-2.5 xl:text-base">
+                        <IconAlert className={`${ICON_STD} text-[#FF9B8F]`} />
                         Dev: tamper test
                     </p>
                     <TamperTestButton invoiceId={invoice.id} chainSeq={events.length} />
@@ -526,8 +537,8 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             )}
 
             {invoice.everCrossedEinvoiceThreshold && (
-                <div className="flex items-start gap-2 rounded-lg border border-[#F59E0B]/40 bg-[#F59E0B]/10 p-3 text-xs text-white">
-                    <IconInfo className="mt-0.5 h-3 w-3 shrink-0 text-[#FBBF24]" />
+                <div className="flex items-start gap-2 rounded-lg border border-[#F59E0B]/40 bg-[#F59E0B]/10 p-3 text-xs text-white sm:gap-2 sm:rounded-lg sm:p-4 sm:text-sm md:gap-2.5 md:rounded-xl md:p-4 md:text-sm lg:gap-3 lg:rounded-xl lg:p-5 lg:text-base xl:gap-3 xl:rounded-xl xl:p-5 xl:text-base">
+                    <IconInfo className={`${ICON_STD} mt-0.5 shrink-0 text-[#FBBF24] sm:mt-0.5 md:mt-1 lg:mt-1 xl:mt-1`} />
                     <span>
                         E-invoicing applies to your business (₹5 crore AATO threshold crossed in a prior year).
                     </span>

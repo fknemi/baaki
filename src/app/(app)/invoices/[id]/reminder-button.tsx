@@ -7,8 +7,13 @@ const STAGES = ["headsUp", "dueDate", "firm", "finalCall"] as const;
 const CHANNELS = ["email", "whatsapp", "sms", "call"] as const;
 
 // ─── outline icons ───────────────────────────────────────────────────────────
+// Capped at h-4 (16px) — going to h-5 inside the trigger/submit buttons looked
+// oversized (same bug the InvoiceDetailPage icons had).
 
-function IconMail({ className = "h-3.5 w-3.5" }: { className?: string }) {
+const ICON_STD =
+    "h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+
+function IconMail({ className = ICON_STD }: { className?: string }) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -26,7 +31,7 @@ function IconMail({ className = "h-3.5 w-3.5" }: { className?: string }) {
     );
 }
 
-function IconCheck({ className = "h-3.5 w-3.5" }: { className?: string }) {
+function IconCheck({ className = ICON_STD }: { className?: string }) {
     return (
         <svg
             viewBox="0 0 24 24"
@@ -43,8 +48,16 @@ function IconCheck({ className = "h-3.5 w-3.5" }: { className?: string }) {
     );
 }
 
+// Native <select> can't take an explicit h-* cleanly without breaking the
+// option dropdown on some mobile browsers, so the scale is driven by
+// responsive padding + font-size + radius. Both the outer control AND the
+// text inside step through the full sm→md→lg→xl ladder.
 const selectSurface =
-    "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-2 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20 [&>option]:bg-[#192221] [&>option]:text-white";
+    "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-2 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-white/20 [&>option]:bg-[#192221] [&>option]:text-white " +
+    "sm:rounded-lg sm:px-2.5 sm:py-2 sm:text-sm " +
+    "md:rounded-xl md:px-3 md:py-2.5 md:text-base " +
+    "lg:rounded-xl lg:px-3 lg:py-3 lg:text-base " +
+    "xl:rounded-xl xl:px-3.5 xl:py-3 xl:text-lg";
 
 export function ReminderButton({ invoiceId }: { invoiceId: string }) {
     const router = useRouter();
@@ -87,15 +100,15 @@ export function ReminderButton({ invoiceId }: { invoiceId: string }) {
                     setOpen((v) => !v);
                     setDone(null);
                 }}
-                className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-4 text-sm font-medium text-white hover:bg-white/5"
+                className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-center text-sm font-medium text-white hover:bg-white/5 sm:h-11 sm:gap-1.5 sm:rounded-lg sm:px-4 sm:text-sm md:h-12 md:gap-2 md:rounded-xl md:px-4 md:text-base lg:h-12 lg:gap-2 lg:rounded-xl lg:px-5 lg:text-base xl:h-14 xl:gap-2.5 xl:rounded-xl xl:px-6 xl:text-lg"
             >
                 <IconMail />
                 Log reminder
             </button>
 
             {done && (
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-white">
-                    <IconCheck className="h-3 w-3" />
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-white sm:mt-2 sm:gap-1.5 sm:text-xs md:mt-2.5 md:gap-2 md:text-sm lg:mt-3 lg:gap-2 lg:text-sm xl:mt-3 xl:gap-2.5 xl:text-base">
+                    <IconCheck />
                     {done}
                 </p>
             )}
@@ -103,7 +116,7 @@ export function ReminderButton({ invoiceId }: { invoiceId: string }) {
             {open && !done && (
                 <form
                     onSubmit={submit}
-                    className="mt-2 space-y-2 rounded-lg border border-white/10 bg-[#171717]/20 p-3"
+                    className="mt-2 space-y-2 rounded-lg border border-white/10 bg-[#171717]/20 p-3 sm:mt-2 sm:space-y-2 sm:rounded-lg sm:p-3 md:mt-3 md:space-y-2.5 md:rounded-xl md:p-4 lg:mt-3 lg:space-y-3 lg:rounded-xl lg:p-4 xl:mt-4 xl:space-y-3 xl:rounded-xl xl:p-5"
                 >
                     <select
                         value={stage}
@@ -130,11 +143,15 @@ export function ReminderButton({ invoiceId }: { invoiceId: string }) {
                     <button
                         type="submit"
                         disabled={busy}
-                        className="w-full rounded-lg bg-[#0F5C4E] py-2 text-xs font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50"
+                        className="h-9 w-full rounded-lg bg-[#0F5C4E] text-xs font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50 sm:h-9 sm:rounded-lg sm:text-sm md:h-10 md:rounded-xl md:text-sm lg:h-11 lg:rounded-xl lg:text-base xl:h-12 xl:rounded-xl xl:text-base"
                     >
                         {busy ? "Logging…" : "Log reminder"}
                     </button>
-                    {error && <p className="text-xs text-[#FF9B8F]">{error}</p>}
+                    {error && (
+                        <p className="text-xs text-[#FF9B8F] sm:text-xs md:text-sm lg:text-sm xl:text-base">
+                            {error}
+                        </p>
+                    )}
                 </form>
             )}
         </div>

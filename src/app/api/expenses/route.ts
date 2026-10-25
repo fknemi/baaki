@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
+import { todayIST } from "@/lib/domain/dates";
 import { requireRole } from "@/lib/auth/require-role";
 import { db } from "@/lib/db/client";
 import { expenses } from "@/lib/db/schema";
@@ -71,7 +72,7 @@ export async function GET(req: NextRequest) {
         .from(expenses)
         .where(and(...conditions));
 
-      const now = new Date();
+      const now = new Date(`${todayIST()}T00:00:00`);
       let view = rows.map((r) => viewExpense(r, now));
 
       // `paid` cannot be pushed down to SQL: for recurring rows the raw
@@ -222,7 +223,7 @@ export async function POST(req: NextRequest) {
       // 1. explicit lastPaidPeriod wins (imports/migrations, "this October was paid")
       // 2. else if paid === true on a recurring row: stamp the current period
       // 3. else: null
-      const now = new Date();
+      const now = new Date(`${todayIST()}T00:00:00`);
       let lastPaidPeriod: string | null = null;
       if (typeof body.lastPaidPeriod === "string" && body.lastPaidPeriod.trim()) {
         lastPaidPeriod = body.lastPaidPeriod.trim();

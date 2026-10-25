@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { requireRole } from "@/lib/auth/require-role";
 import { db } from "@/lib/db/client";
-import { events, invoices } from "@/lib/db/schema";
+import { invoices } from "@/lib/db/schema";
 import { appendEventInTx } from "@/lib/db/hashchain-server";
 import { todayIST, atIso } from "@/lib/domain/dates";
 
@@ -47,13 +47,13 @@ export async function POST(
         );
       }
 
-      // Scope to this business. A cross-business id must 404 here, not
-      // after a DB hit in the tx below.
+      // Scope to this business
       const [inv] = await db
         .select({ id: invoices.id })
         .from(invoices)
         .where(and(eq(invoices.id, id), eq(invoices.businessId, ctx.businessId)))
         .limit(1);
+      
       if (!inv) {
         return NextResponse.json(
           { error: { code: "NOT_FOUND", message: "Invoice not found." } },
@@ -62,31 +62,8 @@ export async function POST(
       }
 
       const result = await db.transaction(async (tx) => {
-        // Idempotency: (stageKey, channel) is the reminder identity.
-        // Reading REMINDER_SENT events for this entity is the source of
-        // truth — no separate reminders table to keep in sync. The
-        // advisory lock inside appendEventInTx serializes concurrent
-        // POSTs on the same entity, so two clicks can't both "win".
-        const existing = await tx
-          .select({ payload: events.payload })
-          .from(events)
-          .where(
-            and(
-              eq(events.businessId, ctx.businessId),
-              eq(events.entityId, id),
-              eq(events.type, "REMINDER_SENT"),
-            ),
-          );
-
-        const alreadySent = existing.some((e) => {
-          const p = (e.payload ?? {}) as Record<string, unknown>;
-          return p.stageKey === stageKey && p.channel === channel;
-        });
-
-        if (alreadySent) {
-          return { alreadySent: true as const };
-        }
-
+        // No more idempotency check. We simply append the event every time 
+        // the user clicks log/send, allowing repeated reminders.
         const event = await appendEventInTx(tx, {
           businessId: ctx.businessId,
           entityType: "invoice",
@@ -97,6 +74,8 @@ export async function POST(
           payload: { stageKey, channel },
         });
 
+        // We continue returning alreadySent: false so the frontend
+        // doesn't show any error messages.
         return { alreadySent: false as const, event };
       });
 

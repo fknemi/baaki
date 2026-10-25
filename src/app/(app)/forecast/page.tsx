@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { formatINR } from "@/lib/domain/money";
 import { ForecastChart } from "@/components/charts/forecast-chart";
 import { StuckBox } from "@/components/domain/stuck-box";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { ForecastRow } from "@/lib/domain/forecast";
+import { formatINR, formatINRDelta } from "@/lib/domain/money";
 
 type ForecastData = {
   rows: ForecastRow[];
@@ -31,8 +31,15 @@ type Chase = {
 };
 
 // ─── outline icons ───────────────────────────────────────────────────────────
+// Shared ladders. Both capped at h-4 (16 px) on lg/xl so glyphs never
+// overpower the h-11→h-14 buttons / text-base→text-lg cards they sit in.
 
-function IconAlert({ className = "h-3.5 w-3.5" }: { className?: string }) {
+const ICON_STD =
+  "h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+const ICON_MD =
+  "h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+
+function IconAlert({ className = ICON_MD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -51,7 +58,7 @@ function IconAlert({ className = "h-3.5 w-3.5" }: { className?: string }) {
   );
 }
 
-function IconClose({ className = "h-3.5 w-3.5" }: { className?: string }) {
+function IconClose({ className = ICON_MD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -69,7 +76,7 @@ function IconClose({ className = "h-3.5 w-3.5" }: { className?: string }) {
   );
 }
 
-function IconChart({ className = "h-3.5 w-3.5" }: { className?: string }) {
+function IconChart({ className = ICON_MD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -87,7 +94,7 @@ function IconChart({ className = "h-3.5 w-3.5" }: { className?: string }) {
   );
 }
 
-function IconTable({ className = "h-3.5 w-3.5" }: { className?: string }) {
+function IconTable({ className = ICON_MD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -109,13 +116,33 @@ function IconTable({ className = "h-3.5 w-3.5" }: { className?: string }) {
 
 // ─── shared styles ───────────────────────────────────────────────────────────
 
-const CARD = "rounded-xl border border-white/10 p-4";
-const CARD_SM = "rounded-xl border border-white/10 p-3";
+// Card chrome — matches the rest of the app (rounded-lg → rounded-2xl,
+// p-3 → p-6). Two sizes because the stat strip and the chart/table card
+// want different paddings at the same width.
 
-// Narrow, local helper: the previous code did `e.message` on a `catch`
-// variable typed `unknown`, which doesn't compile under `strict`. This
-// doesn't assume anything about files I haven't seen — it only inspects
-// the error value caught right here.
+const CARD =
+  "rounded-lg border border-white/10 p-3 sm:rounded-xl sm:p-4 md:rounded-xl md:p-5 lg:rounded-2xl lg:p-6 xl:rounded-2xl xl:p-6";
+const CARD_SM =
+  "rounded-lg border border-white/10 p-2.5 sm:rounded-xl sm:p-3 md:rounded-xl md:p-4 lg:rounded-2xl lg:p-4 xl:rounded-2xl xl:p-5";
+
+// Chart ↔ table toggle button.
+const TOGGLE_BTN =
+  "flex w-full items-center justify-center font-medium text-white hover:bg-white/5 " +
+  "h-9 gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-xs " +
+  "sm:h-9 sm:gap-1.5 sm:rounded-lg sm:px-3 sm:text-sm " +
+  "md:h-10 md:gap-2 md:rounded-xl md:px-4 md:text-sm " +
+  "lg:h-11 lg:gap-2 lg:rounded-xl lg:px-4 lg:text-base " +
+  "xl:h-12 xl:gap-2.5 xl:rounded-xl xl:px-5 xl:text-base";
+
+// Secondary action button (Retry / Reset).
+const SECONDARY_BTN =
+  "flex items-center justify-center font-medium text-white hover:bg-white/5 " +
+  "h-9 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-xs " +
+  "sm:h-9 sm:rounded-lg sm:px-3 sm:text-sm " +
+  "md:h-10 md:rounded-xl md:px-4 md:text-sm " +
+  "lg:h-11 lg:rounded-xl lg:px-4 lg:text-base " +
+  "xl:h-12 xl:rounded-xl xl:px-5 xl:text-base";
+
 function errorMessage(e: unknown): string {
   if (e instanceof Error) return e.message;
   if (typeof e === "string") return e;
@@ -155,8 +182,6 @@ export default function ForecastPage() {
         if (c.data) setChase(c.data);
       })
       .catch((e: unknown) => {
-        // AbortError fires when a newer request superseded this one —
-        // that's expected, not a real failure, so don't surface it.
         if (e instanceof DOMException && e.name === "AbortError") return;
         setError(errorMessage(e));
       });
@@ -164,8 +189,6 @@ export default function ForecastPage() {
     return () => controller.abort();
   }, [whatIf]);
 
-  // Focus + Escape handling for the week-detail modal. Runs only while
-  // the modal is open; cleans itself up when it closes or unmounts.
   useEffect(() => {
     if (openWeek === null) return;
 
@@ -207,18 +230,20 @@ export default function ForecastPage() {
 
   if (error) {
     return (
-      <main className="space-y-3 p-4 text-sm text-white">
+      <main className="mx-auto w-full max-w-md space-y-3 px-3 pb-24 pt-14 text-sm text-white sm:max-w-xl sm:space-y-3 sm:px-4 sm:pb-24 sm:pt-16 sm:text-base md:max-w-2xl md:space-y-4 md:px-6 md:pb-28 md:pt-20 md:text-base lg:max-w-3xl lg:space-y-4 lg:px-6 lg:pb-32 lg:pt-24 lg:text-lg xl:max-w-4xl xl:space-y-5 xl:px-8 xl:pb-32 xl:pt-24 xl:text-lg">
         <p>{error}</p>
-        <button
-          onClick={() => setError(null)}
-          className="rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-1.5 text-xs text-white hover:bg-white/5"
-        >
+        <button onClick={() => setError(null)} className={SECONDARY_BTN}>
           Retry
         </button>
       </main>
     );
   }
-  if (!data) return <main className="p-4 text-sm text-white">Loading…</main>;
+  if (!data)
+    return (
+      <main className="mx-auto w-full max-w-md p-3 pt-14 text-sm text-white sm:max-w-xl sm:p-4 sm:pt-16 sm:text-base md:max-w-2xl md:p-6 md:pt-20 md:text-base lg:max-w-3xl lg:p-6 lg:pt-24 lg:text-lg xl:max-w-4xl xl:p-8 xl:pt-24 xl:text-lg">
+        Loading…
+      </main>
+    );
 
   const gapSet = new Set(data.gapInvoiceIds);
   const gapCoverers = chase.filter((c) => gapSet.has(c.invoiceId));
@@ -231,10 +256,6 @@ export default function ForecastPage() {
     );
   };
 
-  // Find the clicked week by its own `week` field rather than assuming
-  // array index `week - 1` lines up with it. If the rows are ever sparse
-  // or reordered, index arithmetic silently points at the wrong week;
-  // this doesn't.
   const weekRow =
     openWeek !== null
       ? (data.rows.find((r) => r.week === openWeek) ?? null)
@@ -242,23 +263,29 @@ export default function ForecastPage() {
   const { topCustomerId, topExpenseId } = data.whatIfTargets;
 
   return (
-    <main className="space-y-4 p-4 pb-24 pt-14">
-      <h1 className="text-xl font-semibold text-white">Cash forecast</h1>
+    <main className="mx-auto w-full max-w-md space-y-3 px-3 pb-24 pt-14 sm:max-w-xl sm:space-y-4 sm:px-4 sm:pb-24 sm:pt-16 md:max-w-2xl md:space-y-4 md:px-6 md:pb-28 md:pt-20 lg:max-w-3xl lg:space-y-5 lg:px-6 lg:pb-32 lg:pt-24 xl:max-w-4xl xl:space-y-5 xl:px-8 xl:pb-32 xl:pt-24">
+      <h1 className="text-xl font-semibold text-white sm:text-2xl md:text-2xl lg:text-3xl xl:text-4xl">
+        Cash forecast
+      </h1>
 
       <section className={CARD_SM}>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+        <div className="grid grid-cols-3 gap-2 text-center sm:gap-3 md:gap-3 lg:gap-4 xl:gap-4">
           <div>
-            <div className="text-[10px] text-white italic">Opening</div>
-            <div className="mt-0.5 font-semibold tabular-nums text-white">
-              {formatINR(data.openingCashPaise)}
+            <div className="text-[10px] italic text-white sm:text-xs md:text-xs lg:text-sm xl:text-sm">
+              Opening
+            </div>
+            <div className="mt-0.5 text-xs font-semibold tabular-nums text-white sm:mt-0.5 sm:text-sm md:mt-1 md:text-base lg:mt-1 lg:text-lg xl:mt-1 xl:text-lg">
+              {formatINRDelta(data.openingCashPaise)}
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-white italic">Lowest</div>
-            <div className="mt-0.5 font-semibold tabular-nums text-[#FF9B8F]">
-              {formatINR(data.lowestPointPaise)}
+            <div className="text-[10px] italic text-white sm:text-xs md:text-xs lg:text-sm xl:text-sm">
+              Lowest
+            </div>
+            <div className="mt-0.5 text-xs font-semibold tabular-nums text-[#FF9B8F] sm:mt-0.5 sm:text-sm md:mt-1 md:text-base lg:mt-1 lg:text-lg xl:mt-1 xl:text-lg">
+              {formatINRDelta(data.lowestPointPaise)}
               {data.breachWeek !== null && (
-                <span className="text-[10px] text-white italic">
+                <span className="text-[10px] italic text-white sm:text-xs md:text-xs lg:text-sm xl:text-sm">
                   {" "}
                   (W{data.breachWeek})
                 </span>
@@ -266,8 +293,10 @@ export default function ForecastPage() {
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-white italic">Buffer</div>
-            <div className="mt-0.5 font-semibold tabular-nums text-white">
+            <div className="text-[10px] italic text-white sm:text-xs md:text-xs lg:text-sm xl:text-sm">
+              Buffer
+            </div>
+            <div className="mt-0.5 text-xs font-semibold tabular-nums text-white sm:mt-0.5 sm:text-sm md:mt-1 md:text-base lg:mt-1 lg:text-lg xl:mt-1 xl:text-lg">
               {formatINR(data.safetyBufferPaise)}
             </div>
           </div>
@@ -277,9 +306,9 @@ export default function ForecastPage() {
       {data.breachWeek !== null && (
         <div
           role="alert"
-          className="flex items-start gap-2 rounded-xl border border-[#B42318]/40 bg-[#B42318]/10 p-3 text-xs font-medium text-white"
+          className="flex items-start gap-2 rounded-lg border border-[#B42318]/40 bg-[#B42318]/10 p-3 text-xs font-medium text-white sm:gap-2 sm:rounded-lg sm:p-3 sm:text-xs md:gap-2.5 md:rounded-xl md:p-4 md:text-sm lg:gap-3 lg:rounded-xl lg:p-4 lg:text-sm xl:gap-3 xl:rounded-xl xl:p-5 xl:text-base"
         >
-          <IconAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FF9B8F]" />
+          <IconAlert className={`${ICON_MD} mt-0.5 shrink-0 text-[#FF9B8F]`} />
           <span>
             Cash goes below buffer in week {data.breachWeek} · gap{" "}
             {formatINR(data.gapPaise)}
@@ -289,15 +318,25 @@ export default function ForecastPage() {
 
       {showTable ? (
         <section className={CARD_SM}>
-          <div className="max-h-80 overflow-y-auto pr-1">
-            <table className="w-full text-[10px] tabular-nums">
+          <div className="max-h-80 overflow-y-auto pr-1 sm:max-h-96 sm:pr-1 md:max-h-96 md:pr-1.5 lg:max-h-[28rem] lg:pr-2 xl:max-h-[32rem] xl:pr-2">
+            <table className="w-full text-[10px] tabular-nums sm:text-xs md:text-xs lg:text-sm xl:text-sm">
               <thead className="sticky top-0 bg-[#192221]">
                 <tr className="text-white italic">
-                  <th className="pb-1 text-left">Wk</th>
-                  <th className="pb-1 text-right">Opening</th>
-                  <th className="pb-1 text-right">In</th>
-                  <th className="pb-1 text-right">Out</th>
-                  <th className="pb-1 text-right">Closing</th>
+                  <th className="pb-1 text-left sm:pb-1 md:pb-1.5 lg:pb-2 xl:pb-2">
+                    Wk
+                  </th>
+                  <th className="pb-1 text-right sm:pb-1 md:pb-1.5 lg:pb-2 xl:pb-2">
+                    Opening
+                  </th>
+                  <th className="pb-1 text-right sm:pb-1 md:pb-1.5 lg:pb-2 xl:pb-2">
+                    In
+                  </th>
+                  <th className="pb-1 text-right sm:pb-1 md:pb-1.5 lg:pb-2 xl:pb-2">
+                    Out
+                  </th>
+                  <th className="pb-1 text-right sm:pb-1 md:pb-1.5 lg:pb-2 xl:pb-2">
+                    Closing
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -313,18 +352,20 @@ export default function ForecastPage() {
                           : "text-white"
                       }
                     >
-                      <td className="py-0.5">{r.week}</td>
-                      <td className="py-0.5 text-right">
-                        {formatINR(r.openingPaise)}
+                      <td className="py-0.5 sm:py-0.5 md:py-1 lg:py-1 xl:py-1">
+                        {r.week}
                       </td>
-                      <td className="py-0.5 text-right">
+                      <td className="py-0.5 text-right sm:py-0.5 md:py-1 lg:py-1 xl:py-1">
+                        {formatINRDelta(r.openingPaise)}
+                      </td>
+                      <td className="py-0.5 text-right sm:py-0.5 md:py-1 lg:py-1 xl:py-1">
                         {formatINR(r.inflowPaise)}
                       </td>
-                      <td className="py-0.5 text-right">
+                      <td className="py-0.5 text-right sm:py-0.5 md:py-1 lg:py-1 xl:py-1">
                         {formatINR(r.outflowPaise)}
                       </td>
-                      <td className="py-0.5 text-right font-medium">
-                        {formatINR(r.closingPaise)}
+                      <td className="py-0.5 text-right font-medium sm:py-0.5 md:py-1 lg:py-1 xl:py-1">
+                        {formatINRDelta(r.closingPaise)}
                       </td>
                     </tr>
                   );
@@ -345,7 +386,7 @@ export default function ForecastPage() {
       <button
         onClick={() => setShowTable((s) => !s)}
         aria-pressed={showTable}
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-xs font-medium text-white hover:bg-white/5"
+        className={TOGGLE_BTN}
       >
         {showTable ? (
           <>
@@ -366,10 +407,12 @@ export default function ForecastPage() {
       </StuckBox>
 
       <section className={CARD}>
-        <h2 className="text-sm font-semibold text-white">What-if</h2>
-        <div className="mt-3 space-y-2 text-xs">
+        <h2 className="text-sm font-semibold text-white sm:text-base md:text-lg lg:text-lg xl:text-xl">
+          What-if
+        </h2>
+        <div className="mt-3 space-y-2 text-xs sm:mt-3 sm:space-y-2 sm:text-xs md:mt-4 md:space-y-2.5 md:text-sm lg:mt-4 lg:space-y-3 lg:text-sm xl:mt-5 xl:space-y-3 xl:text-base">
           <label
-            className={`flex cursor-pointer items-center gap-2 ${
+            className={`flex cursor-pointer items-center gap-2 sm:gap-2 md:gap-2.5 lg:gap-3 xl:gap-3 ${
               !topCustomerId ? "opacity-50" : ""
             }`}
           >
@@ -379,22 +422,22 @@ export default function ForecastPage() {
                 topCustomerId && toggle(`delayCustomer:${topCustomerId}:30`)
               }
               disabled={!topCustomerId}
-              className="bg-transparent border-white/20"
+              className="bg-transparent border-white/20 h-4 w-4 md:h-5 md:w-5"
             />
             <span className="text-white">Delay biggest customer 30 days</span>
           </label>
-          <label className="flex cursor-pointer items-center gap-2">
+          <label className="flex cursor-pointer items-center gap-2 sm:gap-2 md:gap-2.5 lg:gap-3 xl:gap-3">
             <Checkbox
               checked={whatIf.some((w) => w.startsWith("addInflow"))}
               onCheckedChange={() => toggle("addInflow:2026-11-15:200000000")}
-              className="bg-transparent border-white/20"
+              className="bg-transparent border-white/20 h-4 w-4 md:h-5 md:w-5"
             />
             <span className="text-white">
               Simulate big order +₹20,00,000
             </span>
           </label>
           <label
-            className={`flex cursor-pointer items-center gap-2 ${
+            className={`flex cursor-pointer items-center gap-2 sm:gap-2 md:gap-2.5 lg:gap-3 xl:gap-3 ${
               !topExpenseId ? "opacity-50" : ""
             }`}
           >
@@ -404,7 +447,7 @@ export default function ForecastPage() {
                 topExpenseId && toggle(`delayExpense:${topExpenseId}:14`)
               }
               disabled={!topExpenseId}
-              className="bg-transparent border-white/20"
+              className="bg-transparent border-white/20 h-4 w-4 md:h-5 md:w-5"
             />
             <span className="text-white">
               Delay biggest supplier payment 14 days
@@ -413,7 +456,7 @@ export default function ForecastPage() {
           {whatIf.length > 0 && (
             <button
               onClick={() => setWhatIf([])}
-              className="mt-2 rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-1.5 text-xs text-white hover:bg-white/5"
+              className={`${SECONDARY_BTN} mt-2 sm:mt-2 md:mt-2.5 lg:mt-3 xl:mt-3`}
             >
               Reset
             </button>
@@ -423,27 +466,27 @@ export default function ForecastPage() {
 
       {gapCoverers.length > 0 && (
         <section className={CARD}>
-          <h2 className="text-sm font-semibold text-white">
+          <h2 className="text-sm font-semibold text-white sm:text-base md:text-lg lg:text-lg xl:text-xl">
             Invoices that would cover week-{data.breachWeek} gap
           </h2>
-          <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+          <ul className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1 sm:mt-3 sm:max-h-72 sm:space-y-2 sm:pr-1 md:mt-4 md:max-h-80 md:space-y-2.5 md:pr-1.5 lg:mt-4 lg:max-h-96 lg:space-y-3 lg:pr-2 xl:mt-5 xl:max-h-96 xl:space-y-3 xl:pr-2">
             {visibleGapCoverers.map((c) => (
               <li key={c.invoiceId}>
                 <Link
                   href={`/invoices/${c.invoiceId}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#171717]/20 p-2 hover:bg-white/5"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-[#171717]/20 p-2 hover:bg-white/5 sm:gap-3 sm:rounded-lg sm:p-2.5 md:gap-3 md:rounded-xl md:p-3 lg:gap-4 lg:rounded-xl lg:p-3.5 xl:gap-4 xl:rounded-xl xl:p-4"
                 >
                   <div className="min-w-0">
-                    <div className="truncate text-xs font-medium text-white">
+                    <div className="truncate text-xs font-medium text-white sm:text-xs md:text-sm lg:text-sm xl:text-base">
                       {c.customerName}
                     </div>
-                    <div className="text-[10px] text-white italic">
+                    <div className="text-[10px] italic text-white sm:text-[11px] md:text-xs lg:text-xs xl:text-sm">
                       {c.daysOverdue > 0
                         ? `${c.daysOverdue} days overdue`
                         : "not yet due"}
                     </div>
                   </div>
-                  <div className="shrink-0 text-xs font-semibold tabular-nums text-white">
+                  <div className="shrink-0 text-xs font-semibold tabular-nums text-white sm:text-xs md:text-sm lg:text-sm xl:text-base">
                     {formatINR(c.amountPaise)}
                   </div>
                 </Link>
@@ -451,7 +494,7 @@ export default function ForecastPage() {
             ))}
           </ul>
           {hiddenGapCoverers > 0 && (
-            <p className="mt-2 text-[10px] text-white italic">
+            <p className="mt-2 text-[10px] italic text-white sm:mt-2 sm:text-[11px] md:mt-2.5 md:text-xs lg:mt-3 lg:text-xs xl:mt-3 xl:text-sm">
               +{hiddenGapCoverers} more invoice
               {hiddenGapCoverers === 1 ? "" : "s"} not shown
             </p>
@@ -461,54 +504,54 @@ export default function ForecastPage() {
 
       {weekRow && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-3 sm:items-center sm:p-4 md:p-6 lg:p-6 xl:p-8"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpenWeek(null);
           }}
         >
           <div
             ref={dialogRef}
-            className="w-full max-w-md rounded-xl border border-white/10 bg-[#192221] p-4 shadow-xl"
+            className="max-h-[90vh] w-full overflow-y-auto rounded-xl border border-white/10 bg-[#192221] p-4 shadow-xl sm:max-h-[88vh] sm:rounded-xl sm:p-5 md:max-h-[86vh] md:max-w-lg md:rounded-2xl md:p-6 lg:max-h-[85vh] lg:max-w-xl lg:rounded-2xl lg:p-6 xl:max-h-[85vh] xl:max-w-2xl xl:rounded-3xl xl:p-7"
             role="dialog"
             aria-modal="true"
             aria-label={`Week ${weekRow.week} detail`}
           >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-2 sm:gap-3 md:gap-3 lg:gap-4 xl:gap-4">
               <div className="min-w-0">
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-lg font-semibold text-white sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl">
                   Week {weekRow.week}
                 </h2>
-                <p className="mt-1 text-xs text-white italic">
+                <p className="mt-1 text-xs italic text-white sm:mt-1 sm:text-sm md:mt-1.5 md:text-sm lg:mt-2 lg:text-base xl:mt-2 xl:text-base">
                   {weekRow.weekStart} – {weekRow.weekEnd} · opening{" "}
-                  {formatINR(weekRow.openingPaise)}
+                  {formatINRDelta(weekRow.openingPaise)}
                 </p>
               </div>
               <button
                 ref={closeButtonRef}
                 onClick={() => setOpenWeek(null)}
-                className="shrink-0 text-white/60 hover:text-white"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/60 hover:bg-white/5 hover:text-white sm:h-8 sm:w-8 md:h-9 md:w-9 md:rounded-lg lg:h-9 lg:w-9 lg:rounded-lg xl:h-10 xl:w-10 xl:rounded-lg"
                 aria-label="Close"
               >
                 <IconClose />
               </button>
             </div>
-            <div className="mt-3 space-y-1 text-xs">
-              <div className="flex justify-between gap-2">
+            <div className="mt-3 space-y-1 text-xs sm:mt-3 sm:space-y-1 sm:text-sm md:mt-4 md:space-y-1.5 md:text-sm lg:mt-4 lg:space-y-2 lg:text-base xl:mt-5 xl:space-y-2 xl:text-base">
+              <div className="flex justify-between gap-2 sm:gap-2 md:gap-3 lg:gap-3 xl:gap-4">
                 <span className="text-white italic">Inflows</span>
                 <span className="font-medium tabular-nums text-[#4ADE80]">
                   +{formatINR(weekRow.inflowPaise)}
                 </span>
               </div>
-              <div className="flex justify-between gap-2">
+              <div className="flex justify-between gap-2 sm:gap-2 md:gap-3 lg:gap-3 xl:gap-4">
                 <span className="text-white italic">Outflows</span>
                 <span className="font-medium tabular-nums text-[#FF9B8F]">
                   −{formatINR(weekRow.outflowPaise)}
                 </span>
               </div>
-              <div className="mt-2 flex justify-between gap-2 border-t border-white/10 pt-2">
+              <div className="mt-2 flex justify-between gap-2 border-t border-white/10 pt-2 sm:gap-2 sm:pt-2 md:mt-3 md:gap-3 md:pt-2.5 lg:mt-3 lg:gap-3 lg:pt-3 xl:mt-4 xl:gap-4 xl:pt-3">
                 <span className="font-medium text-white">Closing</span>
                 <span className="font-semibold tabular-nums text-white">
-                  {formatINR(weekRow.closingPaise)}
+                  {formatINRDelta(weekRow.closingPaise)}
                 </span>
               </div>
             </div>

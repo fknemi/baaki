@@ -653,36 +653,115 @@ async function main() {
   // "Diwali stock buildup" is the week-6 lever — a real festival-season purchase
   // that produces the cash dip the design doc targets. Tune up/down if the
   // breach week drifts from 6.
+
+  // ─── Expenses ────────────────────────────────────────────────
+  console.log("Seeding expenses…");
+
+  // Anchor recurring expenses to the same date the app thinks it is,
+  // so `lastPaidPeriod === currentPeriodKey` holds today and flips
+  // tomorrow (or when NEXT_PUBLIC_DEMO_TODAY advances).
+  const seedToday = new Date(todayStr + "T00:00:00");
+  const currentMonthKey = `${seedToday.getFullYear()}-${String(seedToday.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}`;
+
+  // Two flavours:
+  //   • recurring: one row per bill; `lastPaidPeriod` = current month so
+  //     it shows "paid" now and flips "unpaid" next period (the whole
+  //     point of the new model).
+  //   • once: single-shot payments with a hard due date. Used for the
+  //     spikes that create the week-6/7 dip.
   const expenseRows = [
-    { label: "Salaries", category: "salary", amount: 480000, due: "2026-11-01" },
-    { label: "Rent", category: "rent", amount: 85000, due: "2026-11-05" },
-    { label: "Electricity", category: "utility", amount: 22000, due: "2026-11-10" },
-    { label: "GST payment", category: "gst", amount: 120000, due: "2026-11-20" },
-    { label: "Paper supplier", category: "supplier", amount: 60000, due: "2026-11-28" },
-    { label: "Ink supplier", category: "supplier", amount: 35000, due: "2026-12-03" },
-    { label: "Dec Salaries", category: "salary", amount: 480000, due: "2026-12-01" },
-    { label: "Dec Rent", category: "rent", amount: 85000, due: "2026-12-05" },
-    { label: "Diwali stock buildup", category: "supplier", amount: 1200000, due: "2026-12-07" },
+    // Recurring bills — already paid for the current period
+    {
+      label: "Salaries",
+      category: "salary",
+      amount: 480000,
+      recurrence: "monthly",
+      dayOfMonth: 1,
+      due: null,
+      paidPeriod: currentMonthKey,
+    },
+    {
+      label: "Rent",
+      category: "rent",
+      amount: 85000,
+      recurrence: "monthly",
+      dayOfMonth: 5,
+      due: null,
+      paidPeriod: currentMonthKey,
+    },
+    {
+      label: "Electricity",
+      category: "utility",
+      amount: 22000,
+      recurrence: "monthly",
+      dayOfMonth: 10,
+      due: null,
+      paidPeriod: currentMonthKey,
+    },
+    {
+      label: "GST payment",
+      category: "gst",
+      amount: 120000,
+      recurrence: "monthly",
+      dayOfMonth: 20,
+      due: null,
+      paidPeriod: currentMonthKey,
+    },
+    // Not yet paid this month — appears in current period too
+    {
+      label: "Paper supplier",
+      category: "supplier",
+      amount: 60000,
+      recurrence: "monthly",
+      dayOfMonth: 28,
+      due: null,
+      paidPeriod: null,
+    },
+
+    // One-off spikes — keep the cash-dip story intact
+    {
+      label: "Ink supplier",
+      category: "supplier",
+      amount: 35000,
+      recurrence: "once",
+      dayOfMonth: null,
+      due: "2026-12-03",
+      paidPeriod: null,
+    },
+    {
+      label: "Diwali stock buildup",
+      category: "supplier",
+      amount: 1200000,
+      recurrence: "once",
+      dayOfMonth: null,
+      due: "2026-12-07",
+      paidPeriod: null,
+    },
     {
       label: "Paper reorder (week 6 force)",
       category: "supplier",
       amount: 600000,
+      recurrence: "once",
+      dayOfMonth: null,
       due: "2026-12-08",
+      paidPeriod: null,
     },
-    { label: "Dec Electricity", category: "utility", amount: 22000, due: "2026-12-10" },
-    { label: "Dec GST", category: "gst", amount: 120000, due: "2026-12-20" },
   ];
 
   for (const e of expenseRows) {
     await sql`
       INSERT INTO expenses (
-        business_id, label, category, amount_paise, recurrence, due_date
+        business_id, label, category, amount_paise, recurrence,
+        day_of_month, due_date, paid, last_paid_period
       ) VALUES (
-        ${businessId}, ${e.label}, ${e.category}, ${e.amount * 100}, 'once', ${e.due}
+        ${businessId}, ${e.label}, ${e.category}, ${e.amount * 100}, ${e.recurrence},
+        ${e.dayOfMonth}, ${e.due}, false, ${e.paidPeriod}
       )
     `;
   }
-
   // ─── Summary ─────────────────────────────────────────────────
   const [{ count: invoiceCount }] = await sql`SELECT COUNT(*)::int FROM invoices`;
   const [{ count: itemCount }] = await sql`SELECT COUNT(*)::int FROM invoice_items`;

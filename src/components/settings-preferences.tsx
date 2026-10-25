@@ -13,7 +13,6 @@ function randChar(target: string) {
     return set[Math.floor(Math.random() * set.length)];
 }
 
-
 function readTextSize(): TextSize {
     if (typeof window === "undefined") return 100;
     const v = Number(window.localStorage.getItem(TEXT_KEY));
@@ -32,13 +31,39 @@ function applyContrast(on: boolean) {
 
 // ─── shared styles ───────────────────────────────────────────────────────────
 
-const CARD = "rounded-xl border border-white/10 p-4";
-const PILL_ACTIVE =
-    "rounded-lg px-3 py-1.5 text-xs font-medium bg-[#0F5C4E] text-white";
-const PILL_INACTIVE =
-    "rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 bg-[#171717]/20 text-white hover:bg-white/5";
-const CHIP =
-    "rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/5";
+// Card chrome — radius + padding ladder matches every other card in the app.
+const CARD =
+    "rounded-lg border border-white/10 p-3 sm:rounded-xl sm:p-4 md:rounded-xl md:p-4 lg:rounded-2xl lg:p-5 xl:rounded-2xl xl:p-5";
+
+// Pill / chip chrome. Height grows via explicit h-* (not py-*) so every
+// group member is the same height at every breakpoint, and text grows in
+// lockstep so the box never stretches while the label stays tiny.
+const PILL_BASE =
+    "flex items-center justify-center rounded-lg font-medium " +
+    "h-8 px-3 text-xs " +
+    "sm:h-9 sm:px-3.5 sm:text-sm " +
+    "md:h-10 md:px-4 md:text-sm " +
+    "lg:h-10 lg:px-4 lg:text-base " +
+    "xl:h-11 xl:px-4 xl:text-base";
+const PILL_ACTIVE = `${PILL_BASE} bg-[#0F5C4E] text-white`;
+const PILL_INACTIVE = `${PILL_BASE} border border-white/10 bg-[#171717]/20 text-white hover:bg-white/5`;
+const CHIP = `${PILL_BASE} border border-white/10 bg-[#171717]/20 text-white hover:bg-white/5`;
+
+// Section heading ladder — mirrors the settings tiles above.
+const SECTION_H3 =
+    "font-semibold text-white text-sm sm:text-base md:text-base lg:text-lg xl:text-lg";
+
+// Row wrapper for pill groups.
+const PILL_ROW =
+    "flex flex-wrap gap-2 sm:gap-2 md:gap-2.5 lg:gap-3 xl:gap-3";
+
+// Body text ladder for the demo-date status line and checkbox label.
+const BODY_TEXT =
+    "text-xs sm:text-xs md:text-sm lg:text-sm xl:text-base";
+
+// Checkbox size ladder.
+const CHECKBOX =
+    "accent-[#0F5C4E] h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-5 xl:w-5";
 
 export function SettingsPreferences() {
     const locale = useLocale();
@@ -119,10 +144,15 @@ export function SettingsPreferences() {
     };
 
     return (
-        <div className="space-y-3">
+        // auto-rows-fr — every grid row resolves to the height of the
+        // tallest card (Demo date, with its chips row + status line), so
+        // all four cards are the same height, not just the two per row.
+        // Grid goes 1-col → 2×2 at md, keeping the section parity with
+        // the four tiles above it on the settings page.
+        <div className="grid auto-rows-fr grid-cols-1 gap-3 sm:gap-3 md:grid-cols-2 md:gap-4 lg:gap-4 xl:gap-5">
             <section className={CARD}>
-                <h3 className="text-sm font-semibold text-white">{dLanguage}</h3>
-                <div className="mt-2 flex gap-2">
+                <h3 className={SECTION_H3}>{dLanguage}</h3>
+                <div className={`mt-2 sm:mt-2 md:mt-2.5 lg:mt-3 xl:mt-3 ${PILL_ROW}`}>
                     <button
                         onClick={() => changeLang("en")}
                         className={locale === "en" ? PILL_ACTIVE : PILL_INACTIVE}
@@ -139,8 +169,8 @@ export function SettingsPreferences() {
             </section>
 
             <section className={CARD}>
-                <h3 className="text-sm font-semibold text-white">{dTextSize}</h3>
-                <div className="mt-2 flex gap-2">
+                <h3 className={SECTION_H3}>{dTextSize}</h3>
+                <div className={`mt-2 sm:mt-2 md:mt-2.5 lg:mt-3 xl:mt-3 ${PILL_ROW}`}>
                     {([100, 115, 130] as TextSize[]).map((s) => (
                         <button
                             key={s}
@@ -154,23 +184,25 @@ export function SettingsPreferences() {
             </section>
 
             <section className={CARD}>
-                <h3 className="text-sm font-semibold text-white">
+                <h3 className={SECTION_H3}>
                     {dHighContrast}
                 </h3>
-                <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs">
+                <label
+                    className={`mt-2 flex cursor-pointer items-center gap-2 sm:mt-2 sm:gap-2 md:mt-2.5 md:gap-2.5 lg:mt-3 lg:gap-3 xl:mt-3 xl:gap-3 ${BODY_TEXT}`}
+                >
                     <input
                         type="checkbox"
                         checked={contrast ?? false}
                         onChange={(e) => changeContrast(e.target.checked)}
-                        className="h-3.5 w-3.5 accent-[#0F5C4E]"
+                        className={CHECKBOX}
                     />
                     <span className="text-white">{dHighContrast}</span>
                 </label>
             </section>
 
             <section className={CARD}>
-                <h3 className="text-sm font-semibold text-white">{dDemoDate}</h3>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <h3 className={SECTION_H3}>{dDemoDate}</h3>
+                <div className={`mt-2 sm:mt-2 md:mt-2.5 lg:mt-3 xl:mt-3 ${PILL_ROW}`}>
                     <button onClick={() => demoChip(7)} className={CHIP}>
                         {dPlus7}
                     </button>
@@ -185,7 +217,9 @@ export function SettingsPreferences() {
                     </button>
                 </div>
                 {demoDate && (
-                    <p className="mt-2 text-xs text-white italic">
+                    <p
+                        className={`mt-2 italic text-white sm:mt-2 md:mt-2.5 lg:mt-3 xl:mt-3 ${BODY_TEXT}`}
+                    >
                         {dDemoDate}: <span className="font-mono">{demoDate}</span>
                     </p>
                 )}

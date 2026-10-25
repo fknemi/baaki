@@ -3,8 +3,14 @@
 import { useState } from "react";
 
 // ─── outline icons ───────────────────────────────────────────────────────────
+// Shares InvoiceDetailPage's ICON_PRINT ladder — starts at 14px, caps at 16px
+// (h-4). Anything larger (h-5 / 20px) looked oversized inside the ~36–56px
+// button at lg/xl.
 
-function IconCopy({ className = "h-3.5 w-3.5" }: { className?: string }) {
+const ICON_STD =
+  "h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+
+function IconCopy({ className = ICON_STD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -22,7 +28,7 @@ function IconCopy({ className = "h-3.5 w-3.5" }: { className?: string }) {
   );
 }
 
-function IconCheck({ className = "h-3.5 w-3.5" }: { className?: string }) {
+function IconCheck({ className = ICON_STD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -85,7 +91,7 @@ export function CopyPayLinkButton({ invoiceId }: { invoiceId: string }) {
       onClick={handleClick}
       disabled={busy}
       title={error ?? undefined}
-      className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-4 text-center text-xs font-medium text-white hover:bg-white/5 disabled:opacity-50"
+      className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-center text-xs font-medium text-white hover:bg-white/5 disabled:opacity-50 sm:h-11 sm:gap-1.5 sm:rounded-lg sm:px-4 sm:text-sm md:h-12 md:gap-2 md:rounded-xl md:px-4 md:text-base lg:h-12 lg:gap-2 lg:rounded-xl lg:px-5 lg:text-base xl:h-14 xl:gap-2.5 xl:rounded-xl xl:px-6 xl:text-lg"
     >
       {busy ? (
         "Creating…"

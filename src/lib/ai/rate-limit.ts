@@ -1,7 +1,6 @@
-import { sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { rateLimits } from "@/lib/db/schema";
-
+import { eq, sql } from "drizzle-orm";
 const WINDOW_SEC = 3600;
 
 export async function checkRateLimit(
@@ -31,4 +30,23 @@ export async function checkRateLimit(
 
   const count = row?.count ?? 1;
   return { allowed: count <= limit, remaining: Math.max(0, limit - count) };
+}
+
+
+
+/**
+ * Decrement a bucket's count. Used to refund a slot when the upstream
+ * call failed for reasons outside the user's control (Gemini 429,
+ * network error, timeout). Never goes below 0.
+ */
+export async function refundRateLimit(
+  userId: string,
+  bucket: string,
+  amount = 1,
+): Promise<void> {
+  const key = `${userId}:${bucket}`;
+  await db
+    .update(rateLimits)
+    .set({ count: sql`GREATEST(${rateLimits.count} - ${amount}, 0)` })
+    .where(eq(rateLimits.key, key));
 }

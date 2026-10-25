@@ -51,8 +51,14 @@ export default async function BusinessSettingsPage() {
     : ["upi"];
 
   return (
-    <main className="space-y-4 p-4 pb-24 pt-14">
-      <h1 className="text-xl font-semibold">Business profile</h1>
+    // Container max-width matches the parent Settings page (`md:max-w-3xl
+    // lg:max-w-4xl xl:max-w-4xl`) so navigating in/out of this route keeps
+    // the same content width — the form doesn't snap from a 4xl-wide page
+    // back to a phone-width sheet on desktop.
+    <main className="mx-auto w-full max-w-md space-y-3 px-3 pb-24 pt-14 sm:max-w-xl sm:space-y-4 sm:px-4 sm:pt-16 md:max-w-3xl md:space-y-4 md:px-6 md:pt-20 lg:max-w-4xl lg:space-y-5 lg:px-6 lg:pb-32 lg:pt-24 xl:max-w-4xl xl:space-y-5 xl:px-8 xl:pb-32 xl:pt-24">
+      <h1 className="text-xl font-semibold text-white sm:text-2xl md:text-2xl lg:text-3xl xl:text-4xl">
+        Business profile
+      </h1>
       <BusinessProfileForm
         initial={{
           name: biz.name,

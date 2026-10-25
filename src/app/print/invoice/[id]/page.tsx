@@ -49,6 +49,11 @@ export default async function PrintInvoicePage({ params }: { params: Promise<{ i
           box-sizing: border-box;
         }
 
+        /* The "sheet" — A4 proportions at 794px max-width. Never stretched
+           beyond 794px regardless of viewport, so it always reads as a
+           physical page rather than a stretched app panel. Responsive
+           scaling happens via padding + font-size steps below, NOT via
+           max-width growth. */
         .print-page {
           font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
           font-size: 13px;
@@ -215,7 +220,19 @@ export default async function PrintInvoicePage({ params }: { params: Promise<{ i
           min-width: 160px;
         }
 
-        @media (max-width: 520px) {
+        /* ─── Responsive ladder ─────────────────────────────────────────
+           Tailwind default breakpoints: sm=640 md=768 lg=1024 xl=1280.
+           Base (no query) is the "medium phone / small tablet" layout.
+           Mobile (< 640) stacks the two-column sections.
+           md/lg/xl grow the shell padding and the sheet's interior
+           typography modestly so the preview reads like a physical
+           sheet sitting on a desk — the max-width stays capped at 794px
+           on every screen size, so it never stretches into an app panel.
+           The @media print block at the bottom overrides ALL of these
+           because it's in physical pt units and comes last in source. */
+
+        /* Mobile — stack everything, tighten padding */
+        @media (max-width: 639px) {
           .invoice-shell  { padding: 8px; padding-top: 64px; }
           .print-page     { padding: 20px 16px; border-radius: 4px; font-size: 12px;
                             box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
@@ -230,6 +247,40 @@ export default async function PrintInvoicePage({ params }: { params: Promise<{ i
           .inv-overlay-inner span { font-size: 18px; letter-spacing: 0.08em; }
         }
 
+        /* md — more breathing room, slightly larger sheet interior */
+        @media (min-width: 768px) {
+          .invoice-shell  { padding: 24px; padding-top: 88px; }
+          .print-page     { padding: 36px 40px; font-size: 13.5px;
+                            box-shadow: 0 6px 32px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.05); }
+          .inv-biz-name   { font-size: 21px; }
+          .inv-doc-title  { font-size: 17px; }
+          .inv-cust-name  { font-size: 14.5px; }
+          .inv-items td   { font-size: 12.5px; padding: 8px; }
+          .inv-totals td  { font-size: 12.5px; }
+          .inv-totals .total-row td { font-size: 13.5px; }
+        }
+
+        /* lg — bigger shell margin, more generous sheet padding */
+        @media (min-width: 1024px) {
+          .invoice-shell  { padding: 32px; padding-top: 96px; }
+          .print-page     { padding: 40px 44px; font-size: 14px;
+                            box-shadow: 0 8px 40px rgba(0,0,0,0.12), 0 3px 6px rgba(0,0,0,0.06); }
+          .inv-biz-name   { font-size: 22px; }
+          .inv-cust-name  { font-size: 15px; }
+          .inv-items td   { font-size: 13px; }
+          .inv-totals td  { font-size: 13px; }
+        }
+
+        /* xl — cap the breathing room; sheet stays 794px wide but the
+           typography inside gets one last legibility step */
+        @media (min-width: 1280px) {
+          .invoice-shell  { padding: 40px; padding-top: 104px; }
+          .print-page     { padding: 44px 48px; font-size: 14.5px;
+                            box-shadow: 0 12px 48px rgba(0,0,0,0.14), 0 4px 8px rgba(0,0,0,0.06); }
+          .inv-biz-name   { font-size: 23px; }
+        }
+
+        /* ─── Print — overrides everything above via physical pt units ─ */
         @media print {
           html, body { background: #fff !important; margin: 0; padding: 0; }
           .invoice-shell {

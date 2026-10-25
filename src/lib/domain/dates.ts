@@ -1,8 +1,6 @@
 
 
 
-
-
 import type { expenses } from "@/lib/db/schema";
 type ExpenseRow = typeof expenses.$inferSelect;
 
@@ -82,15 +80,6 @@ export function todayIST(): string {
 
 
 
-
-
-
-
-
-
-
-
-
 export function currentPeriodKey(
   recurrence: string,
   today: Date,
@@ -104,6 +93,14 @@ export function currentPeriodKey(
   return null;
 }
 
+
+
+
+
+
+
+
+
 export function isPaidForCurrentPeriod(
   e: Pick<ExpenseRow, "recurrence" | "paid" | "lastPaidPeriod">,
   today: Date,
@@ -114,15 +111,22 @@ export function isPaidForCurrentPeriod(
 }
 
 /** For recurring rows the stored dueDate is static; derive the real one. */
+
 export function effectiveDueDate(
-  e: Pick<ExpenseRow, "recurrence" | "dayOfMonth" | "dueDate">,
+  e: ExpenseForDue,
   today: Date,
 ): string | null {
   if (e.recurrence === "once") return e.dueDate;
   const dom = e.dayOfMonth ?? 1;
   const y = today.getFullYear();
   const m = today.getMonth();
+  const todayMidnight = new Date(y, m, today.getDate());
   const thisMonth = new Date(y, m, dom);
-  const target = thisMonth > today ? thisMonth : new Date(y, m + 1, dom);
-  return target.toISOString().slice(0, 10);
+  const target =
+    thisMonth >= todayMidnight ? thisMonth : new Date(y, m + 1, dom);
+  // Local getters — toISOString() converts to UTC and drops a day in IST.
+  const yy = target.getFullYear();
+  const mm = String(target.getMonth() + 1).padStart(2, "0");
+  const dd = String(target.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
 }

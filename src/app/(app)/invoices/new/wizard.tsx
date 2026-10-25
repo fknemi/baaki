@@ -84,9 +84,16 @@ const GST_RATES = [0, 5, 12, 18, 28];
 const UNITS = ["pcs", "box", "kg", "m", "sqft", "roll", "set"];
 const STEP_LABELS = ["Customer", "Items", "Dates", "Review", "Preview", "Save"];
 
-// Only bg + border are overridden. Size / padding / radius / focus ring
-// left at shadcn defaults.
-const fieldSurface = "bg-[#171717]/20 border-white/10";
+/**
+ * fieldSurface — shared chrome for every form control.
+ *
+ * IMPORTANT: includes responsive height AND font-size so inputs, selects,
+ * and the date buttons all scale together as the dialog widens. Previously
+ * this only set background/border, which left inputs locked at shadcn's
+ * h-9 / text-sm defaults — the "not scaling proportionally" bug.
+ */
+const fieldSurface =
+    "bg-[#171717]/20 border-white/10 h-9 sm:h-10 md:h-11 lg:h-12 md:text-base";
 
 const unitItems = UNITS.map((u) => ({ label: u, value: u }));
 const gstItems = GST_RATES.map((r) => ({ label: `${r}%`, value: String(r) }));
@@ -94,6 +101,29 @@ const discountTypeItems = [
     { label: "₹", value: "amount" },
     { label: "%", value: "pct" },
 ];
+
+/* ─────────────────────────────────────────────────────────────────────
+   Responsive CSS — only for things that can't be expressed cleanly in
+   Tailwind utility classes (zoom is non-standard; mm units for padding).
+   All breakpoints mirror Tailwind's defaults exactly.
+   ───────────────────────────────────────────────────────────────────── */
+const WIZARD_CSS = `
+/* ── Step-5 preview zoom — Tailwind default breakpoints ──────────────
+   The A4 InvoicePreview div is 210mm wide. zoom scales it to fit inside
+   the dialog at each size. Padding gives breathing room around the sheet.
+   ─────────────────────────────────────────────────────────────────── */
+.wiz-zoom { zoom: 0.55; padding: 3mm; }
+
+@media (min-width: 640px)  { .wiz-zoom { zoom: 0.60; padding: 3.5mm; } }
+@media (min-width: 768px)  { .wiz-zoom { zoom: 0.68; padding: 4mm;   } }
+@media (min-width: 1024px) { .wiz-zoom { zoom: 0.78; padding: 5mm;   } }
+@media (min-width: 1280px) { .wiz-zoom { zoom: 0.84; padding: 5mm;   } }
+@media (min-width: 1536px) { .wiz-zoom { zoom: 0.90; padding: 6mm;   } }
+`;
+
+function WizardStyles() {
+    return <style>{WIZARD_CSS}</style>;
+}
 
 function newItem(): ItemDraft {
     return {
@@ -237,7 +267,6 @@ export function Wizard({
     const [datePickerOpen, setDatePickerOpen] = useState(false);
     const [rangeDraft, setRangeDraft] = useState<DateRange | undefined>(undefined);
 
-    // Step-6 completion state
     const [sentInfo, setSentInfo] = useState<{
         number: string;
         id: string;
@@ -249,7 +278,6 @@ export function Wizard({
 
     const customer = customers.find((c) => c.id === customerId);
 
-    // Seed the picker's working range from the committed dates each time it opens.
     useEffect(() => {
         if (datePickerOpen) {
             setRangeDraft({
@@ -260,8 +288,6 @@ export function Wizard({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [datePickerOpen]);
 
-    // Best-effort preview of the next invoice number. If the endpoint
-    // doesn't exist we silently fall back to "Draft" in the UI.
     useEffect(() => {
         if (step === 6 && !sentInfo && !previewFetched) {
             setPreviewFetched(true);
@@ -390,8 +416,6 @@ export function Wizard({
             const number: string =
                 sendJson?.data?.number ?? json?.data?.number ?? "—";
 
-            // Public share/pay link. Adjust the route if your app uses
-            // /pay/[id], /i/[id], etc.
             const payLink = `${window.location.origin}/invoices/${newId}`;
 
             setSentInfo({ number, id: newId, payLink });
@@ -428,19 +452,24 @@ export function Wizard({
 
     function renderStepContent() {
         switch (step) {
+
             // ── Step 1: pick a customer ──────────────────────────────────────
             case 1:
                 return (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-3 sm:gap-4">
 
-                        <InputGroup className="bg-[#171717]/20! w-full py-6 border-white/10 w-full ">
-                            <InputGroupAddon className="bg-[#171717]/20!">
+                        {/* Search — height scales with the dialog */}
+                        <InputGroup className="bg-[#171717]/20! border-white/10 w-full py-2 sm:py-3 md:py-4  h-9 sm:h-10 md:h-11 lg:h-12 md:text-base
+">
+                            <InputGroupAddon className="bg-[#171717]/20! pl-2 sm:pl-2.5 md:pl-3">
                                 <svg
                                     width="12"
                                     height="12"
                                     viewBox="0 0 12 12"
                                     fill="none"
                                     xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                    className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 lg:w-5 lg:h-5 shrink-0"
                                 >
                                     <path
                                         d="M9.89181 4.9459C9.89181 2.21947 7.67233 0 4.9459 0C2.21947 0 0 2.21947 0 4.9459C0 7.67233 2.21947 9.89181 4.9459 9.89181C6.08964 9.89181 7.13447 9.50232 7.97527 8.84699L11.1283 12L12 11.1283L8.84699 7.97527C9.5218 7.10941 9.88937 6.04366 9.89181 4.9459ZM1.23648 4.9459C1.23648 2.89954 2.89954 1.23648 4.9459 1.23648C6.99227 1.23648 8.65533 2.89954 8.65533 4.9459C8.65533 6.99227 6.99227 8.65533 4.9459 8.65533C2.89954 8.65533 1.23648 6.99227 1.23648 4.9459Z"
@@ -452,22 +481,28 @@ export function Wizard({
                             <InputGroupInput
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="placeholder:text-[#737373] !ring-0 !outline-none"
+                                className="placeholder:text-[#737373] !ring-0 !outline-none text-sm sm:text-base md:text-lg
+
+
+                                "
                                 placeholder="Search..."
                             />
                         </InputGroup>
 
-
                         {filtered.length === 0 ? (
                             <StuckBox message="No customers found." />
                         ) : (
-                            <ul className="max-h-56 overflow-y-auto gap-4 flex flex-col">
+                            <ul className="
+                                max-h-40 sm:max-h-48 md:max-h-56 lg:max-h-64 xl:max-h-72 2xl:max-h-80
+                                overflow-y-auto flex flex-col gap-2 sm:gap-3
+                            ">
                                 {filtered.map(({ customer: c, match }) => (
                                     <li
                                         key={c.id}
                                         onClick={() => setCustomerId(c.id)}
                                         className={[
-                                            "flex flex-row items-center justify-start gap-20 border-2 p-2 cursor-pointer transition-colors",
+                                            "flex flex-row items-center gap-3 sm:gap-4 md:gap-5",
+                                            "border-2 p-2 sm:p-2.5 md:p-3 lg:p-3.5 cursor-pointer transition-colors",
                                             c.id === customerId
                                                 ? "border-white/40"
                                                 : "border-white/10",
@@ -476,17 +511,17 @@ export function Wizard({
                                         <Checkbox
                                             checked={c.id === customerId}
                                             onCheckedChange={() => setCustomerId(c.id)}
-                                            className="bg-transparent border-white/20"
+                                            className="bg-transparent border-white/20 shrink-0 h-4 w-4 md:h-5 md:w-5"
                                         />
-                                        <div className="flex flex-col gap-2 ">
-                                            <span className="font-medium text-lg">
+                                        <div className="flex flex-col gap-1 sm:gap-1.5 min-w-0">
+                                            <span className="font-medium text-sm sm:text-base md:text-lg truncate">
                                                 <Highlight
                                                     text={c.name}
                                                     indices={match.name?.indices}
                                                 />
                                             </span>
                                             {(c.gstin || c.city) && (
-                                                <span className="text-md italic">
+                                                <span className="text-xs sm:text-sm italic text-muted-foreground truncate">
                                                     {c.gstin && (
                                                         <Highlight
                                                             text={c.gstin}
@@ -513,11 +548,14 @@ export function Wizard({
             // ── Step 2: line items ───────────────────────────────────────────
             case 2:
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4 md:space-y-5">
                         {items.map((it, idx) => (
-                            <div key={it.id} className="rounded-md border border-white/10 p-3 space-y-3">
+                            <div
+                                key={it.id}
+                                className="rounded-md border border-white/10 p-2.5 sm:p-3 md:p-4 space-y-2 sm:space-y-3"
+                            >
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-muted-foreground">
+                                    <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-muted-foreground">
                                         Item {idx + 1}
                                     </span>
                                     {items.length > 1 && (
@@ -526,7 +564,7 @@ export function Wizard({
                                             onClick={() => removeItem(it.id)}
                                             className="text-muted-foreground hover:text-destructive transition-colors"
                                         >
-                                            <X className="h-3.5 w-3.5" />
+                                            <X className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
                                         </button>
                                     )}
                                 </div>
@@ -542,7 +580,7 @@ export function Wizard({
                                     />
                                 </Field>
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                     <Field>
                                         <FieldLabel htmlFor={`hsn-${it.id}`}>HSN / SAC</FieldLabel>
                                         <Input
@@ -565,7 +603,7 @@ export function Wizard({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {unitItems.map((item) => (
-                                                    <SelectItem key={item.value} value={item.value}>
+                                                    <SelectItem key={item.value} value={item.value} className="md:text-base">
                                                         {item.label}
                                                     </SelectItem>
                                                 ))}
@@ -574,7 +612,7 @@ export function Wizard({
                                     </Field>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                     <Field>
                                         <FieldLabel htmlFor={`qty-${it.id}`}>Qty</FieldLabel>
                                         <Input
@@ -607,7 +645,7 @@ export function Wizard({
                                     </Field>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                     <Field>
                                         <FieldLabel htmlFor={`gst-${it.id}`}>GST %</FieldLabel>
                                         <Select
@@ -622,7 +660,7 @@ export function Wizard({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {gstItems.map((item) => (
-                                                    <SelectItem key={item.value} value={item.value}>
+                                                    <SelectItem key={item.value} value={item.value} className="md:text-base">
                                                         {item.label}
                                                     </SelectItem>
                                                 ))}
@@ -632,7 +670,7 @@ export function Wizard({
 
                                     <Field>
                                         <FieldLabel htmlFor={`disc-${it.id}`}>Discount</FieldLabel>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1 sm:gap-1.5">
                                             <Select
                                                 items={discountTypeItems}
                                                 value={it.discountType}
@@ -642,12 +680,12 @@ export function Wizard({
                                                     })
                                                 }
                                             >
-                                                <SelectTrigger className={fieldSurface}>
+                                                <SelectTrigger className={`${fieldSurface} w-16 sm:w-20 md:w-24 shrink-0`}>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {discountTypeItems.map((item) => (
-                                                        <SelectItem key={item.value} value={item.value}>
+                                                        <SelectItem key={item.value} value={item.value} className="md:text-base">
                                                             {item.label}
                                                         </SelectItem>
                                                     ))}
@@ -672,7 +710,7 @@ export function Wizard({
 
                         <Button
                             variant="outline"
-                            className="w-full"
+                            className="w-full text-sm sm:text-base md:text-lg h-9 sm:h-10 md:h-11"
                             onClick={() => setItems((prev) => [...prev, newItem()])}
                         >
                             + Add Item
@@ -683,8 +721,8 @@ export function Wizard({
             // ── Step 3: dates & supply settings ─────────────────────────────
             case 3:
                 return (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-3 sm:space-y-4 md:space-y-5">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
                             <Field>
                                 <FieldLabel>Invoice Date</FieldLabel>
                                 <Button
@@ -693,7 +731,7 @@ export function Wizard({
                                     className={`${fieldSurface} w-full justify-start text-left font-normal`}
                                     onClick={() => setDatePickerOpen(true)}
                                 >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    <CalendarIcon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 shrink-0" />
                                     {invoiceDate ? (
                                         format(parseISO(invoiceDate), "MMM d, yyyy")
                                     ) : (
@@ -710,7 +748,7 @@ export function Wizard({
                                     className={`${fieldSurface} w-full justify-start text-left font-normal`}
                                     onClick={() => setDatePickerOpen(true)}
                                 >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    <CalendarIcon className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 shrink-0" />
                                     {dueDate ? (
                                         format(parseISO(dueDate), "MMM d, yyyy")
                                     ) : (
@@ -736,14 +774,14 @@ export function Wizard({
                                 id="reverseCharge"
                                 checked={reverseCharge}
                                 onChange={(e) => setReverseCharge(e.target.checked)}
-                                className="h-4 w-4 accent-primary"
+                                className="h-4 w-4 md:h-5 md:w-5 accent-primary"
                             />
-                            <span className="text-sm">Reverse Charge Applicable</span>
+                            <span className="text-sm sm:text-base">Reverse Charge Applicable</span>
                         </label>
 
                         <Dialog open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                            <DialogContent className="w-full bg-[#192221]!">
-                                <DialogHeader className="">
+                            <DialogContent className="w-full sm:max-w-md md:max-w-lg bg-[#192221]!">
+                                <DialogHeader>
                                     <DialogTitle className="font-sans">Select invoice &amp; due date</DialogTitle>
                                 </DialogHeader>
                                 <AnimatedRangeCalendar
@@ -751,7 +789,12 @@ export function Wizard({
                                     onChange={handleRangeChange}
                                 />
                                 <DialogFooter>
-                                    <Button onClick={() => setDatePickerOpen(false)}>Done</Button>
+                                    <Button
+                                        onClick={() => setDatePickerOpen(false)}
+                                        className="h-9 sm:h-10 md:h-11 text-sm sm:text-base"
+                                    >
+                                        Done
+                                    </Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
@@ -761,14 +804,14 @@ export function Wizard({
             // ── Step 4: review summary ───────────────────────────────────────
             case 4:
                 return (
-                    <div className="space-y-3 text-sm px-2">
+                    <div className="space-y-2.5 sm:space-y-3 md:space-y-4 text-sm px-1 sm:px-2">
                         {/* Bill to */}
-                        <div className="rounded-md border border-white/10 p-3">
-                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                        <div className="rounded-md border border-white/10 p-2.5 sm:p-3 md:p-4">
+                            <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1 sm:mb-1.5">
                                 Bill To
                             </div>
-                            <div className="font-semibold">{customer?.name ?? "—"}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                            <div className="font-semibold text-sm sm:text-base md:text-lg">{customer?.name ?? "—"}</div>
+                            <div className="text-xs sm:text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
                                 {customer?.city && (
                                     <>
                                         {customer.city}
@@ -786,9 +829,9 @@ export function Wizard({
                         </div>
 
                         {/* Invoice meta */}
-                        <div className="rounded-md border border-white/10 p-3 grid grid-cols-2 gap-y-2 gap-x-3 text-xs">
+                        <div className="rounded-md border border-white/10 p-2.5 sm:p-3 md:p-4 grid grid-cols-2 gap-y-1.5 sm:gap-y-2 gap-x-2 sm:gap-x-3 text-xs sm:text-sm md:text-base">
                             <div>
-                                <div className="text-muted-foreground">Invoice Date</div>
+                                <div className="text-muted-foreground text-[10px] sm:text-xs">Invoice Date</div>
                                 <div className="font-medium tabular-nums">
                                     {invoiceDate
                                         ? format(parseISO(invoiceDate), "dd MMM yyyy")
@@ -796,27 +839,27 @@ export function Wizard({
                                 </div>
                             </div>
                             <div>
-                                <div className="text-muted-foreground">Due Date</div>
+                                <div className="text-muted-foreground text-[10px] sm:text-xs">Due Date</div>
                                 <div className="font-medium tabular-nums">
                                     {dueDate ? format(parseISO(dueDate), "dd MMM yyyy") : "—"}
                                 </div>
                             </div>
                             <div>
-                                <div className="text-muted-foreground">Place of Supply</div>
+                                <div className="text-muted-foreground text-[10px] sm:text-xs">Place of Supply</div>
                                 <div className="font-medium">{placeOfSupply || "—"}</div>
                             </div>
                             <div>
-                                <div className="text-muted-foreground">Reverse Charge</div>
+                                <div className="text-muted-foreground text-[10px] sm:text-xs">Reverse Charge</div>
                                 <div className="font-medium">{reverseCharge ? "Yes" : "No"}</div>
                             </div>
                         </div>
 
                         {/* Items */}
                         <div className="rounded-md border border-white/10 overflow-hidden">
-                            <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 border-b border-white/10">
+                            <div className="text-[9px] sm:text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2.5 sm:px-3 py-1.5 sm:py-2 border-b border-white/10">
                                 Items ({items.length})
                             </div>
-                            <table className="w-full text-xs">
+                            <table className="w-full text-[10px] sm:text-xs md:text-sm">
                                 <thead className="text-muted-foreground">
                                     <tr className="border-b border-white/10">
                                         <th className="text-left px-2 py-1.5 font-medium">Description</th>
@@ -835,7 +878,7 @@ export function Wizard({
                                                 key={it.id}
                                                 className="border-b border-white/5 last:border-0"
                                             >
-                                                <td className="px-2 py-1.5 truncate max-w-[140px]">
+                                                <td className="px-2 py-1.5 truncate max-w-[100px] sm:max-w-[140px] md:max-w-[200px]">
                                                     {it.description || (
                                                         <span className="text-muted-foreground italic">
                                                             Untitled
@@ -863,7 +906,7 @@ export function Wizard({
 
                         {/* Totals */}
                         {totals ? (
-                            <div className="rounded-md border border-white/10 p-3 text-xs">
+                            <div className="rounded-md border border-white/10 p-2.5 sm:p-3 md:p-4 text-xs sm:text-sm md:text-base">
                                 <div className="flex justify-between py-0.5">
                                     <span className="text-muted-foreground">Taxable Value</span>
                                     <span className="tabular-nums">
@@ -902,13 +945,13 @@ export function Wizard({
                                         </span>
                                     </div>
                                 )}
-                                <div className="flex justify-between mt-1.5 pt-2 border-t border-white/10 font-semibold text-sm">
+                                <div className="flex justify-between mt-1.5 pt-2 border-t border-white/10 font-semibold text-sm sm:text-base md:text-lg">
                                     <span>Total</span>
                                     <span className="tabular-nums">
                                         {formatINR(totals.totalPaise)}
                                     </span>
                                 </div>
-                                <div className="text-[11px] text-muted-foreground italic pt-2">
+                                <div className="text-[10px] sm:text-xs text-muted-foreground italic pt-2">
                                     {numberToWordsIndian(totals.totalPaise / 100)} Rupees only
                                 </div>
                             </div>
@@ -926,15 +969,15 @@ export function Wizard({
                     );
                 }
                 return (
-                    <div className="space-y-3">
-                        <p className="text-xs text-muted-foreground text-center">
+                    <div className="space-y-2 sm:space-y-3">
+                        <p className="text-xs sm:text-sm text-muted-foreground text-center">
                             Live preview — the final invoice number is assigned when you save.
                         </p>
                         <div
                             className="mx-auto overflow-auto rounded-lg border border-white/10"
-                            style={{ maxHeight: "65vh", maxWidth: "100%", background: "#e5e7eb" }}
+                            style={{ background: "#e5e7eb" }}
                         >
-                            <div style={{ zoom: 0.65, padding: "4mm" }}>
+                            <div className="wiz-zoom">
                                 <div style={{ background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }}>
                                     <InvoicePreview
                                         business={business}
@@ -957,36 +1000,33 @@ export function Wizard({
                 // ── Success state ────────────────────────────────────────────
                 if (sentInfo) {
                     return (
-                        <div className="space-y-4 flex flex-col gap-4">
-                            <div className="rounded-md p-4 bg-[#235C49]">
-                                <div className="flex items-center gap-2 text-white-500 font-semibold">
-                                    <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <div className="flex flex-col gap-3 sm:gap-4">
+                            <div className="rounded-md p-3 sm:p-4 md:p-5 bg-[#235C49]">
+                                <div className="flex items-center gap-2 text-white font-semibold text-sm sm:text-base md:text-lg">
+                                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 shrink-0" />
                                     <span>Invoice sent successfully</span>
                                 </div>
-                                <div className="text-sm text-white mt-1 ml-7">
+                                <div className="text-xs sm:text-sm text-white mt-1 ml-6 sm:ml-7 md:ml-8">
                                     {sentInfo.number} · {customer?.name}
                                 </div>
 
                                 <button
                                     type="button"
                                     onClick={copyPayLink}
-                                    className="mt-4 w-full gap-2 rounded-md flex flex-row items-center justify-center bg-white  p-3 text-left transition-colors"
+                                    className="mt-3 sm:mt-4 w-full gap-2 rounded-md flex flex-row items-center justify-center bg-white p-2.5 sm:p-3 md:p-3.5 text-left transition-colors"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5">
                                         <path d="M2.18305 10.1842C1.44966 10.1842 0.849609 9.58413 0.849609 8.85074V2.18354C0.849609 1.45015 1.44966 0.850098 2.18305 0.850098H8.85025C9.58364 0.850098 10.1837 1.45015 10.1837 2.18354M6.18337 4.85042H12.8506C13.587 4.85042 14.184 5.44742 14.184 6.18386V12.8511C14.184 13.5875 13.587 14.1845 12.8506 14.1845H6.18337C5.44693 14.1845 4.84993 13.5875 4.84993 12.8511V6.18386C4.84993 5.44742 5.44693 4.85042 6.18337 4.85042Z" strokeWidth="1.7" strokeLinecap="round" stroke="#235C49" />
                                     </svg>
-
-                                    <div className="text-xs text-[#235C49]">
+                                    <div className="text-xs sm:text-sm md:text-base text-[#235C49]">
                                         {copied ? "Copied to clipboard!" : "Copy pay link"}
                                     </div>
-
-
                                 </button>
                             </div>
 
                             <Link
                                 href="/invoices"
-                                className="flex font-medium items-center justify-center rounded-md border border-white/10  text-lg text-white bg-[#144733]  py-2 px-2"
+                                className="flex font-medium items-center justify-center rounded-md border border-white/10 text-sm sm:text-base md:text-lg text-white bg-[#144733] py-2 sm:py-2.5 md:py-3 px-3 sm:px-4"
                             >
                                 Back To Invoices
                             </Link>
@@ -996,16 +1036,16 @@ export function Wizard({
 
                 // ── Preview / confirm state ──────────────────────────────────
                 return (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                         {error && (
-                            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs sm:text-sm text-destructive">
                                 {error}
                             </div>
                         )}
 
                         <div>
-                            <div className="text-base font-semibold">Invoice Created</div>
-                            <div className="text-sm text-muted-foreground mt-1">
+                            <div className="text-sm sm:text-base md:text-lg font-semibold">Invoice Created</div>
+                            <div className="text-xs sm:text-sm text-muted-foreground mt-1">
                                 Your Tax Invoice is ready for{" "}
                                 <span className="text-foreground font-medium">
                                     {customer?.name ?? "—"}
@@ -1014,27 +1054,25 @@ export function Wizard({
                             </div>
                         </div>
 
-                        <div className="rounded-md border border-white/10 p-4">
+                        <div className="rounded-md border border-white/10 p-3 sm:p-4 md:p-5">
                             <div className="text-center">
-                                <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                                <div className="text-[10px] sm:text-xs font-mono uppercase tracking-wider text-muted-foreground">
                                     {previewNumber ?? "Draft"}
                                 </div>
-                                <div className="font-semibold mt-1">
+                                <div className="font-semibold mt-1 text-sm sm:text-base md:text-lg">
                                     {customer?.name ?? "—"}
                                 </div>
                                 {(customer?.stateCode || customer?.gstin) && (
-                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                    <div className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
                                         ({customer.gstin ?? customer.stateCode ?? customer.city})
                                     </div>
                                 )}
-                                <div className="text-2xl font-semibold tabular-nums mt-3">
+                                <div className="text-xl sm:text-2xl md:text-3xl font-semibold tabular-nums mt-2 sm:mt-3">
                                     {totals ? formatINR(totals.totalPaise) : "—"}
                                 </div>
-                                <div className="border-t border-white/10 mt-3 pt-3 text-xs space-y-1.5 text-left">
+                                <div className="border-t border-white/10 mt-2 sm:mt-3 pt-2 sm:pt-3 text-[10px] sm:text-xs md:text-sm space-y-1 sm:space-y-1.5 text-left">
                                     <div className="flex justify-between">
-                                        <span className="text-muted-foreground">
-                                            Invoice date
-                                        </span>
+                                        <span className="text-muted-foreground">Invoice date</span>
                                         <span className="tabular-nums">
                                             {invoiceDate
                                                 ? format(parseISO(invoiceDate), "dd MMM yyyy")
@@ -1053,28 +1091,25 @@ export function Wizard({
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-xs text-white">
-                            <span>Invoice
-
-                                {busyAction === "send" ? " sent " : " created "}
-
-                                · actions complete</span>
+                        <div className="flex items-center gap-2 text-[10px] sm:text-xs md:text-sm text-white">
+                            <span>
+                                Invoice{busyAction === "send" ? " sent " : " created "}&middot; actions complete
+                            </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
                             <Button
                                 variant="outline"
                                 disabled={busyAction !== null || !totals}
                                 onClick={saveAsDraft}
-                                className="bg-[transparent]! text-white rounded-sm"
+                                className="bg-[transparent]! text-white rounded-sm text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                             >
                                 {busyAction === "draft" ? "Saving…" : "Save as Draft"}
                             </Button>
                             <Button
                                 disabled={busyAction !== null || !totals}
                                 onClick={sendInvoice}
-                                className="bg-[#144733]/63! text-white rounded-sm"
-
+                                className="bg-[#144733]/63! text-white rounded-sm text-xs sm:text-sm md:text-base h-9 sm:h-10 md:h-11"
                             >
                                 {busyAction === "send" ? "Sending…" : "Send Invoice"}
                             </Button>
@@ -1090,7 +1125,8 @@ export function Wizard({
     // ─── shell ───────────────────────────────────────────────────────────────
 
     return (
-        <main className="pt-14">
+        <main className="pt-14 sm:pt-16 md:pt-20 lg:pt-24">
+            <WizardStyles />
             <Dialog
                 open
                 onOpenChange={(open) => {
@@ -1104,22 +1140,30 @@ export function Wizard({
                 }}
             >
                 <DialogContent
-                    className={`bg-[#192221]! ${step === 5 ? "sm:max-w-2xl" : "sm:max-w-sm"}`}
+                    className={`bg-[#192221]! ${step === 5
+                        ? "sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl"
+                        : "sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-xl"
+                        }`}
                 >
                     <DialogHeader className="flex flex-row items-center justify-between pr-0">
-                        <DialogTitle>New Invoice</DialogTitle>
+                        <DialogTitle className="text-sm sm:text-base md:text-lg">New Invoice</DialogTitle>
                         <DialogClose className="rounded-sm opacity-50 hover:opacity-100 transition-opacity">
-                            <X className="h-4 w-4" />
+                            <X className="h-4 w-4 md:h-5 md:w-5" />
                         </DialogClose>
                     </DialogHeader>
 
                     <StepProgress
                         labels={STEP_LABELS}
                         current={step}
-                        className="py-4"
+                        className="py-3 sm:py-4 md:py-5"
                     />
 
-                    <div className="overflow-y-auto max-h-[60vh] px-0.5">
+                    <div className="
+                        overflow-y-auto
+                        max-h-[52vh] sm:max-h-[56vh] md:max-h-[60vh]
+                        lg:max-h-[64vh] xl:max-h-[66vh] 2xl:max-h-[68vh]
+                        px-0.5
+                    ">
                         {renderStepContent()}
                     </div>
 
@@ -1130,11 +1174,15 @@ export function Wizard({
                                     <Button
                                         variant="outline"
                                         onClick={() => setStep((s) => Math.max(s - 1, 1))}
+                                        className="text-sm sm:text-base h-9 sm:h-10 md:h-11"
                                     >
                                         Back
                                     </Button>
                                 )}
-                                <Button onClick={() => setStep((s) => Math.min(s + 1, 6))}>
+                                <Button
+                                    onClick={() => setStep((s) => Math.min(s + 1, 6))}
+                                    className="text-sm sm:text-base h-9 sm:h-10 md:h-11"
+                                >
                                     Next
                                 </Button>
                             </>
@@ -1147,6 +1195,9 @@ export function Wizard({
 }
 
 // ─── live A4 invoice preview ─────────────────────────────────────────────────
+// This component is intentionally NOT made responsive — it represents an A4
+// paper document at fixed print dimensions. The parent .wiz-zoom CSS class
+// handles viewport-aware scaling of the whole sheet.
 
 function InvoicePreview({
     business,

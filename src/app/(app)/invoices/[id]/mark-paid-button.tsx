@@ -2,10 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // ─── outline icons ───────────────────────────────────────────────────────────
+// Capped at h-4 (16px) — same fix as the rest of the action grid.
 
-function IconRupee({ className = "h-3.5 w-3.5" }: { className?: string }) {
+const ICON_STD =
+  "h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 lg:h-4 lg:w-4 xl:h-4 xl:w-4";
+
+function IconRupee({ className = ICON_STD }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -25,8 +35,16 @@ function IconRupee({ className = "h-3.5 w-3.5" }: { className?: string }) {
   );
 }
 
+// fieldSurface scales the box AND the text inside together. The control's
+// height comes from py-* + text-* + line-height, not a fixed h-*, so the
+// input chrome and its text both grow in lockstep at every breakpoint —
+// the exact bug flagged for input groups.
 const fieldSurface =
-  "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark]";
+  "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark] " +
+  "sm:rounded-lg sm:px-3 sm:py-2 sm:text-sm " +
+  "md:rounded-xl md:px-3.5 md:py-2.5 md:text-base " +
+  "lg:rounded-xl lg:px-4 lg:py-3 lg:text-base " +
+  "xl:rounded-xl xl:px-4 xl:py-3 xl:text-lg";
 
 export function MarkPaidButton({
   invoiceId,
@@ -76,53 +94,72 @@ export function MarkPaidButton({
   }
 
   return (
-    // self-start: without this, an open form below the trigger makes this
-    // grid cell taller than its siblings, and in a 2-column grid row
-    // (items are stretched by default) that extra height can pull the
-    // neighboring button's wrapper taller even though the button itself
-    // didn't change. self-start pins this cell to the top of its row so
-    // only the trigger button participates in row-height matching.
-    <div className="self-start">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-4 text-sm font-medium text-white hover:bg-white/5"
-      >
-        <IconRupee />
-        Record payment
-      </button>
-
-      {open && (
-        <form
-          onSubmit={submit}
-          className="mt-2 space-y-2 rounded-lg border border-white/10 bg-[#171717]/20 p-3"
+    <>
+      {/* self-start keeps this trigger pinned to the top of its grid cell.
+          The form now lives in a portal (shadcn Dialog), so it can never
+          grow this cell — but self-start still keeps the button aligned
+          with its row siblings when another cell in the row is taller. */}
+      <div className="self-start">
+        <button
+          onClick={() => setOpen(true)}
+          className="flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 text-center text-sm font-medium text-white hover:bg-white/5 sm:h-11 sm:gap-1.5 sm:rounded-lg sm:px-4 sm:text-sm md:h-12 md:gap-2 md:rounded-xl md:px-4 md:text-base lg:h-12 lg:gap-2 lg:rounded-xl lg:px-5 lg:text-base xl:h-14 xl:gap-2.5 xl:rounded-xl xl:px-6 xl:text-lg"
         >
-          <input
-            type="number"
-            step="0.01"
-            min="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder="Amount ₹"
-            className={fieldSurface}
-            required
-          />
-          <input
-            type="text"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            placeholder="Reference (TXN1234, optional)"
-            className={fieldSurface}
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-[#0F5C4E] py-2 text-xs font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50"
+          <IconRupee />
+          Record payment
+        </button>
+      </div>
+
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          // Clear any stale error from a previous attempt when reopening.
+          if (v) setError(null);
+        }}
+      >
+        <DialogContent className="bg-[#192221]! sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-sans text-sm sm:text-base md:text-lg lg:text-lg xl:text-xl">
+              Record payment
+            </DialogTitle>
+          </DialogHeader>
+
+          <form
+            onSubmit={submit}
+            className="space-y-2 md:space-y-2.5 lg:space-y-3 xl:space-y-3.5"
           >
-            {busy ? "Recording…" : "Confirm payment"}
-          </button>
-          {error && <p className="text-xs text-[#FF9B8F]">{error}</p>}
-        </form>
-      )}
-    </div>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="Amount ₹"
+              className={fieldSurface}
+              required
+            />
+            <input
+              type="text"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="Reference (TXN1234, optional)"
+              className={fieldSurface}
+            />
+            <button
+              type="submit"
+              disabled={busy}
+              className="h-9 w-full rounded-lg bg-[#0F5C4E] text-xs font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50 sm:h-9 sm:rounded-lg sm:text-sm md:h-10 md:rounded-xl md:text-sm lg:h-11 lg:rounded-xl lg:text-base xl:h-12 xl:rounded-xl xl:text-base"
+            >
+              {busy ? "Recording…" : "Confirm payment"}
+            </button>
+            {error && (
+              <p className="text-xs text-[#FF9B8F] sm:text-xs md:text-sm lg:text-sm xl:text-base">
+                {error}
+              </p>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
