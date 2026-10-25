@@ -30,8 +30,9 @@ function useInView<T extends HTMLElement>(threshold = 0.12) {
         const el = ref.current;
         if (!el) return;
         const obs = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
+            (entries) => {
+                const entry = entries[0];
+                if (entry?.isIntersecting) {
                     setInView(true);
                     obs.disconnect();
                 }
