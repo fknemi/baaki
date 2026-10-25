@@ -292,17 +292,17 @@ function fuzzyMatch(query: string, text: string): FuzzyResult | null {
     const indices: number[] = [];
     let ti = 0;
     for (let qi = 0; qi < q.length; qi++) {
-        const idx = t.indexOf(q[qi], ti);
+        const idx = t.indexOf(q[qi] ?? "", ti);
         if (idx === -1) return null;
         indices.push(idx);
         ti = idx + 1;
     }
 
     let score = 100;
-    score -= indices[0] * 0.5;
+    score -= (indices[0] ?? 0) * 0.5;
     score -= (text.length - q.length) * 0.1;
     for (let i = 1; i < indices.length; i++) {
-        const gap = indices[i] - indices[i - 1] - 1;
+        const gap = (indices[i] ?? 0) - (indices[i - 1] ?? 0) - 1;
         score += gap === 0 ? 4 : -gap * 0.5;
     }
     return { score, indices };
@@ -404,9 +404,9 @@ function Highlight({
         const match = set.has(i);
         const last = groups[groups.length - 1];
         if (last && last.match === match) {
-            last.text += text[i];
+            last.text += text[i] ?? "";
         } else {
-            groups.push({ text: text[i], match });
+            groups.push({ text: text[i] ?? "", match });
         }
     }
 
@@ -487,9 +487,9 @@ export function InvoicesClient({
     }, [filtered]);
 
     useEffect(() => {
-        setVisibleCount(INITIAL_MONTHS);
+        const timeout = setTimeout(() => setVisibleCount(INITIAL_MONTHS), 0);
+        return () => clearTimeout(timeout);
     }, [query, filters]);
-
     const totalMonths = grouped.length;
     const visibleGroups = grouped.slice(0, visibleCount);
     const hasMore = visibleCount < totalMonths;
@@ -501,7 +501,7 @@ export function InvoicesClient({
 
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && !loadingMore) {
+                if (entries[0]?.isIntersecting && !loadingMore) {
                     setLoadingMore(true);
                 }
             },
@@ -633,8 +633,8 @@ export function InvoicesClient({
                                             className="inv-row"
                                             style={at(
                                                 frameBase +
-                                                    80 +
-                                                    Math.min(rowIdx * ROW_STEP, ROW_CAP),
+                                                80 +
+                                                Math.min(rowIdx * ROW_STEP, ROW_CAP),
                                             )}
                                         >
                                             <Link

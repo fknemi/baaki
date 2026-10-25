@@ -167,9 +167,9 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
 
     // ── Close on route change ─────────────────────────────────────
     useEffect(() => {
-        setOpen(false);
+        const t = setTimeout(() => setOpen(false), 0);
+        return () => clearTimeout(t);
     }, [pathname]);
-
     // ── Lock body scroll while open ───────────────────────────────
     useEffect(() => {
         if (!open) return;

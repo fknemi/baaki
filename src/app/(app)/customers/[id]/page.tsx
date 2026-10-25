@@ -81,11 +81,6 @@ const ACTION_BTN =
     "lg:h-12 lg:gap-2 lg:rounded-xl lg:px-5 lg:text-base " +
     "xl:h-14 xl:gap-2.5 xl:rounded-xl xl:px-6 xl:text-lg";
 
-function maskGstin(g: string | null): string {
-    if (!g) return "—";
-    if (g.length !== 15) return g;
-    return g.slice(0, 4) + "*******" + g.slice(11);
-}
 
 function langLabel(l: string): string {
     return l === "hi" ? "हिंदी" : "English";
@@ -127,9 +122,11 @@ export default function CustomerDetailPage() {
     }, [id]);
 
     useEffect(() => {
-        void reload();
+        const timeout = setTimeout(() => {
+            void reload();
+        }, 0);
+        return () => clearTimeout(timeout);
     }, [reload]);
-
     const openInvoices = useMemo(
         () =>
             (invoices ?? []).filter(
@@ -147,6 +144,7 @@ export default function CustomerDetailPage() {
         setError(null);
         try {
             const first = openInvoices[0];
+            if (!first) return;
             const res = await fetch(`/api/invoices/${first.id}/pay-link`, {
                 method: "POST",
             });
@@ -229,9 +227,8 @@ export default function CustomerDetailPage() {
                             ✎ Edit
                         </button>
                         <span
-                            className={`${GRADE_BADGE} ${
-                                GRADE_COLOR[customer.grade] ?? "bg-[#5A6170] text-white"
-                            }`}
+                            className={`${GRADE_BADGE} ${GRADE_COLOR[customer.grade] ?? "bg-[#5A6170] text-white"
+                                }`}
                             aria-label={`Grade ${customer.grade}`}
                         >
                             {customer.grade}

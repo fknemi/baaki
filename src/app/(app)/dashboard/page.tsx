@@ -1,3 +1,4 @@
+// src/app/(app)/dashboard/page.tsx
 "use client";
 
 import {
@@ -629,7 +630,8 @@ export default function DashboardPage() {
         return Array.from(map.entries());
     }, [dateOptions]);
 
-    async function handleDateChange(v: string) {
+    async function handleDateChange(v: string | null) {
+        if (!v) return;
         const isoDate = v === "today" ? null : v;
         try {
             setRefreshing(true);
@@ -1024,11 +1026,10 @@ export default function DashboardPage() {
                                         <Link
                                             href={`/invoices/${c.invoiceId}`}
                                             style={at(slot(7) + CONTENT_LAG + 200 + idx * 90)}
-                                            className={`dash-rowlink group/row flex w-full min-w-0 flex-row items-center justify-between gap-2 p-2 hover:bg-white/5 sm:gap-3 sm:p-3 md:gap-4 lg:p-4 ${
-                                                idx === 0
-                                                    ? "dash-pulse border-2 border-[#1C6C18]"
-                                                    : `${isFirstLoad ? "dash-row" : ""} border border-[#FFF]/10`
-                                            }`}
+                                            className={`dash-rowlink group/row flex w-full min-w-0 flex-row items-center justify-between gap-2 p-2 hover:bg-white/5 sm:gap-3 sm:p-3 md:gap-4 lg:p-4 ${idx === 0
+                                                ? "dash-pulse border-2 border-[#1C6C18]"
+                                                : `${isFirstLoad ? "dash-row" : ""} border border-[#FFF]/10`
+                                                }`}
                                         >
                                             <div className="dash-nudge-s flex min-w-0 flex-1 flex-col justify-center text-left">
                                                 <h2 className="truncate text-sm sm:text-base lg:text-lg xl:text-xl">

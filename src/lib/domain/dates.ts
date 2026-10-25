@@ -3,7 +3,7 @@
 
 import type { expenses } from "@/lib/db/schema";
 type ExpenseRow = typeof expenses.$inferSelect;
-
+type ExpenseForDue = Pick<ExpenseRow, "recurrence" | "dueDate" | "dayOfMonth">;
 
 
 

@@ -8,7 +8,10 @@ export function ThemeToggle() {
     const [mounted, setMounted] = useState(false);
 
     // avoid hydration mismatch — theme is only known on the client
-    useEffect(() => setMounted(true), []);
+    useEffect(() => {
+        const t = setTimeout(() => setMounted(true), 0);
+        return () => clearTimeout(t);
+    }, []);
     if (!mounted) return <button className="h-9 w-9" aria-hidden />;
 
     const isDark = resolvedTheme === "dark";

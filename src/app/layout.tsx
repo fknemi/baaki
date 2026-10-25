@@ -1,9 +1,9 @@
+/* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { ThemeProvider } from 'next-themes';
 import './globals.css';
 import Navbar from '@/components/navbar';
-import Footer from '@/components/footer';
 import { LocaleProvider, type Locale } from '@/lib/i18n/t';
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/lib/db/client";

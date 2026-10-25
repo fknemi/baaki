@@ -10,8 +10,7 @@ const scriptOf = (s: string): Script =>
 
 const setOf = (s: Script): string => (s === 'devanagari' ? DEVANAGARI : LATIN);
 
-const randFrom = (set: string): string => set[Math.floor(Math.random() * set.length)];
-
+const randFrom = (set: string): string => set[Math.floor(Math.random() * set.length)]!;
 const scramble = (s: string): string => {
   const set = setOf(scriptOf(s));
   return [...s].map(c => (c === ' ' ? c : randFrom(set))).join('');

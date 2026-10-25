@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSetLocale, useLocale, useT } from '@/lib/i18n/t';
 
 type TextSize = 100 | 115 | 130;
@@ -8,10 +8,6 @@ const TEXT_KEY = "baaki.textSize";
 const CONTRAST_KEY = "baaki.highContrast";
 
 import { useDecrypt } from '@/hooks/use-decrypt';
-function randChar(target: string) {
-    const set = /[\u0900-\u097F]/.test(target) ? DEVANAGARI : LATIN;
-    return set[Math.floor(Math.random() * set.length)];
-}
 
 function readTextSize(): TextSize {
     if (typeof window === "undefined") return 100;
@@ -89,11 +85,11 @@ export function SettingsPreferences() {
 
     useEffect(() => {
         const stored = readTextSize();
-        setSizeState(stored);
+        setTimeout(() => setSizeState(stored), 0);
         applyTextSize(stored);
 
         const highContrast = window.localStorage.getItem(CONTRAST_KEY) === "true";
-        setContrastState(highContrast);
+        setTimeout(() => setContrastState(highContrast), 0);
         applyContrast(highContrast);
 
         fetch("/api/admin/demo-date")

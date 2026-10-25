@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 export default function LandingPage() {
     return (
@@ -33,7 +32,7 @@ export default function LandingPage() {
                     Money Owed.<br />
                     Money Delayed.
                 </h2>
-                <p className="text-base">You've  finished the work. You've sent the invoice. The customer said they'd  pay. And then weeks pass, and the invoice is still open, and you're  checking the bank balance again. Meanwhile the salaries, the rent, and  the GST keep coming due. The work is finished. The payment isn't.</p>
+                <p className="text-base">Youapos;ve  finished the work. Youapos;ve sent the invoice. The customer said theyapos;d  pay. And then weeks pass, and the invoice is still open, and youapos;re  checking the bank balance again. Meanwhile the salaries, the rent, and  the GST keep coming due. The work is finished. The payment isnapos;t.</p>
             </div>
 
             {/* 4. page blend */}

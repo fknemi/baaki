@@ -23,7 +23,7 @@ import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { CalendarIcon, CheckCircle2, Copy, X } from "lucide-react";
+import { CalendarIcon, CheckCircle2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StuckBox } from "@/components/domain/stuck-box";
@@ -160,17 +160,17 @@ function fuzzyMatch(query: string, text: string): FuzzyResult | null {
     const indices: number[] = [];
     let ti = 0;
     for (let qi = 0; qi < q.length; qi++) {
-        const idx = t.indexOf(q[qi], ti);
+        const idx = t.indexOf(q[qi] ?? "", ti);
         if (idx === -1) return null;
         indices.push(idx);
         ti = idx + 1;
     }
 
     let score = 100;
-    score -= indices[0] * 0.5;
+    score -= (indices[0] ?? 0) * 0.5;
     score -= (text.length - q.length) * 0.1;
     for (let i = 1; i < indices.length; i++) {
-        const gap = indices[i] - indices[i - 1] - 1;
+        const gap = (indices[i] ?? 0) - (indices[i - 1] ?? 0) - 1;
         score += gap === 0 ? 4 : -gap * 0.5;
     }
     return { score, indices };
@@ -217,9 +217,9 @@ function Highlight({
         const match = set.has(i);
         const last = groups[groups.length - 1];
         if (last && last.match === match) {
-            last.text += text[i];
+            last.text += text[i] ?? "";
         } else {
-            groups.push({ text: text[i], match });
+            groups.push({ text: text[i] ?? "", match });
         }
     }
 
@@ -277,25 +277,29 @@ export function Wizard({
     const [previewFetched, setPreviewFetched] = useState(false);
 
     const customer = customers.find((c) => c.id === customerId);
-
+    
     useEffect(() => {
-        if (datePickerOpen) {
+        if (!datePickerOpen) return;
+        const timeout = setTimeout(() => {
             setRangeDraft({
                 from: invoiceDate ? parseISO(invoiceDate) : undefined,
                 to: dueDate ? parseISO(dueDate) : undefined,
             });
-        }
+        }, 0);
+        return () => clearTimeout(timeout);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [datePickerOpen]);
 
     useEffect(() => {
-        if (step === 6 && !sentInfo && !previewFetched) {
+        if (!(step === 6 && !sentInfo && !previewFetched)) return;
+        const timeout = setTimeout(() => {
             setPreviewFetched(true);
             fetch("/api/invoices/next-number")
                 .then((r) => (r.ok ? r.json() : null))
                 .then((j) => setPreviewNumber(j?.data?.number ?? null))
                 .catch(() => setPreviewNumber(null));
-        }
+        }, 0);
+        return () => clearTimeout(timeout);
     }, [step, sentInfo, previewFetched]);
 
     function handleRangeChange(range: DateRange | undefined) {
@@ -459,8 +463,7 @@ export function Wizard({
                     <div className="flex flex-col gap-3 sm:gap-4">
 
                         {/* Search — height scales with the dialog */}
-                        <InputGroup className="bg-[#171717]/20! border-white/10 w-full py-2 sm:py-3 md:py-4  h-9 sm:h-10 md:h-11 lg:h-12 md:text-base
-">
+                        <InputGroup className="bg-[#171717]/20! border-white/10 w-full py-2 sm:py-3 md:py-4  h-9 sm:h-10 md:h-11 lg:h-12 md:text-base">
                             <InputGroupAddon className="bg-[#171717]/20! pl-2 sm:pl-2.5 md:pl-3">
                                 <svg
                                     width="12"
@@ -481,16 +484,13 @@ export function Wizard({
                             <InputGroupInput
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="placeholder:text-[#737373] !ring-0 !outline-none text-sm sm:text-base md:text-lg
-
-
-                                "
+                                className="placeholder:text-[#737373] !ring-0 !outline-none text-sm sm:text-base md:text-lg"
                                 placeholder="Search..."
                             />
                         </InputGroup>
 
                         {filtered.length === 0 ? (
-                            <StuckBox message="No customers found." />
+                            <StuckBox>No customers found.</StuckBox>
                         ) : (
                             <ul className="
                                 max-h-40 sm:max-h-48 md:max-h-56 lg:max-h-64 xl:max-h-72 2xl:max-h-80
@@ -956,7 +956,7 @@ export function Wizard({
                                 </div>
                             </div>
                         ) : (
-                            <StuckBox message="Fill in all items with a valid qty, rate, and discount to see totals." />
+                            <StuckBox>Fill in all items with a valid qty, rate, and discount to see totals.</StuckBox>
                         )}
                     </div>
                 );
@@ -965,7 +965,7 @@ export function Wizard({
             case 5:
                 if (!customer || !totals) {
                     return (
-                        <StuckBox message="Complete the customer and items to see the invoice preview." />
+                        <StuckBox>Complete the customer and items to see the invoice preview.</StuckBox>
                     );
                 }
                 return (
@@ -1152,12 +1152,9 @@ export function Wizard({
                         </DialogClose>
                     </DialogHeader>
 
-                    <StepProgress
-                        labels={STEP_LABELS}
-                        current={step}
-                        className="py-3 sm:py-4 md:py-5"
-                    />
-
+                    <div className="py-3 sm:py-4 md:py-5">
+                        <StepProgress labels={STEP_LABELS} current={step} total={STEP_LABELS.length} />
+                    </div>
                     <div className="
                         overflow-y-auto
                         max-h-[52vh] sm:max-h-[56vh] md:max-h-[60vh]
@@ -1232,8 +1229,8 @@ function InvoicePreview({
 
     useEffect(() => {
         if (!upiUri) {
-            setQrDataUrl(null);
-            return;
+            const timeout = setTimeout(() => setQrDataUrl(null), 0);
+            return () => clearTimeout(timeout);
         }
         let cancelled = false;
         import("qrcode").then((QRCode) =>
