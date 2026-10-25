@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  allowedDevOrigins: ["127.0.0.1", "10.21.32.244"],
+  allowedDevOrigins: ["127.0.0.1", "10.21.32.244", "baaki.fknemi.dev", "assets.fknemi.dev"],
 };
 
 export default nextConfig;
