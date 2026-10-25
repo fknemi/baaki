@@ -30,6 +30,16 @@ function applyContrast(on: boolean) {
     document.documentElement.classList.toggle("contrast-high", on);
 }
 
+// ─── shared styles ───────────────────────────────────────────────────────────
+
+const CARD = "rounded-xl border border-white/10 p-4";
+const PILL_ACTIVE =
+    "rounded-lg px-3 py-1.5 text-xs font-medium bg-[#0F5C4E] text-white";
+const PILL_INACTIVE =
+    "rounded-lg px-3 py-1.5 text-xs font-medium border border-white/10 bg-[#171717]/20 text-white hover:bg-white/5";
+const CHIP =
+    "rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/5";
+
 export function SettingsPreferences() {
     const locale = useLocale();
     const setLocale = useSetLocale();
@@ -110,41 +120,32 @@ export function SettingsPreferences() {
 
     return (
         <div className="space-y-3">
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">{dLanguage}</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">{dLanguage}</h3>
                 <div className="mt-2 flex gap-2">
                     <button
                         onClick={() => changeLang("en")}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium ${locale === "en"
-                            ? "bg-[#0F5C4E] text-white"
-                            : "bg-white text-[#5A6170] ring-1 ring-[#E4E7EC]"
-                            }`}
+                        className={locale === "en" ? PILL_ACTIVE : PILL_INACTIVE}
                     >
                         {dLangEn}
                     </button>
                     <button
                         onClick={() => changeLang("hi")}
-                        className={`rounded-lg px-3 py-1.5 text-xs font-medium ${locale === "hi"
-                            ? "bg-[#0F5C4E] text-white"
-                            : "bg-white text-[#5A6170] ring-1 ring-[#E4E7EC]"
-                            }`}
+                        className={locale === "hi" ? PILL_ACTIVE : PILL_INACTIVE}
                     >
                         {dLangHi}
                     </button>
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">{dTextSize}</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">{dTextSize}</h3>
                 <div className="mt-2 flex gap-2">
                     {([100, 115, 130] as TextSize[]).map((s) => (
                         <button
                             key={s}
                             onClick={() => changeSize(s)}
-                            className={`rounded-lg px-3 py-1.5 text-xs font-medium ${size === s
-                                ? "bg-[#0F5C4E] text-white"
-                                : "bg-white text-[#5A6170] ring-1 ring-[#E4E7EC]"
-                                }`}
+                            className={size === s ? PILL_ACTIVE : PILL_INACTIVE}
                         >
                             {sizeLabels[s]}
                         </button>
@@ -152,48 +153,39 @@ export function SettingsPreferences() {
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">{dHighContrast}</h3>
-                <label className="mt-2 flex items-center gap-2 text-xs">
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">
+                    {dHighContrast}
+                </h3>
+                <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs">
                     <input
                         type="checkbox"
                         checked={contrast ?? false}
                         onChange={(e) => changeContrast(e.target.checked)}
+                        className="h-3.5 w-3.5 accent-[#0F5C4E]"
                     />
-                    <span>{dHighContrast}</span>
+                    <span className="text-white">{dHighContrast}</span>
                 </label>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">{dDemoDate}</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">{dDemoDate}</h3>
                 <div className="mt-2 flex flex-wrap gap-2">
-                    <button
-                        onClick={() => demoChip(7)}
-                        className="rounded-lg border border-[#E4E7EC] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F8FA]"
-                    >
+                    <button onClick={() => demoChip(7)} className={CHIP}>
                         {dPlus7}
                     </button>
-                    <button
-                        onClick={() => demoChip(15)}
-                        className="rounded-lg border border-[#E4E7EC] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F8FA]"
-                    >
+                    <button onClick={() => demoChip(15)} className={CHIP}>
                         {dPlus15}
                     </button>
-                    <button
-                        onClick={() => demoChip(30)}
-                        className="rounded-lg border border-[#E4E7EC] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F8FA]"
-                    >
+                    <button onClick={() => demoChip(30)} className={CHIP}>
                         {dPlus30}
                     </button>
-                    <button
-                        onClick={() => void setDemoDate("")}
-                        className="rounded-lg border border-[#E4E7EC] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F8FA]"
-                    >
+                    <button onClick={() => void setDemoDate("")} className={CHIP}>
                         {dToday}
                     </button>
                 </div>
                 {demoDate && (
-                    <p className="mt-2 text-xs text-[#5A6170]">
+                    <p className="mt-2 text-xs text-white italic">
                         {dDemoDate}: <span className="font-mono">{demoDate}</span>
                     </p>
                 )}

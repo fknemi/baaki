@@ -53,7 +53,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
                         <Navbar isAuthed={!!session} business={businessName ? { name: businessName, city: businessCity } : undefined} />
                         {children}
-                        <Footer />
                     </ThemeProvider>
                 </LocaleProvider>
             </body>

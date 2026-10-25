@@ -14,6 +14,25 @@ type Inv = {
   dueDate: string;
 };
 
+// ─── outline icon ────────────────────────────────────────────────────────────
+
+function IconChevronRight({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 export default function DocumentsIndexPage() {
   const [invoices, setInvoices] = useState<Inv[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +48,8 @@ export default function DocumentsIndexPage() {
       .catch((e) => setError(e.message));
   }, []);
 
-  if (error) return <main className="p-4 text-sm text-[#B42318]">{error}</main>;
-  if (!invoices) return <main className="p-4 text-sm text-[#5A6170]">Loading…</main>;
+  if (error) return <main className="p-4 text-sm text-white">{error}</main>;
+  if (!invoices) return <main className="p-4 text-sm text-white">Loading…</main>;
 
   const filtered = invoices.filter((i) => {
     if (!q) return true;
@@ -42,11 +61,11 @@ export default function DocumentsIndexPage() {
   });
 
   return (
-    <main className="space-y-4 p-4 pb-24">
-      <h1 className="text-xl font-semibold">Documents</h1>
-      <p className="text-xs text-[#5A6170]">
-        Open any invoice to see its timeline, generate a demand letter, or download the evidence
-        pack.
+    <main className="space-y-4 p-4 pb-24 pt-14">
+      <h1 className="text-xl font-semibold text-white">Documents</h1>
+      <p className="text-xs text-white italic">
+        Open any invoice to see its timeline, generate a demand letter, or
+        download the evidence pack.
       </p>
 
       <input
@@ -54,11 +73,11 @@ export default function DocumentsIndexPage() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search invoice number or customer…"
-        className="w-full rounded-lg border border-[#E4E7EC] px-3 py-2 text-sm"
+        className="w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [&::-webkit-search-cancel-button]:invert"
       />
 
       {filtered.length === 0 && (
-        <p className="rounded-lg bg-white p-4 text-xs text-[#5A6170] ring-1 ring-[#E4E7EC]">
+        <p className="rounded-lg border border-white/10 p-4 text-xs text-white italic">
           No invoices match your search.
         </p>
       )}
@@ -69,19 +88,25 @@ export default function DocumentsIndexPage() {
             <li key={inv.id}>
               <Link
                 href={`/documents/${inv.id}`}
-                className="flex items-center justify-between rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC] hover:bg-[#F7F8FA]"
+                className="flex items-center justify-between gap-3 border border-white/10 p-4 hover:bg-white/5"
               >
                 <div className="min-w-0">
-                  <div className="font-mono text-xs">{inv.number}</div>
-                  <div className="text-[10px] text-[#5A6170]">
-                    {inv.customer?.name ?? inv.customerName ?? "—"} · due {inv.dueDate}
+                  <div className="truncate font-mono text-xs text-white">
+                    {inv.number}
+                  </div>
+                  <div className="truncate text-[10px] text-white italic">
+                    {inv.customer?.name ?? inv.customerName ?? "—"} · due{" "}
+                    {inv.dueDate}
                   </div>
                 </div>
-                <div className="text-right text-xs">
-                  <div className="font-semibold tabular-nums">
+                <div className="shrink-0 text-right text-xs">
+                  <div className="font-semibold tabular-nums text-white">
                     {formatINR(inv.outstandingPaise ?? 0)}
                   </div>
-                  <div className="text-[10px] text-[#5A6170]">Open ›</div>
+                  <div className="flex items-center justify-end gap-0.5 text-[10px] text-white italic">
+                    Open
+                    <IconChevronRight className="h-2.5 w-2.5" />
+                  </div>
                 </div>
               </Link>
             </li>

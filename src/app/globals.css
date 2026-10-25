@@ -172,3 +172,43 @@ html, body {
     padding: 0;
     overflow-x: hidden;
 }
+
+
+
+
+
+
+
+
+
+
+.url-line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.url-line > .url-label {
+  flex-shrink: 0;
+}
+.url-line > .url-truncate {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+
+@media print {
+    .url-line { display: block; }
+.url-line > .url-truncate {
+  display: inline;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-all;
+}
+}
+
+

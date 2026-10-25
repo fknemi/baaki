@@ -18,6 +18,41 @@ export type InvoiceItemView = {
   gstRatePct: number;
 };
 
+// Matches the confirmed shape of businesses.bankJson. accountNumberMasked
+// is the presence check (and the only account-number field we ever read
+// or show — this app masks sensitive numbers at rest, same pattern as
+// customer.phoneMasked elsewhere), so a bankJson with no
+// accountNumberMasked is treated as "no bank details configured", not an
+// error.
+export type BusinessBankInfo = {
+  accountName: string;
+  accountNumberMasked: string;
+  ifsc: string;
+  bankName: string;
+};
+
+function bankFromJson(json: unknown): BusinessBankInfo | null {
+  if (!json || typeof json !== "object") return null;
+  const j = json as Record<string, unknown>;
+  const accountNumberMasked = j.accountNumberMasked;
+  if (typeof accountNumberMasked !== "string" || !accountNumberMasked) return null;
+  return {
+    accountName: typeof j.accountName === "string" ? j.accountName : "",
+    accountNumberMasked,
+    ifsc: typeof j.ifsc === "string" ? j.ifsc : "",
+    bankName: typeof j.bankName === "string" ? j.bankName : "",
+  };
+}
+
+// paymentMethods is stored as jsonb with no DB-level type guarantee, so
+// this defends against anything that isn't actually a string[] (null,
+// a malformed value, non-string entries) by filtering down to strings
+// and defaulting to an empty array rather than throwing.
+function paymentMethodsFromJson(json: unknown): string[] {
+  if (!Array.isArray(json)) return [];
+  return json.filter((m): m is string => typeof m === "string");
+}
+
 export type InvoiceView = {
   id: string;
   number: string;
@@ -46,6 +81,13 @@ export type InvoiceView = {
     gstin: string | null;
     stateCode: string;
     upiId: string | null;
+    // New: every payment method the business has configured, and the
+    // bank account details (if any) to go with a "bank" entry in that
+    // list. Added so reminder/summary rendering (see
+    // lib/domain/invoice-ascii.ts) can show ALL configured payment
+    // methods rather than just upiId alone.
+    paymentMethods: string[];
+    bank: BusinessBankInfo | null;
     address: {
       line1: string | null;
       city: string | null;
@@ -171,6 +213,8 @@ export async function getInvoiceWithTotals(
       gstin: row.business.gstin,
       stateCode: businessStateCode,
       upiId: row.business.upiId,
+      paymentMethods: paymentMethodsFromJson(row.business.paymentMethods),
+      bank: bankFromJson(row.business.bankJson),
       address: addressFromJson(row.business.addressJson),
     },
     items: itemsView,
@@ -182,11 +226,17 @@ export async function listInvoices(
   businessId: string,
   today: string,
   limit = 100,
+  opts: { customerId?: string } = {},
 ): Promise<InvoiceView[]> {
+  const conditions = [eq(invoices.businessId, businessId)];
+  if (opts.customerId) {
+    conditions.push(eq(invoices.customerId, opts.customerId));
+  }
+
   const rows = await db
     .select({ id: invoices.id })
     .from(invoices)
-    .where(eq(invoices.businessId, businessId))
+    .where(and(...conditions))
     .orderBy(desc(invoices.invoiceDate), desc(invoices.number))
     .limit(limit);
 

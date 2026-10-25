@@ -12,15 +12,62 @@ import {
   ConfirmationResult,
 } from "firebase/auth";
 import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { friendlyError } from "@/lib/auth/friendly-error";
 
 const actionCodeSettings = {
   url: `${process.env.NEXT_PUBLIC_APP_URL}/auth/complete`,
   handleCodeInApp: true,
 };
+
+// ─── outline icons ───────────────────────────────────────────────────────────
+
+function IconArrowRight({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+}
+
+function IconCheck({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+// ─── shared styles ───────────────────────────────────────────────────────────
+
+const fieldSurface =
+  "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark]";
+
+const PRIMARY_BTN =
+  "flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#0F5C4E] px-4 py-3 text-sm font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50";
+
+const SECONDARY_BTN =
+  "flex w-full items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-4 py-3 text-sm font-medium text-white hover:bg-white/5 disabled:opacity-50";
+
+const DIVIDER = "flex-1 border-t border-white/10";
 
 /**
  * Read the `next` query param, validated to prevent open redirects.
@@ -47,7 +94,8 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [confirmationResult, setConfirmationResult] =
+    useState<ConfirmationResult | null>(null);
   const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
@@ -168,14 +216,20 @@ export default function LoginPage() {
     setBusy(true);
     try {
       if (!recaptchaRef.current) {
-        recaptchaRef.current = new RecaptchaVerifier(getFirebaseAuth(), "recaptcha-container", {
-          size: "invisible",
-        });
+        recaptchaRef.current = new RecaptchaVerifier(
+          getFirebaseAuth(),
+          "recaptcha-container",
+          { size: "invisible" },
+        );
       }
-      const result = await signInWithPhoneNumber(getFirebaseAuth(), phone, recaptchaRef.current);
+      const result = await signInWithPhoneNumber(
+        getFirebaseAuth(),
+        phone,
+        recaptchaRef.current,
+      );
       setConfirmationResult(result);
       setOtpSent(true);
-      setSuccess("OTP sent! Check your phone.");
+      setSuccess("OTP sent. Check your phone.");
     } catch (e) {
       const code = (e as { code?: string })?.code ?? "";
       const message = (e as { message?: string })?.message ?? "";
@@ -205,131 +259,150 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <Card className="w-full max-w-sm space-y-5 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Sign in</h1>
-          <Link href="/signup" className="text-muted-foreground text-xs underline">
+      <div className="w-full max-w-sm space-y-5 rounded-xl border border-white/10 bg-[#192221] p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-xl font-semibold text-white">Sign in</h1>
+          <Link
+            href="/signup"
+            className="text-xs text-white underline underline-offset-4"
+          >
             Need an account?
           </Link>
         </div>
 
-        {success && <p className="text-sm text-green-600">{success}</p>}
+        {success && (
+          <p className="flex items-center gap-1.5 text-sm text-white">
+            <IconCheck className="h-3.5 w-3.5 shrink-0 text-[#4ADE80]" />
+            {success}
+          </p>
+        )}
 
         {/* Demo button — top of the card, most prominent */}
         <div className="space-y-2">
-          <Button
-            className="w-full bg-[#0F5C4E] text-white hover:bg-[#0F5C4E]/90"
+          <button
+            type="button"
+            className={PRIMARY_BTN}
             onClick={handleDemoLogin}
             disabled={busy}
           >
-            Try as Sharma Packaging →
-          </Button>
-          <p className="text-muted-foreground text-center text-xs">
+            Try as Sharma Packaging
+            <IconArrowRight />
+          </button>
+          <p className="text-center text-xs text-white italic">
             One-tap demo · no phone number required
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="border-border flex-1 border-t" />
-          <span className="text-muted-foreground text-xs">or sign in properly</span>
-          <div className="border-border flex-1 border-t" />
+          <div className={DIVIDER} />
+          <span className="text-xs text-white italic">or sign in properly</span>
+          <div className={DIVIDER} />
         </div>
 
-        <Button className="w-full" onClick={handleGoogle} disabled={busy}>
+        <button
+          type="button"
+          className={SECONDARY_BTN}
+          onClick={handleGoogle}
+          disabled={busy}
+        >
           Continue with Google
-        </Button>
+        </button>
 
-        <div className="text-muted-foreground text-center text-xs">or</div>
+        <div className="text-center text-xs text-white italic">or</div>
 
         <form onSubmit={handleSignIn} className="space-y-3">
-          <Input
+          <input
             type="email"
             required
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className={fieldSurface}
           />
-          <Input
+          <input
             type="password"
             required
             minLength={6}
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            className={fieldSurface}
           />
-          <Button type="submit" className="w-full" disabled={busy}>
+          <button type="submit" className={PRIMARY_BTN} disabled={busy}>
             Sign in
-          </Button>
+          </button>
         </form>
 
         <Link
           href="/forgot-password"
-          className="text-muted-foreground block w-full text-center text-xs underline"
+          className="block w-full text-center text-xs text-white underline underline-offset-4"
         >
           Forgot password?
         </Link>
 
-        <div className="text-muted-foreground text-center text-xs">
+        <div className="text-center text-xs text-white italic">
           or sign in without a password
         </div>
 
         {linkSent ? (
-          <p className="text-center text-sm">
+          <p className="text-center text-sm text-white">
             Check <strong>{email}</strong> for a sign-in link.
           </p>
         ) : (
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="w-full"
+            className={SECONDARY_BTN}
             onClick={handleEmailLink}
             disabled={busy}
           >
             Email me a sign-in link
-          </Button>
+          </button>
         )}
 
-        <div className="text-muted-foreground text-center text-xs">or sign in with SMS</div>
+        <div className="text-center text-xs text-white italic">
+          or sign in with SMS
+        </div>
 
         {!otpSent ? (
           <div className="space-y-3">
-            <Input
+            <input
               type="tel"
               placeholder="+91 98XXX XXXXX"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              className={fieldSurface}
             />
-            <Button
+            <button
               type="button"
-              variant="outline"
-              className="w-full"
+              className={SECONDARY_BTN}
               onClick={handleSendOtp}
               disabled={busy}
             >
               Send OTP
-            </Button>
+            </button>
           </div>
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-3">
-            <Input
+            <input
               type="text"
               inputMode="numeric"
               placeholder="Enter 6-digit code"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               maxLength={6}
+              className={fieldSurface}
             />
-            <Button type="submit" className="w-full" disabled={busy}>
-              Verify & Sign In
-            </Button>
+            <button type="submit" className={PRIMARY_BTN} disabled={busy}>
+              Verify &amp; Sign In
+            </button>
           </form>
         )}
 
         {/* Required container for Firebase reCAPTCHA */}
         <div id="recaptcha-container"></div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-      </Card>
+        {error && <p className="text-sm text-[#FF9B8F]">{error}</p>}
+      </div>
     </main>
   );
 }

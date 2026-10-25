@@ -7,6 +7,13 @@ const INR = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 2,
 });
 
+// Intl emits "₹1,234.56" for en-IN/INR; we want "₹ 1,234.56".
+// Normalises to exactly one space (handles engines that already emit
+// a narrow no-break space after the symbol).
+function withRupeeSpace(formatted: string): string {
+  return formatted.replace(/\u20B9\s*/, "\u20B9 ");
+}
+
 export function isPaise(n: unknown): n is number {
   return typeof n === "number" && Number.isInteger(n);
 }
@@ -49,7 +56,7 @@ export function parseRupeeInput(input: string): number {
 
 export function formatINR(paise: number): string {
   assertPaise(paise);
-  return INR.format(paise / 100);
+  return withRupeeSpace(INR.format(paise / 100));
 }
 
 export function sumPaise(values: number[]): number {
@@ -73,5 +80,5 @@ export function formatINRDelta(paise: number): string {
     throw new TypeError(`formatINRDelta: expected integer, got ${String(paise)}`);
   }
   const sign = paise < 0 ? "\u2212" : "";
-  return sign + INR.format(Math.abs(paise) / 100);
+  return sign + withRupeeSpace(INR.format(Math.abs(paise) / 100));
 }

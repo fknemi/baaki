@@ -39,6 +39,68 @@ type Evidence = {
   demandLetterAvailable: boolean;
 };
 
+// ─── outline icons ───────────────────────────────────────────────────────────
+
+function IconFileText({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <line x1="10" y1="9" x2="8" y2="9" />
+    </svg>
+  );
+}
+
+function IconMail({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  );
+}
+
+function IconArrowRight({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+}
+
+const CARD = "rounded-xl border border-white/10 p-4";
+const SCROLL = "overflow-y-auto pr-1";
+
 function titleCase(s: string): string {
   return s
     .replace(/_/g, " ")
@@ -63,21 +125,24 @@ export default function DocumentsDetailPage() {
       .catch((e) => setError(e.message));
   }, [invoiceId]);
 
-  if (error) return <main className="p-4 text-sm text-[#B42318]">{error}</main>;
-  if (!data) return <main className="p-4 text-sm text-[#5A6170]">Loading…</main>;
+  if (error) return <main className="p-4 text-sm text-white">{error}</main>;
+  if (!data) return <main className="p-4 text-sm text-white">Loading…</main>;
 
   const artefactCount =
     data.events.length + data.payments.length + data.messages.length + data.attachments.length;
 
   return (
-    <main className="space-y-4 p-4 pb-24">
+    <main className="space-y-4 p-4 pb-24 pt-14">
       <header>
-        <div className="text-xs text-[#5A6170]">
+        <div className="text-xs text-white italic">
           {data.customer.name} · {data.invoice.daysOverdue} days overdue
         </div>
-        <h1 className="font-mono text-lg font-semibold">{data.invoice.number}</h1>
-        <p className="text-xs text-[#5A6170]">
-          {artefactCount} artefacts · {formatINR(data.invoice.outstandingPaise)} outstanding
+        <h1 className="font-mono text-lg font-semibold text-white">
+          {data.invoice.number}
+        </h1>
+        <p className="text-xs text-white italic">
+          {artefactCount} artefacts · {formatINR(data.invoice.outstandingPaise)}{" "}
+          outstanding
         </p>
       </header>
 
@@ -86,38 +151,45 @@ export default function DocumentsDetailPage() {
           href={`/print/evidence/${data.invoice.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded-lg bg-[#0F5C4E] px-3 py-3 text-center text-xs font-medium text-white hover:bg-[#0F5C4E]/90"
+          className="flex items-center justify-center gap-1.5 rounded-lg bg-[#0F5C4E] px-3 py-3 text-center text-xs font-medium text-white hover:bg-[#0F5C4E]/90"
         >
-          📄 Download evidence pack
+          <IconFileText />
+          Download evidence pack
         </a>
         {data.demandLetterAvailable ? (
           <a
             href={`/print/letter/${data.invoice.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg border border-[#E4E7EC] bg-white px-3 py-3 text-center text-xs font-medium hover:bg-[#F7F8FA]"
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-3 text-center text-xs font-medium text-white hover:bg-white/5"
           >
-            ✉️ Open demand letter
+            <IconMail />
+            Open demand letter
           </a>
         ) : (
           <div
-            className="rounded-lg border border-dashed border-[#E4E7EC] bg-white px-3 py-3 text-center text-xs text-[#5A6170]"
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-white/10 px-3 py-3 text-center text-xs text-white italic"
             title={`Invoice must be ≥30 days overdue (currently ${data.invoice.daysOverdue})`}
           >
-            ✉️ Demand letter (needs 30d overdue)
+            <IconMail />
+            Demand letter (needs 30d overdue)
           </div>
         )}
       </div>
 
-      <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-        <h2 className="text-sm font-semibold">Timeline ({data.events.length} events)</h2>
-        <ol className="mt-3 space-y-2 text-xs">
+      <section className={CARD}>
+        <h2 className="text-sm font-semibold text-white">
+          Timeline ({data.events.length} events)
+        </h2>
+        <ol className={`mt-3 max-h-64 space-y-2 text-xs ${SCROLL}`}>
           {data.events.map((e) => (
             <li key={e.chainSeq} className="flex gap-2">
-              <span className="min-w-[40px] text-[10px] text-[#5A6170]">#{e.chainSeq}</span>
+              <span className="min-w-[40px] text-[10px] text-white italic">
+                #{e.chainSeq}
+              </span>
               <div>
-                <div className="font-medium">{titleCase(e.type)}</div>
-                <div className="text-[10px] text-[#5A6170]">
+                <div className="font-medium text-white">{titleCase(e.type)}</div>
+                <div className="text-[10px] text-white italic">
                   {e.actor} · {e.atIso.slice(0, 10)}
                 </div>
               </div>
@@ -127,11 +199,13 @@ export default function DocumentsDetailPage() {
       </section>
 
       {data.attachments.length > 0 && (
-        <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-          <h2 className="text-sm font-semibold">Attachments ({data.attachments.length})</h2>
-          <ul className="mt-2 space-y-1 text-xs">
+        <section className={CARD}>
+          <h2 className="text-sm font-semibold text-white">
+            Attachments ({data.attachments.length})
+          </h2>
+          <ul className={`mt-2 max-h-48 space-y-1 text-xs ${SCROLL}`}>
             {data.attachments.map((a) => (
-              <li key={a.id} className="text-[#5A6170]">
+              <li key={a.id} className="text-white italic">
                 {a.mime}
               </li>
             ))}
@@ -141,9 +215,10 @@ export default function DocumentsDetailPage() {
 
       <Link
         href={`/invoices/${data.invoice.id}`}
-        className="block rounded-lg border border-[#E4E7EC] bg-white px-3 py-2 text-center text-xs font-medium hover:bg-[#F7F8FA]"
+        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-center text-xs font-medium text-white hover:bg-white/5"
       >
-        Open invoice detail →
+        Open invoice detail
+        <IconArrowRight />
       </Link>
     </main>
   );

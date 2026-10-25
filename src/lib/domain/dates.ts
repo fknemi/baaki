@@ -1,3 +1,15 @@
+
+
+
+
+
+import type { expenses } from "@/lib/db/schema";
+type ExpenseRow = typeof expenses.$inferSelect;
+
+
+
+
+
 /**
  * All dates are YYYY-MM-DD in IST. Pure — no Date.now().
  * Callers must pass `today` explicitly.
@@ -62,4 +74,55 @@ export function todayIST(): string {
   const mm = String(ist.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(ist.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export function currentPeriodKey(
+  recurrence: string,
+  today: Date,
+): string | null {
+  if (recurrence === "once") return null;
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
+  if (recurrence === "monthly") return `${y}-${String(m).padStart(2, "0")}`;
+  if (recurrence === "quarterly") return `${y}-Q${Math.ceil(m / 3)}`;
+  if (recurrence === "yearly") return `${y}`;
+  return null;
+}
+
+export function isPaidForCurrentPeriod(
+  e: Pick<ExpenseRow, "recurrence" | "paid" | "lastPaidPeriod">,
+  today: Date,
+): boolean {
+  if (e.recurrence === "once") return e.paid;
+  const key = currentPeriodKey(e.recurrence, today);
+  return key !== null && e.lastPaidPeriod === key;
+}
+
+/** For recurring rows the stored dueDate is static; derive the real one. */
+export function effectiveDueDate(
+  e: Pick<ExpenseRow, "recurrence" | "dayOfMonth" | "dueDate">,
+  today: Date,
+): string | null {
+  if (e.recurrence === "once") return e.dueDate;
+  const dom = e.dayOfMonth ?? 1;
+  const y = today.getFullYear();
+  const m = today.getMonth();
+  const thisMonth = new Date(y, m, dom);
+  const target = thisMonth > today ? thisMonth : new Date(y, m + 1, dom);
+  return target.toISOString().slice(0, 10);
 }

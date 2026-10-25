@@ -15,6 +15,9 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   due_soon: ["cancelled"],
 };
 
+
+
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   return requireRole(
@@ -81,6 +84,83 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       });
 
       return NextResponse.json({ data: { id, status: target } });
+    },
+    ["owner"],
+  );
+}
+
+
+
+
+
+
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  return requireRole(
+    req,
+    async (req, ctx) => {
+      const body = (await req.json().catch(() => ({}))) as { reason?: string };
+      const reason =
+        typeof body.reason === "string" && body.reason.trim()
+          ? body.reason.trim().slice(0, 500)
+          : null;
+
+      const [inv] = await db
+        .select()
+        .from(invoices)
+        .where(and(eq(invoices.id, id), eq(invoices.businessId, ctx.businessId)))
+        .limit(1);
+      if (!inv) {
+        return NextResponse.json(
+          { error: { code: "NOT_FOUND", message: "Invoice not found." } },
+          { status: 404 },
+        );
+      }
+
+      // Idempotent: a second DELETE must not append a second event.
+      if (inv.status === "cancelled") {
+        return NextResponse.json({
+          data: { id, status: "cancelled", alreadyCancelled: true },
+        });
+      }
+
+      const allowed = ALLOWED_TRANSITIONS[inv.status] ?? [];
+      if (!allowed.includes("cancelled")) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "CONFLICT",
+              message: `Cannot delete invoice in status "${inv.status}".`,
+            },
+          },
+          { status: 409 },
+        );
+      }
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(invoices)
+          .set({ status: "cancelled" })
+          .where(
+            and(eq(invoices.id, id), eq(invoices.businessId, ctx.businessId)),
+          );
+
+        await appendEventInTx(tx, {
+          businessId: ctx.businessId,
+          entityType: "invoice",
+          entityId: id,
+          type: "INVOICE_STATUS_CHANGED",
+          actor: `user:${ctx.userId}`,
+          atIso: atIso(todayIST()),
+          payload: { from: inv.status, to: "cancelled", reason },
+        });
+      });
+
+      return NextResponse.json({ data: { id, status: "cancelled" } });
     },
     ["owner"],
   );

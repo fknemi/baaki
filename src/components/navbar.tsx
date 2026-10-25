@@ -10,9 +10,58 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 
 // ── Config ──────────────────────────────────────────────────────
-const HIDE_BUSINESS_ON = ["/"];
-const HIDE_LOGO_ON = ["/dashboard", "/customers", "/invoices", "/invoice", "/forecast", "/forecast"]
-const HIDE_LANG_ON = ["/dashboard", "/customers", "/invoices", "/invoice", "/forecast", "/forecast"]
+// HIDE_NAVBAR_ON — entire <nav> is not rendered. Use for pages where
+// app chrome would be wrong: print/PDF renderers, customer-facing pay
+// page, auth callbacks, and login/signup screens.
+const HIDE_NAVBAR_ON = [
+    "/print",              // print/PDF renderers — no chrome
+    "/pay",                // customer-facing pay page
+    "/auth",               // magic-link / OAuth callbacks
+    "/login",              // auth screens have their own layout
+    "/signup",
+    "/forgot-password",
+];
+
+const HIDE_BUSINESS_ON = ["/"];                             // business name
+const HIDE_LOGO_ON = [
+    "/dashboard",
+    "/customers",
+    "/invoices",
+    "/invoice",
+    "/forecast",
+    "/payments",
+    "/help",
+    "/settings",
+    "/documents",
+    "/inbox",
+    "/chase",
+    "/follow-ups",
+];
+const HIDE_LANG_ON = [
+    "/dashboard",
+    "/customers",
+    "/invoices",
+    "/invoice",
+    "/forecast",
+    "/payments",
+    "/help",
+    "/settings",
+    "/documents",
+    "/inbox",
+    "/chase",
+    "/follow-ups",
+];
+
+/**
+ * Matches a pathname against a list of prefixes.
+ * Patterns must not end with a trailing slash — `"/pay"` matches
+ * `/pay` and `/pay/abc`, but `"/pay/"` would only match exactly
+ * `/pay/` (double-slash from concatenation) and silently fail on
+ * every real pay URL.
+ */
+function matchesAnyPath(pathname: string, patterns: string[]): boolean {
+    return patterns.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
 
 const MENU_LINKS_PUBLIC = [
     { label: "Home", href: "/" },
@@ -36,11 +85,12 @@ interface NavbarProps {
 
 export default function Navbar({ isAuthed, business }: NavbarProps) {
     const pathname = usePathname();
-    const showBusiness = business && !HIDE_BUSINESS_ON.includes(pathname);
-    const showLogo = !HIDE_LOGO_ON.some((p) => pathname === p || pathname.startsWith(p + "/"));
-    const showLanguageToggle = !HIDE_LANG_ON.some(
-        (p) => pathname === p || pathname.startsWith(p + "/"),
-    );
+
+    const showNavbar = !matchesAnyPath(pathname, HIDE_NAVBAR_ON);
+    const showBusiness =
+        business && !matchesAnyPath(pathname, HIDE_BUSINESS_ON);
+    const showLogo = !matchesAnyPath(pathname, HIDE_LOGO_ON);
+    const showLanguageToggle = !matchesAnyPath(pathname, HIDE_LANG_ON);
 
     const links = isAuthed ? MENU_LINKS_AUTHED : MENU_LINKS_PUBLIC;
 
@@ -130,10 +180,14 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
         };
     }, [open]);
 
+    // Bail out AFTER all hooks — the Rules of Hooks require every hook
+    // to run on every render, even when we're going to render nothing.
+    if (!showNavbar) return null;
+
     return (
         <nav className="absolute top-0 right-0 left-0 z-50">
             {/* ─────────── TOP BAR ─────────── */}
-            <div className="relative z-[60] flex flex-row items-center justify-between border border-red-500 px-2 pt-2">
+            <div className="relative z-[60] flex flex-row items-center justify-between px-2 pt-2">
                 {showBusiness && (
                     <span>
                         {business!.name}

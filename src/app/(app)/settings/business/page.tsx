@@ -51,7 +51,7 @@ export default async function BusinessSettingsPage() {
     : ["upi"];
 
   return (
-    <main className="space-y-4 p-4 pb-24">
+    <main className="space-y-4 p-4 pb-24 pt-14">
       <h1 className="text-xl font-semibold">Business profile</h1>
       <BusinessProfileForm
         initial={{

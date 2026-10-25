@@ -38,9 +38,84 @@ type InvoiceData = {
   };
 };
 
+// ─── outline icons (stroke, no fill) ─────────────────────────────────────────
+
+function IconCopy({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function IconCheck({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function IconDownload({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+function IconClose({ className = "h-3.5 w-3.5" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 /**
  * Renders a standalone invoice summary as a PNG and triggers a download.
- * Includes whichever payment methods are enabled (UPI / bank / both).
+ * The PNG itself stays light — it's a customer-facing document, not
+ * app chrome, so it matches printed invoices rather than the dark theme.
  */
 async function downloadInvoiceImage(
   data: InvoiceData,
@@ -49,7 +124,7 @@ async function downloadInvoiceImage(
   const { invoice, business } = data;
   const SCALE = 2;
   const W = 800;
-  const H = 2800; // upper bound; cropped to actual content below
+  const H = 2800;
   const PAD = 48;
 
   const canvas = document.createElement("canvas");
@@ -114,7 +189,6 @@ async function downloadInvoiceImage(
   ctx.stroke();
   y += 24;
 
-  // ─── UPI section
   const showUpi =
     business.paymentMethods.includes("upi") &&
     !!business.upiId &&
@@ -156,7 +230,6 @@ async function downloadInvoiceImage(
     y += 20;
   }
 
-  // ─── Bank section
   if (business.paymentMethods.includes("bank") && business.bank) {
     ctx.fillStyle = "#1A1D23";
     ctx.font = `600 14px ${fontStack}`;
@@ -192,7 +265,6 @@ async function downloadInvoiceImage(
     y += 20;
   }
 
-  // ─── Items
   ctx.fillStyle = "#5A6170";
   ctx.font = `500 10px ${fontStack}`;
   ctx.fillText("DESCRIPTION", PAD, y);
@@ -297,6 +369,11 @@ async function downloadInvoiceImage(
     setTimeout(() => URL.revokeObjectURL(href), 1000);
   }
 }
+
+// Shared surfaces — kept in one place so theme tweaks are one edit.
+const SURFACE = "rounded-xl border border-white/10 p-4";
+const PRIMARY =
+  "flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#0F5C4E] px-4 py-3 text-center text-xs font-medium text-white hover:bg-[#0F5C4E]/90";
 
 export default function PayClient() {
   const params = useParams<{ token: string }>();
@@ -423,9 +500,11 @@ export default function PayClient() {
   if (error) {
     return (
       <main className="mx-auto max-w-md p-6 text-center">
-        <h1 className="text-lg font-semibold">Link not available</h1>
-        <p className="mt-2 text-xs text-[#5A6170]">{error}</p>
-        <p className="mt-6 text-[10px] text-[#5A6170]">
+        <h1 className="text-lg font-semibold text-white">
+          Link not available
+        </h1>
+        <p className="mt-2 text-xs text-white">{error}</p>
+        <p className="mt-6 text-[10px] italic text-white">
           This page is a prototype.
         </p>
       </main>
@@ -434,7 +513,7 @@ export default function PayClient() {
 
   if (!data) {
     return (
-      <main className="mx-auto max-w-md p-6 text-center text-xs text-[#5A6170]">
+      <main className="mx-auto max-w-md p-6 text-center text-xs text-white">
         Loading…
       </main>
     );
@@ -449,25 +528,31 @@ export default function PayClient() {
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#0F5C4E] text-lg font-semibold text-white">
           {business.name.charAt(0)}
         </div>
-        <h1 className="mt-2 text-base font-semibold">{business.name}</h1>
+        <h1 className="mt-2 text-base font-semibold text-white">
+          {business.name}
+        </h1>
       </header>
 
-      <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-        <div className="text-xs text-[#5A6170]">Invoice</div>
-        <div className="mt-0.5 font-mono text-sm">{invoice.number}</div>
-        <div className="mt-3 text-xs text-[#5A6170]">Amount due</div>
-        <div className="text-2xl font-semibold tabular-nums">
+      <section className={SURFACE}>
+        <div className="text-xs italic text-white">Invoice</div>
+        <div className="mt-0.5 font-mono text-sm text-white">
+          {invoice.number}
+        </div>
+        <div className="mt-3 text-xs italic text-white">Amount due</div>
+        <div className="text-2xl font-semibold tabular-nums text-white">
           {formatINR(invoice.outstandingPaise)}
         </div>
-        <div className="text-[10px] text-[#5A6170]">Due {invoice.dueDate}</div>
+        <div className="text-[10px] italic text-white">
+          Due {invoice.dueDate}
+        </div>
 
-        <ul className="mt-3 space-y-1 border-t border-[#E4E7EC] pt-3 text-[10px]">
+        <ul className="mt-3 space-y-1 border-t border-white/10 pt-3 text-[10px]">
           {invoice.items.map((it, i) => (
-            <li key={i} className="flex justify-between">
-              <span className="text-[#5A6170]">
+            <li key={i} className="flex justify-between gap-2">
+              <span className="text-white italic">
                 {it.qty} {it.unit} × {it.description}
               </span>
-              <span className="tabular-nums">
+              <span className="tabular-nums text-white">
                 {formatINR(it.qty * it.ratePaise)}
               </span>
             </li>
@@ -477,13 +562,13 @@ export default function PayClient() {
 
       {/* UPI payment block */}
       {showUpi && upiUri && !submitted && (
-        <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-          <div className="text-xs font-semibold">Pay by UPI</div>
-          <p className="mt-1 text-[10px] text-[#5A6170]">
+        <section className={SURFACE}>
+          <div className="text-xs font-semibold text-white">Pay by UPI</div>
+          <p className="mt-1 text-[10px] italic text-white">
             Scan this QR with any UPI app to pay.
           </p>
 
-          <div className="mt-3 rounded-lg border border-dashed border-[#E4E7EC] p-4 text-center">
+          <div className="mt-3 rounded-lg border border-dashed border-white/10 p-4 text-center">
             {qrUrl ? (
               <button
                 type="button"
@@ -491,7 +576,7 @@ export default function PayClient() {
                 onClick={() => {
                   /* intentional no-op — double-click saves */
                 }}
-                className="mx-auto block cursor-zoom-in select-none rounded border-0 bg-transparent p-0"
+                className="mx-auto block cursor-zoom-in select-none rounded border-0 bg-white p-1"
                 aria-label="Double-click to save invoice as image"
                 title="Double-click to save invoice as image"
                 style={{ touchAction: "manipulation" }}
@@ -503,18 +588,19 @@ export default function PayClient() {
                   height={160}
                   unoptimized
                   draggable={false}
+                  className="block"
                 />
               </button>
             ) : (
-              <div className="mx-auto h-40 w-40 animate-pulse rounded bg-[#F7F8FA]" />
+              <div className="mx-auto h-40 w-40 animate-pulse rounded bg-white/5" />
             )}
-            <div className="mt-2 font-mono text-[10px] break-all text-[#5A6170]">
+            <div className="mt-2 break-all font-mono text-[10px] text-white">
               {business.upiId}
             </div>
-            <div className="mt-1 text-[10px] text-[#5A6170]">
+            <div className="mt-1 text-[10px] italic text-white">
               Amount pre-fills to {formatINR(invoice.outstandingPaise)}
             </div>
-            <div className="mt-1 text-[10px] text-[#5A6170]">
+            <div className="mt-1 text-[10px] italic text-white">
               Reference auto-fills as{" "}
               <span className="font-mono">
                 {invoice.number.replace(/[^A-Za-z0-9]/g, "")}
@@ -525,32 +611,44 @@ export default function PayClient() {
                 type="button"
                 onClick={saveInvoice}
                 disabled={saving}
-                className="mt-2 text-[10px] text-[#175CD3] underline disabled:opacity-50"
+                className="mt-2 inline-flex w-full items-center justify-center gap-1.5 text-[10px] text-white underline underline-offset-4 disabled:opacity-50"
                 aria-label="Download invoice summary as image"
               >
-                {saving
-                  ? "Saving…"
-                  : saved
-                    ? "✓ Saved"
-                    : "⇩ Save invoice as image"}
+                {saving ? (
+                  "Saving…"
+                ) : saved ? (
+                  <>
+                    <IconCheck className="h-3 w-3" />
+                    Saved
+                  </>
+                ) : (
+                  <>
+                    <IconDownload className="h-3 w-3" />
+                    Save invoice as image
+                  </>
+                )}
               </button>
             )}
           </div>
 
           {isMerchant ? (
             <>
-              <a
-                href={upiUri}
-                className="mt-3 block rounded-lg bg-[#0F5C4E] px-4 py-3 text-center text-xs font-medium text-white hover:bg-[#0F5C4E]/90"
-              >
+              <a href={upiUri} className={`mt-3 ${PRIMARY}`}>
                 Open UPI app
               </a>
               <button
                 type="button"
                 onClick={copyUpiId}
-                className="mt-2 block w-full text-center text-[10px] text-[#5A6170] underline"
+                className="mt-2 flex w-full items-center justify-center gap-1.5 text-center text-[10px] text-white underline underline-offset-4"
               >
-                {copiedUpi ? "✓ UPI ID copied" : "Or copy UPI ID"}
+                {copiedUpi ? (
+                  <>
+                    <IconCheck className="h-3 w-3" />
+                    UPI ID copied
+                  </>
+                ) : (
+                  "Or copy UPI ID"
+                )}
               </button>
             </>
           ) : (
@@ -558,21 +656,31 @@ export default function PayClient() {
               <button
                 type="button"
                 onClick={copyUpiId}
-                className="mt-3 block w-full rounded-lg bg-[#0F5C4E] px-4 py-3 text-center text-xs font-medium text-white hover:bg-[#0F5C4E]/90"
+                className={`mt-3 ${PRIMARY}`}
               >
-                {copiedUpi ? "✓ Copied" : "📋 Copy UPI ID"}
+                {copiedUpi ? (
+                  <>
+                    <IconCheck className="h-3 w-3" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <IconCopy className="h-3 w-3" />
+                    Copy UPI ID
+                  </>
+                )}
               </button>
               <a
                 href={upiUri}
                 onClick={() => setDeepLinkNotice(true)}
-                className="mt-2 block rounded-lg border border-[#E4E7EC] bg-white px-4 py-3 text-center text-xs font-medium hover:bg-[#F7F8FA]"
+                className="mt-2 block rounded-lg border border-white/10 bg-[#171717]/20 px-4 py-3 text-center text-xs font-medium text-white hover:bg-white/5"
               >
                 Open UPI app
               </a>
               {deepLinkNotice && (
-                <div className="mt-2 rounded-lg bg-[#FFFAEB] p-2 text-[10px] text-[#B54708] ring-1 ring-[#FEDF89]">
-                  <p className="font-medium">Heads up:</p>
-                  <p className="mt-0.5">
+                <div className="mt-2 rounded-lg border border-[#B54708]/40 bg-[#B54708]/10 p-2 text-[10px] text-white">
+                  <p className="font-medium text-white">Heads up:</p>
+                  <p className="mt-0.5 italic">
                     UPI apps reject deep-link payments to personal UPI IDs
                     (RBI/NPCI rule). If the app opens but the payment is
                     declined, scan the QR above or paste the UPI ID into
@@ -580,7 +688,7 @@ export default function PayClient() {
                   </p>
                   <button
                     onClick={() => setDeepLinkNotice(false)}
-                    className="mt-1 underline"
+                    className="mt-1 underline underline-offset-4"
                   >
                     Dismiss
                   </button>
@@ -593,9 +701,11 @@ export default function PayClient() {
 
       {/* Bank transfer block */}
       {showBank && business.bank && !submitted && (
-        <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-          <div className="text-xs font-semibold">Bank transfer</div>
-          <p className="mt-1 text-[10px] text-[#5A6170]">
+        <section className={SURFACE}>
+          <div className="text-xs font-semibold text-white">
+            Bank transfer
+          </div>
+          <p className="mt-1 text-[10px] italic text-white">
             Use NEFT, RTGS, or IMPS from your bank app. Include the reference
             so the payment can be matched.
           </p>
@@ -616,9 +726,19 @@ export default function PayClient() {
           <button
             type="button"
             onClick={copyBankDetails}
-            className="mt-3 block w-full rounded-lg bg-[#0F5C4E] px-4 py-3 text-center text-xs font-medium text-white hover:bg-[#0F5C4E]/90"
+            className={`mt-3 ${PRIMARY}`}
           >
-            {copiedBank ? "✓ Bank details copied" : "📋 Copy bank details"}
+            {copiedBank ? (
+              <>
+                <IconCheck className="h-3 w-3" />
+                Bank details copied
+              </>
+            ) : (
+              <>
+                <IconCopy className="h-3 w-3" />
+                Copy bank details
+              </>
+            )}
           </button>
 
           {showUpi && qrUrl && (
@@ -626,13 +746,21 @@ export default function PayClient() {
               type="button"
               onClick={saveInvoice}
               disabled={saving}
-              className="mt-2 block w-full text-center text-[10px] text-[#175CD3] underline disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-1.5 text-center text-[10px] text-white underline underline-offset-4 disabled:opacity-50"
             >
-              {saving
-                ? "Saving…"
-                : saved
-                  ? "✓ Saved"
-                  : "⇩ Save invoice as image"}
+              {saving ? (
+                "Saving…"
+              ) : saved ? (
+                <>
+                  <IconCheck className="h-3 w-3" />
+                  Saved
+                </>
+              ) : (
+                <>
+                  <IconDownload className="h-3 w-3" />
+                  Save invoice as image
+                </>
+              )}
             </button>
           )}
         </section>
@@ -640,7 +768,7 @@ export default function PayClient() {
 
       {/* No payment methods configured */}
       {!hasAnyMethod && !submitted && (
-        <section className="rounded-xl bg-white p-4 text-xs text-[#5A6170] ring-1 ring-[#E4E7EC]">
+        <section className={`${SURFACE} text-xs italic text-white`}>
           No payment methods are configured. Please contact{" "}
           {business.name} to arrange payment.
         </section>
@@ -650,13 +778,13 @@ export default function PayClient() {
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => setMode("paid")}
-            className="rounded-lg border border-[#E4E7EC] bg-white px-3 py-2 text-xs font-medium hover:bg-[#F7F8FA]"
+            className="rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-xs font-medium text-white hover:bg-white/5"
           >
             I&apos;ve already paid
           </button>
           <button
             onClick={() => setMode("dispute")}
-            className="rounded-lg border border-[#E4E7EC] bg-white px-3 py-2 text-xs font-medium hover:bg-[#F7F8FA]"
+            className="rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-xs font-medium text-white hover:bg-white/5"
           >
             Something&apos;s wrong
           </button>
@@ -664,21 +792,28 @@ export default function PayClient() {
       )}
 
       {submitted && (
-        <div className="rounded-xl bg-[#ECFDF5] p-4 text-center text-xs text-[#067647] ring-1 ring-[#A6F4C5]">
-          Sent ✓ {business.name} will review and reply.
+        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-[#235C49] p-4 text-center text-xs text-white">
+          <span>Sent</span>
+          <IconCheck className="h-3 w-3" />
+          <span>{business.name} will review and reply.</span>
         </div>
       )}
 
-      <footer className="text-center text-[10px] text-[#5A6170]">
+      <footer className="text-center text-[10px] text-white">
         Questions?{" "}
         {business.phone ? (
-          <a href={`tel:${business.phone}`} className="underline">
+          <a
+            href={`tel:${business.phone}`}
+            className="underline underline-offset-4"
+          >
             Call {business.phone}
           </a>
         ) : (
-          <span>Contact the business that sent this invoice.</span>
+          <span className="italic">
+            Contact the business that sent this invoice.
+          </span>
         )}
-        <div className="mt-1">This page is a prototype.</div>
+        <div className="mt-1 italic">This page is a prototype.</div>
       </footer>
 
       {mode !== "none" && (
@@ -709,15 +844,15 @@ function BankRow({
 }) {
   return (
     <div className="flex justify-between gap-2">
-      <dt className="text-[#5A6170]">{label}</dt>
-      <dd className={`text-right text-[#1A1D23] ${mono ? "font-mono" : ""}`}>
+      <dt className="text-white italic">{label}</dt>
+      <dd className={`text-right text-white ${mono ? "font-mono" : ""}`}>
         {value}
       </dd>
     </div>
   );
 }
 
-/* SubmitSheet — unchanged */
+/* SubmitSheet */
 function SubmitSheet({
   mode,
   token,
@@ -762,26 +897,29 @@ function SubmitSheet({
     }
   }
 
+  const fieldSurface =
+    "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark]";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
       role="dialog"
       aria-modal="true"
     >
-      <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl">
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#192221] p-4 shadow-xl">
         <div className="flex items-start justify-between">
-          <h2 className="text-base font-semibold">
+          <h2 className="text-base font-semibold text-white">
             {mode === "paid" ? "I've already paid" : "Something's wrong"}
           </h2>
           <button
             onClick={onClose}
-            className="text-[#5A6170]"
+            className="text-white/60 hover:text-white"
             aria-label="Close"
           >
-            ✕
+            <IconClose className="h-3.5 w-3.5" />
           </button>
         </div>
 
@@ -792,13 +930,13 @@ function SubmitSheet({
               placeholder="Reference number"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              className="w-full rounded-lg border border-[#E4E7EC] px-3 py-2 text-sm"
+              className={fieldSurface}
             />
             <input
               type="date"
               value={paidOn}
               onChange={(e) => setPaidOn(e.target.value)}
-              className="w-full rounded-lg border border-[#E4E7EC] px-3 py-2 text-sm"
+              className={fieldSurface}
             />
           </div>
         ) : (
@@ -807,18 +945,18 @@ function SubmitSheet({
             placeholder="What's wrong with this invoice?"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="mt-3 w-full rounded-lg border border-[#E4E7EC] px-3 py-2 text-sm"
+            className={`mt-3 ${fieldSurface}`}
           />
         )}
 
-        {error && <p className="mt-2 text-xs text-[#B42318]">{error}</p>}
+        {error && <p className="mt-2 text-xs text-white">{error}</p>}
 
         <button
           onClick={submit}
           disabled={
             submitting || (mode === "dispute" && reason.trim().length === 0)
           }
-          className="mt-3 w-full rounded-lg bg-[#0F5C4E] px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
+          className="mt-3 w-full rounded-lg bg-[#0F5C4E] px-3 py-2 text-xs font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50"
         >
           {submitting ? "Sending…" : "Send"}
         </button>

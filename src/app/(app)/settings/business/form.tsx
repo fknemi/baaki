@@ -30,6 +30,32 @@ type Props = {
     };
 };
 
+// ─── outline icon ────────────────────────────────────────────────────────────
+
+function IconCheck({ className = "h-3 w-3" }: { className?: string }) {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+            aria-hidden="true"
+        >
+            <polyline points="20 6 9 17 4 12" />
+        </svg>
+    );
+}
+
+// ─── shared styles ───────────────────────────────────────────────────────────
+
+const CARD = "rounded-xl border border-white/10 p-4";
+const fieldSurface =
+    "w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark]";
+const selectSurface = `${fieldSurface} [&>option]:bg-[#192221] [&>option]:text-white`;
+
 export function BusinessProfileForm({ initial }: Props) {
     const router = useRouter();
     const [name, setName] = useState(initial.name);
@@ -158,38 +184,42 @@ export function BusinessProfileForm({ initial }: Props) {
 
     return (
         <div className="space-y-3">
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">Identity</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">Identity</h3>
                 <div className="mt-2 space-y-2 text-xs">
                     <Field label="Business name" value={name} onChange={setName} />
-                    <div className="text-[10px] text-[#5A6170]">
+                    <div className="text-[10px] text-white italic">
                         Owner: {initial.ownerName} · {initial.ownerPhone}
                     </div>
                     <label className="flex flex-col gap-1">
-                        <span className="text-[#5A6170]">GSTIN</span>
+                        <span className="text-xs italic text-white">GSTIN</span>
                         <input
                             value={gstin}
                             onChange={(e) => setGstin(e.target.value.toUpperCase())}
-                            className={`rounded-lg border px-3 py-2 text-xs font-mono ${gstinValid ? "border-[#E4E7EC]" : "border-[#B42318]"
-                                }`}
+                            className={`w-full rounded-lg border bg-[#171717]/20 px-3 py-2 font-mono text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 ${
+                                gstinValid ? "border-white/10" : "border-[#B42318]/60"
+                            }`}
                         />
                         {!gstinValid && gstin.length > 0 && (
-                            <span className="text-[10px] text-[#B42318]">
+                            <span className="text-[10px] text-[#FF9B8F]">
                                 Invalid GSTIN checksum
                             </span>
                         )}
                         {gstinValid && gstin.length >= 14 && (
-                            <span className="text-[10px] text-[#067647]">
-                                ✓ Valid (state code {gstinStateCode})
+                            <span className="flex items-center gap-1 text-[10px] text-white">
+                                <IconCheck className="h-3 w-3" />
+                                Valid (state code {gstinStateCode})
                             </span>
                         )}
                     </label>
                     <label className="flex flex-col gap-1">
-                        <span className="text-[#5A6170]">Registration type</span>
+                        <span className="text-xs italic text-white">
+                            Registration type
+                        </span>
                         <select
                             value={regType}
                             onChange={(e) => setRegType(e.target.value)}
-                            className="rounded-lg border border-[#E4E7EC] px-3 py-2 text-xs"
+                            className={selectSurface}
                         >
                             <option value="regular">Regular</option>
                             <option value="composition">Composition</option>
@@ -199,8 +229,10 @@ export function BusinessProfileForm({ initial }: Props) {
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">E-invoice threshold</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">
+                    E-invoice threshold
+                </h3>
                 <div className="mt-2 space-y-2 text-xs">
                     <Field
                         label="Current-year turnover (₹)"
@@ -208,35 +240,43 @@ export function BusinessProfileForm({ initial }: Props) {
                         onChange={setTurnover}
                         type="number"
                     />
-                    <label className="flex items-center gap-2">
+                    <label className="flex cursor-pointer items-center gap-2">
                         <input
                             type="checkbox"
                             checked={everCrossed}
                             onChange={(e) => setEverCrossed(e.target.checked)}
+                            className="h-3.5 w-3.5 accent-[#0F5C4E]"
                         />
-                        <span>Crossed ₹5 cr in a prior FY (e-invoicing applies)</span>
+                        <span className="text-white">
+                            Crossed ₹5 cr in a prior FY (e-invoicing applies)
+                        </span>
                     </label>
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">Udyam (MSMED)</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">
+                    Udyam (MSMED)
+                </h3>
                 <div className="mt-2 space-y-2 text-xs">
-                    <label className="flex items-center gap-2">
+                    <label className="flex cursor-pointer items-center gap-2">
                         <input
                             type="checkbox"
                             checked={udyamRegistered}
                             onChange={(e) => setUdyamRegistered(e.target.checked)}
+                            className="h-3.5 w-3.5 accent-[#0F5C4E]"
                         />
-                        <span>Registered under Udyam</span>
+                        <span className="text-white">Registered under Udyam</span>
                     </label>
                     {udyamRegistered && (
                         <label className="flex flex-col gap-1">
-                            <span className="text-[#5A6170]">Classification</span>
+                            <span className="text-xs italic text-white">
+                                Classification
+                            </span>
                             <select
                                 value={udyamType}
                                 onChange={(e) => setUdyamType(e.target.value)}
-                                className="rounded-lg border border-[#E4E7EC] px-3 py-2 text-xs"
+                                className={selectSurface}
                             >
                                 <option value="micro">Micro</option>
                                 <option value="small">Small</option>
@@ -247,8 +287,8 @@ export function BusinessProfileForm({ initial }: Props) {
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">Address</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">Address</h3>
                 <div className="mt-2 space-y-2 text-xs">
                     <Field label="Line 1" value={line1} onChange={setLine1} />
                     <Field label="City" value={city} onChange={setCity} />
@@ -257,24 +297,28 @@ export function BusinessProfileForm({ initial }: Props) {
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">Payment methods</h3>
-                <p className="mt-1 text-[10px] text-[#5A6170]">
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">
+                    Payment methods
+                </h3>
+                <p className="mt-1 text-[10px] text-white italic">
                     Shown to customers on the pay page. Enable one or both.
                 </p>
 
                 <div className="mt-3 space-y-3">
                     {/* UPI */}
                     <div
-                        className={`rounded-lg border p-3 ${enableUpi ? "border-[#0F5C4E]" : "border-[#E4E7EC]"
-                            }`}
+                        className={`rounded-lg border p-3 ${
+                            enableUpi ? "border-[#067647]/60" : "border-white/10"
+                        }`}
                     >
-                        <label className="flex items-center justify-between gap-2 text-xs">
-                            <span className="font-medium">UPI</span>
+                        <label className="flex cursor-pointer items-center justify-between gap-2 text-xs">
+                            <span className="font-medium text-white">UPI</span>
                             <input
                                 type="checkbox"
                                 checked={enableUpi}
                                 onChange={(e) => setEnableUpi(e.target.checked)}
+                                className="h-3.5 w-3.5 accent-[#0F5C4E]"
                             />
                         </label>
                         {enableUpi && (
@@ -285,7 +329,7 @@ export function BusinessProfileForm({ initial }: Props) {
                                     onChange={setUpiId}
                                     mono
                                 />
-                                <p className="mt-1 text-[10px] text-[#5A6170]">
+                                <p className="mt-1 text-[10px] text-white italic">
                                     e.g. businessname@okhdfcbank
                                 </p>
                             </div>
@@ -294,15 +338,19 @@ export function BusinessProfileForm({ initial }: Props) {
 
                     {/* Bank Transfer */}
                     <div
-                        className={`rounded-lg border p-3 ${enableBank ? "border-[#0F5C4E]" : "border-[#E4E7EC]"
-                            }`}
+                        className={`rounded-lg border p-3 ${
+                            enableBank ? "border-[#067647]/60" : "border-white/10"
+                        }`}
                     >
-                        <label className="flex items-center justify-between gap-2 text-xs">
-                            <span className="font-medium">Bank transfer</span>
+                        <label className="flex cursor-pointer items-center justify-between gap-2 text-xs">
+                            <span className="font-medium text-white">
+                                Bank transfer
+                            </span>
                             <input
                                 type="checkbox"
                                 checked={enableBank}
                                 onChange={(e) => setEnableBank(e.target.checked)}
+                                className="h-3.5 w-3.5 accent-[#0F5C4E]"
                             />
                         </label>
                         {enableBank && (
@@ -329,7 +377,7 @@ export function BusinessProfileForm({ initial }: Props) {
                                     onChange={(v) => setIfsc(v.toUpperCase())}
                                     mono
                                 />
-                                <p className="text-[10px] text-[#5A6170]">
+                                <p className="text-[10px] text-white italic">
                                     Account number is displayed as entered. Use the masked form
                                     (e.g. XXXX XXXX 4821) for public sharing, or the full
                                     number if customers need it to transfer.
@@ -340,8 +388,8 @@ export function BusinessProfileForm({ initial }: Props) {
                 </div>
             </section>
 
-            <section className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-                <h3 className="text-sm font-semibold">Forecast</h3>
+            <section className={CARD}>
+                <h3 className="text-sm font-semibold text-white">Forecast</h3>
                 <div className="mt-2 space-y-2 text-xs">
                     <Field
                         label="Safety buffer (₹)"
@@ -352,8 +400,13 @@ export function BusinessProfileForm({ initial }: Props) {
                 </div>
             </section>
 
-            {err && <p className="text-xs text-[#B42318]">{err}</p>}
-            {msg && <p className="text-xs text-[#067647]">{msg}</p>}
+            {err && <p className="text-xs text-[#FF9B8F]">{err}</p>}
+            {msg && (
+                <p className="flex items-center gap-1.5 text-xs text-white">
+                    <IconCheck className="h-3 w-3" />
+                    {msg}
+                </p>
+            )}
 
             <button
                 onClick={save}
@@ -381,13 +434,14 @@ function Field({
 }) {
     return (
         <label className="flex flex-col gap-1">
-            <span className="text-[#5A6170]">{label}</span>
+            <span className="text-xs italic text-white">{label}</span>
             <input
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className={`rounded-lg border border-[#E4E7EC] px-3 py-2 text-xs ${mono ? "font-mono" : ""
-                    }`}
+                className={`w-full rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-2 text-xs text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark] ${
+                    mono ? "font-mono" : ""
+                }`}
             />
         </label>
     );

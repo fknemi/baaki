@@ -2,6 +2,7 @@ CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"phone_e164" text NOT NULL,
 	"name" text NOT NULL,
+	"email" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"last_login_at" timestamp with time zone,
 	CONSTRAINT "users_phone_e164_unique" UNIQUE("phone_e164")
@@ -22,6 +23,9 @@ CREATE TABLE "businesses" (
 	"upi_id" text,
 	"safety_buffer_paise" bigint NOT NULL,
 	"opening_cash_paise" bigint NOT NULL,
+	"ladder_override" jsonb,
+	"auto_send_stages" jsonb DEFAULT '["headsUp","dueDate"]'::jsonb NOT NULL,
+	"payment_methods" jsonb DEFAULT '["upi"]'::jsonb NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -66,6 +70,7 @@ CREATE TABLE "invoices" (
 	"amount_paid_paise" bigint DEFAULT 0 NOT NULL,
 	"disputed" boolean DEFAULT false NOT NULL,
 	"promise_to_pay_date" date,
+	"snoozed_until" date,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -90,7 +95,8 @@ CREATE TABLE "expenses" (
 	"recurrence" text DEFAULT 'once' NOT NULL,
 	"day_of_month" integer,
 	"due_date" date,
-	"paid" boolean DEFAULT false NOT NULL
+	"paid" boolean DEFAULT false NOT NULL,
+	"last_paid_period" text
 );
 --> statement-breakpoint
 CREATE TABLE "payments" (
@@ -115,6 +121,20 @@ CREATE TABLE "inbox_items" (
 	"status" text DEFAULT 'open' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"resolved_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "events" (
+	"seq" bigserial PRIMARY KEY NOT NULL,
+	"chain_seq" integer DEFAULT 0 NOT NULL,
+	"business_id" uuid NOT NULL,
+	"entity_type" text NOT NULL,
+	"entity_id" uuid NOT NULL,
+	"type" text NOT NULL,
+	"actor" text NOT NULL,
+	"at_iso" timestamp with time zone NOT NULL,
+	"payload" jsonb NOT NULL,
+	"prev_hash" text NOT NULL,
+	"hash" text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "otp_challenges" (
@@ -165,6 +185,12 @@ CREATE TABLE "audit_admin" (
 	"at_iso" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "rate_limits" (
+	"key" text PRIMARY KEY NOT NULL,
+	"count" integer DEFAULT 0 NOT NULL,
+	"reset_at" timestamp with time zone NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "businesses" ADD CONSTRAINT "businesses_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "business_members" ADD CONSTRAINT "business_members_business_id_businesses_id_fk" FOREIGN KEY ("business_id") REFERENCES "public"."businesses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "business_members" ADD CONSTRAINT "business_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -183,4 +209,7 @@ ALTER TABLE "reminder_log" ADD CONSTRAINT "reminder_log_invoice_id_invoices_id_f
 ALTER TABLE "evidence_files" ADD CONSTRAINT "evidence_files_business_id_businesses_id_fk" FOREIGN KEY ("business_id") REFERENCES "public"."businesses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "bm_uniq" ON "business_members" USING btree ("business_id","user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "inv_business_number_uniq" ON "invoices" USING btree ("business_id","number");--> statement-breakpoint
+CREATE INDEX "events_entity_idx" ON "events" USING btree ("entity_type","entity_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "events_hash_uniq" ON "events" USING btree ("hash");--> statement-breakpoint
+CREATE UNIQUE INDEX "events_chain_uniq" ON "events" USING btree ("business_id","entity_id","chain_seq");--> statement-breakpoint
 CREATE UNIQUE INDEX "reminder_uniq" ON "reminder_log" USING btree ("invoice_id","stage_key");

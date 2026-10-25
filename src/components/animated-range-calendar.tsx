@@ -548,12 +548,12 @@ export function AnimatedRangeCalendar({
   return (
     <div
       ref={rootRef}
-      className={cn("arc-root relative mx-auto w-full min-w-0 max-w-[560px]", className)}
+      className={cn("arc-root relative mx-auto w-full min-w-0  h-fit ", className)}
     >
       <style>{CSS}</style>
 
       {/* ------------------------------ header ----------------------------- */}
-      <div className="mb-4 grid grid-cols-2 gap-4">
+      <div className="mb-4 grid grid-cols-2 gap-4 w-full ">
         <DateCard
           label={startLabel}
           filled={Boolean(startKey)}
@@ -653,11 +653,11 @@ const CSS = `
   --arc-glow: rgba(37, 99, 235, 0.40);
 
   /* whole-pixel sizes keep every edge on the pixel grid (crisp) */
-  --arc-cell-h: 56px;   /* height of one day row  */
-  --arc-d-max: 46px;    /* day circle + path height (shrinks if the card is narrow) */
+  --arc-cell-h: 40px;   /* height of one day row  */
+  --arc-d-max: 42px;    /* day circle + path height (shrinks if the card is narrow) */
 }
 @media (max-width: 480px) {
-  .arc-root { --arc-cell-h: 48px; --arc-d-max: 40px; }
+  .arc-root { --arc-cell-h: 56px; --arc-d-max: 46px; }
 }
 
 .dark .arc-root {

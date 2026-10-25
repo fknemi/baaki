@@ -54,13 +54,81 @@ const FLAG_LABEL: Record<string, string> = {
 };
 
 const FLAG_CLASS: Record<string, string> = {
-  part: "bg-blue-100 text-blue-900",
-  multi: "bg-blue-100 text-blue-900",
-  tdsShortfall: "bg-amber-100 text-amber-900",
-  overpayment: "bg-red-100 text-red-900",
-  unmatched: "bg-red-100 text-red-900",
-  duplicate: "bg-gray-200 text-gray-900",
+  part: "border border-[#2563EB]/40 bg-[#2563EB]/10 text-white",
+  multi: "border border-[#2563EB]/40 bg-[#2563EB]/10 text-white",
+  tdsShortfall: "border border-[#F59E0B]/40 bg-[#F59E0B]/10 text-white",
+  overpayment: "border border-[#EF4444]/40 bg-[#EF4444]/10 text-white",
+  unmatched: "border border-[#EF4444]/40 bg-[#EF4444]/10 text-white",
+  duplicate: "border border-white/10 bg-white/5 text-white",
 };
+
+// ─── outline icons ───────────────────────────────────────────────────────────
+
+function IconUpload({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </svg>
+  );
+}
+
+function IconCheck({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function IconClose({ className = "h-3 w-3" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+// ─── shared button styles ────────────────────────────────────────────────────
+
+const PRIMARY =
+  "flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#0F5C4E] px-4 py-3 text-center text-sm font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50";
+const SECONDARY =
+  "flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-[#171717]/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/5 disabled:opacity-50";
+const CARD = "rounded-xl border border-white/10";
+
+// Every scrollable list uses this pair so the scrollbar doesn't butt
+// against the card border.
+const SCROLL = "overflow-y-auto pr-1";
 
 export function PaymentsClient() {
   const [data, setData] = useState<ImportResponse | null>(null);
@@ -192,11 +260,18 @@ export function PaymentsClient() {
   const visibleLines = data?.lines.filter((r) => !ignoredIds.has(r.lineId)) ?? [];
 
   return (
-    <main className="space-y-4 p-4 pb-24">
-      <h1 className="text-xl font-semibold">Payments</h1>
+    <main className="space-y-4 p-4 pb-24 pt-14">
+      <h1 className="text-xl font-semibold text-white">Payments</h1>
 
-      <label className="block cursor-pointer rounded-lg bg-[#0F5C4E] px-4 py-3 text-center text-sm font-medium text-white hover:bg-[#0F5C4E]/90">
-        {busy ? "Processing…" : "📥 Import bank statement (CSV)"}
+      <label className={`cursor-pointer ${PRIMARY}`}>
+        {busy ? (
+          "Processing…"
+        ) : (
+          <>
+            <IconUpload className="h-4 w-4" />
+            Import bank statement (CSV)
+          </>
+        )}
         <input
           type="file"
           accept=".csv,text/csv"
@@ -206,26 +281,34 @@ export function PaymentsClient() {
         />
       </label>
 
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-[#FF9B8F]">{error}</p>}
 
       {data && (
-        <div className="rounded-lg bg-white p-3 text-xs ring-1 ring-[#E4E7EC]">
+        <div className="rounded-lg border border-white/10 p-3 text-xs">
           <div className="grid grid-cols-4 gap-2 text-center">
             <div>
-              <div className="font-semibold">{data.summary.totalLines}</div>
-              <div className="text-muted-foreground">lines</div>
+              <div className="font-semibold text-white">
+                {data.summary.totalLines}
+              </div>
+              <div className="text-white italic">lines</div>
             </div>
             <div>
-              <div className="font-semibold text-[#067647]">{data.summary.matched}</div>
-              <div className="text-muted-foreground">matched</div>
+              <div className="font-semibold text-[#4ADE80]">
+                {data.summary.matched}
+              </div>
+              <div className="text-white italic">matched</div>
             </div>
             <div>
-              <div className="font-semibold text-[#B54708]">{data.summary.needsReview}</div>
-              <div className="text-muted-foreground">review</div>
+              <div className="font-semibold text-[#FBBF24]">
+                {data.summary.needsReview}
+              </div>
+              <div className="text-white italic">review</div>
             </div>
             <div>
-              <div className="font-semibold text-[#5A6170]">{data.summary.duplicates}</div>
-              <div className="text-muted-foreground">dup.</div>
+              <div className="font-semibold text-white">
+                {data.summary.duplicates}
+              </div>
+              <div className="text-white italic">dup.</div>
             </div>
           </div>
         </div>
@@ -239,7 +322,7 @@ export function PaymentsClient() {
       )}
 
       {data && visibleLines.length === 0 && (
-        <p className="text-muted-foreground rounded-lg bg-white p-4 text-xs ring-1 ring-[#E4E7EC]">
+        <p className="rounded-lg border border-white/10 p-4 text-xs text-white italic">
           {data.lines.length === 0
             ? "No lines found in this statement."
             : "All lines have been confirmed or ignored."}
@@ -247,48 +330,54 @@ export function PaymentsClient() {
       )}
 
       {visibleLines.length > 0 && (
-        <ul className="space-y-3">
+        <ul className={`max-h-[60vh] space-y-3 ${SCROLL}`}>
           {visibleLines.map((row) => {
             const isDone = confirmedIds.has(row.lineId);
             return (
               <li
                 key={row.lineId}
-                className={`rounded-xl bg-white p-4 ring-1 ${
-                  isDone ? "ring-[#067647]" : "ring-[#E4E7EC]"
+                className={`rounded-xl border p-4 ${
+                  isDone ? "border-[#067647]/60" : "border-white/10"
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="text-muted-foreground text-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-xs text-white italic">
                       {row.line.date} · {row.line.ref}
                     </div>
-                    <div className="text-sm font-medium">{row.line.description}</div>
+                    <div className="text-sm font-medium text-white">
+                      {row.line.description}
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="font-semibold tabular-nums">
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="font-semibold tabular-nums text-white">
                       {formatINR(row.line.creditPaise)}
                     </div>
                     {!isDone && (
                       <button
                         onClick={() => ignoreLine(row)}
-                        className="text-[10px] text-[#5A6170] hover:text-[#B42318]"
+                        className="flex items-center gap-1 text-[10px] text-white hover:text-[#FF9B8F]"
                         disabled={busy}
                       >
-                        ✕ Ignore
+                        <IconClose className="h-2.5 w-2.5" />
+                        Ignore
                       </button>
                     )}
                   </div>
                 </div>
 
                 {isDone ? (
-                  <p className="mt-2 text-xs text-[#067647]">✓ Confirmed. See payments below.</p>
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-white">
+                    <IconCheck className="h-3 w-3" />
+                    Confirmed. See payments below.
+                  </p>
                 ) : row.proposals.length === 0 ? (
-                  <div className="mt-2 flex items-center justify-between">
-                    <p className="text-muted-foreground text-xs italic">No proposals.</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-xs text-white italic">No proposals.</p>
                     <button
                       onClick={() => openChangeMatch(row)}
                       disabled={busy}
-                      className="rounded-lg border border-[#E4E7EC] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F8FA]"
+                      className={SECONDARY}
                     >
                       Change match
                     </button>
@@ -299,20 +388,25 @@ export function PaymentsClient() {
                       const hasFlags = p.flags.length > 0;
                       const canConfirm = p.invoiceIds.length > 0 && !p.flags.includes("duplicate");
                       return (
-                        <li key={i} className="rounded-lg border border-[#E4E7EC] p-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="text-muted-foreground text-xs">
+                        <li
+                          key={i}
+                          className="rounded-lg border border-white/10 p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs text-white italic">
                                 Confidence {(p.confidence * 100).toFixed(0)}%
                               </div>
-                              <div className="mt-1 text-xs">{p.reason}</div>
+                              <div className="mt-1 text-xs text-white">
+                                {p.reason}
+                              </div>
                               {hasFlags && (
                                 <div className="mt-2 flex flex-wrap gap-1">
                                   {p.flags.map((f) => (
                                     <span
                                       key={f}
                                       className={`rounded px-2 py-0.5 text-[10px] font-medium ${
-                                        FLAG_CLASS[f] ?? "bg-gray-100"
+                                        FLAG_CLASS[f] ?? "border border-white/10 bg-white/5 text-white"
                                       }`}
                                     >
                                       {FLAG_LABEL[f] ?? f}
@@ -321,7 +415,7 @@ export function PaymentsClient() {
                                 </div>
                               )}
                             </div>
-                            <div className="ml-3 flex shrink-0 flex-col gap-1">
+                            <div className="flex shrink-0 flex-col gap-1">
                               {canConfirm && (
                                 <button
                                   onClick={() => confirmLine(row, p)}
@@ -334,7 +428,7 @@ export function PaymentsClient() {
                               <button
                                 onClick={() => openChangeMatch(row)}
                                 disabled={busy}
-                                className="rounded-lg border border-[#E4E7EC] px-3 py-1.5 text-xs font-medium hover:bg-[#F7F8FA] disabled:opacity-50"
+                                className={SECONDARY}
                               >
                                 Change match
                               </button>
@@ -352,29 +446,45 @@ export function PaymentsClient() {
       )}
 
       {confirmed !== null && (
-        <div className="rounded-xl bg-white p-4 ring-1 ring-[#E4E7EC]">
-          <h2 className="text-sm font-semibold">Confirmed payments</h2>
+        <div className={`${CARD} p-4`}>
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-sm font-semibold text-white">
+              Confirmed payments
+            </h2>
+            <span className="text-xs text-white italic">
+              {confirmed.length}
+            </span>
+          </div>
           {confirmed.length === 0 ? (
-            <p className="text-muted-foreground mt-2 text-xs">No payments confirmed yet.</p>
+            <p className="mt-2 text-xs text-white italic">
+              No payments confirmed yet.
+            </p>
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul className={`mt-3 max-h-64 space-y-2 ${SCROLL}`}>
               {confirmed.map((p) => (
-                <li key={p.id} className="flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-medium tabular-nums">{formatINR(p.amountPaise)}</div>
-                    <div className="text-muted-foreground">
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between gap-2 text-xs"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium tabular-nums text-white">
+                      {formatINR(p.amountPaise)}
+                    </div>
+                    <div className="text-white italic">
                       {p.paidOn} · {p.reference ?? "—"}
                     </div>
                   </div>
                   {p.invoiceId && p.invoiceNumber ? (
                     <Link
                       href={`/invoices/${p.invoiceId}`}
-                      className="font-mono text-[#175CD3] hover:underline"
+                      className="shrink-0 font-mono text-white underline underline-offset-4"
                     >
                       {p.invoiceNumber}
                     </Link>
                   ) : (
-                    <span className="text-muted-foreground">unmatched</span>
+                    <span className="shrink-0 text-white italic">
+                      unmatched
+                    </span>
                   )}
                 </li>
               ))}
@@ -385,7 +495,7 @@ export function PaymentsClient() {
 
       {changeMatchFor !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center"
           onClick={(e) => {
             if (e.target === e.currentTarget) setChangeMatchFor(null);
           }}
@@ -393,44 +503,54 @@ export function PaymentsClient() {
           aria-modal="true"
           aria-label="Pick an invoice"
         >
-          <div className="w-full max-w-md rounded-xl bg-white p-4 shadow-xl">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Pick an invoice</h2>
-                <p className="text-muted-foreground mt-1 text-xs">
+          <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#192221] p-4 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-white">
+                  Pick an invoice
+                </h2>
+                <p className="mt-1 text-xs text-white italic">
                   {changeMatchFor.line.date} · {changeMatchFor.line.description} ·{" "}
                   {formatINR(changeMatchFor.line.creditPaise)}
                 </p>
               </div>
               <button
                 onClick={() => setChangeMatchFor(null)}
-                className="text-[#5A6170] hover:text-[#1A1D23]"
+                className="shrink-0 text-white/60 hover:text-white"
                 aria-label="Close"
               >
-                ✕
+                <IconClose className="h-3.5 w-3.5" />
               </button>
             </div>
-            {loadingInvoices && <p className="text-muted-foreground mt-4 text-xs">Loading…</p>}
+            {loadingInvoices && (
+              <p className="mt-4 text-xs text-white italic">Loading…</p>
+            )}
             {!loadingInvoices && openInvoices && openInvoices.length === 0 && (
-              <p className="text-muted-foreground mt-4 text-xs">No open invoices.</p>
+              <p className="mt-4 text-xs text-white italic">
+                No open invoices.
+              </p>
             )}
             {!loadingInvoices && openInvoices && openInvoices.length > 0 && (
-              <ul className="mt-4 max-h-[60vh] space-y-2 overflow-y-auto">
+              <ul className={`mt-4 max-h-[60vh] space-y-2 ${SCROLL}`}>
                 {openInvoices.map((inv) => (
                   <li key={inv.id}>
                     <button
-                      onClick={() => changeMatchFor && pickInvoice(changeMatchFor, inv.id)}
+                      onClick={() =>
+                        changeMatchFor && pickInvoice(changeMatchFor, inv.id)
+                      }
                       disabled={busy}
-                      className="w-full rounded-lg border border-[#E4E7EC] p-3 text-left hover:bg-[#F7F8FA] disabled:opacity-50"
+                      className="w-full rounded-lg border border-white/10 bg-[#171717]/20 p-3 text-left hover:bg-white/5 disabled:opacity-50"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-mono text-xs text-[#175CD3]">{inv.number}</div>
-                          <div className="text-muted-foreground text-xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate font-mono text-xs text-white">
+                            {inv.number}
+                          </div>
+                          <div className="truncate text-xs text-white italic">
                             {inv.customerName ?? "—"}
                           </div>
                         </div>
-                        <div className="text-xs font-semibold tabular-nums">
+                        <div className="shrink-0 text-xs font-semibold tabular-nums text-white">
                           {formatINR(inv.outstandingPaise)}
                         </div>
                       </div>

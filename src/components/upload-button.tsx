@@ -9,6 +9,9 @@ async function computeSha256(buffer: ArrayBuffer): Promise<string> {
     .join("");
 }
 
+// ─── outline icon ────────────────────────────────────────────────────────────
+
+
 export function UploadButton({
   onUploaded,
   accept = "image/jpeg,image/png,application/pdf,audio/mpeg,audio/wav",
@@ -77,9 +80,15 @@ export function UploadButton({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy}
-        className="w-full rounded-lg bg-[#0F5C4E] px-4 py-3 text-sm font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#0F5C4E] px-4 py-3 text-sm font-medium text-white hover:bg-[#0F5C4E]/90 disabled:opacity-50"
       >
-        {busy ? "Uploading…" : `📎 ${label}`}
+        {busy ? (
+          "Uploading…"
+        ) : (
+          <>
+            {label}
+          </>
+        )}
       </button>
       <input
         ref={inputRef}
@@ -88,7 +97,7 @@ export function UploadButton({
         className="hidden"
         onChange={handleChange}
       />
-      {error && <p className="mt-2 text-xs text-[#B42318]">{error}</p>}
+      {error && <p className="mt-2 text-xs text-[#FF9B8F]">{error}</p>}
     </div>
   );
 }
