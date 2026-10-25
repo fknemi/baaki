@@ -219,9 +219,14 @@ function FollowUpCard({ item, today }: { item: FollowUpItem; today: string }) {
         return STAGES.includes(k) ? k : "headsUp";
     });
 
-    // PREVIEW IS DYNAMIC! Instantly looks up the text for whatever stage is selected in the dropdown.
-    // Fallback to original derived message if the backend hasn't been updated yet.
-    const activeMessage = item.allMessages?.[stage]?.[language] ?? (language === "hi" ? item.messageHi : item.messageEn);
+    // PREVIEW IS DYNAMIC! Looks up the text for whatever stage is selected in
+    // the dropdown and the current language toggle. Falls back through the
+    // derived-stage pair and finally the raw `message` so the card never
+    // shows "No reminder stage active." when *some* body exists.
+    const activeMessage =
+        item.allMessages?.[stage]?.[language] ??
+        (language === "hi" ? item.messageHi : item.messageEn) ??
+        item.message;
 
     // Clicking these buttons sends the intent AND logs it automatically.
     async function sendReminder(btnChannel: ApiChannel) {
@@ -243,12 +248,25 @@ function FollowUpCard({ item, today }: { item: FollowUpItem; today: string }) {
             }
 
             const serverBody: string = activeMessage?.body ?? "";
+
+            // WhatsApp and SMS get the ASCII invoice appended so the
+            // recipient sees the itemised bill inline. Email keeps the
+            // server-rendered body untouched ({{asciiInvoice}} is
+            // interpolated server-side into the email template); Call is
+            // a tel: handoff so the body is unused.
+            const includeAscii =
+                btnChannel === "whatsapp" || btnChannel === "sms";
+            const body: string =
+                includeAscii && item.asciiInvoice
+                    ? `${serverBody}\n\n${item.asciiInvoice}`
+                    : serverBody;
+
             const phone = item.customerPhone?.replace(/[^\d+]/g, "") ?? "";
 
             if (btnChannel === "whatsapp" && phone) {
-                window.open(whatsappUri(phone, serverBody), "_blank");
+                window.open(whatsappUri(phone, body), "_blank");
             } else if (btnChannel === "sms" && phone) {
-                window.location.href = smsUri(phone, serverBody);
+                window.location.href = smsUri(phone, body);
             } else if (btnChannel === "call" && phone) {
                 window.location.href = `tel:${phone}`;
             }

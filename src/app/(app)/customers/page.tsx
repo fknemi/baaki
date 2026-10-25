@@ -120,7 +120,6 @@ function Highlight({
         const last = groups[groups.length - 1];
         if (last && last.match === match) {
             last.text += text[i]!;
-
         } else {
             groups.push({ text: text[i]!, match });
         }
@@ -176,17 +175,6 @@ const ROW_CARD =
     "lg:rounded-2xl lg:p-5 " +
     "xl:rounded-2xl xl:p-6";
 
-// aspect-square  — belt-and-suspenders: keeps 1:1 even if h-* or w-* is
-//                  ever dropped from this string in a future edit.
-// leading-none   — collapses the line-box to the font-size so items-center
-//                  centers the GLYPH (not an oversized line-box whose
-//                  baseline sits ~80% down). Without this, the letter
-//                  drifts toward the bottom as text-base scales the
-//                  line-height to 24px inside a 40px box, and the badge
-//                  reads as a squashed pill even though border-radius is
-//                  still 9999px.
-// text-center    — guards against horizontal mis-centering on very wide
-//                  letters (M/W) at lg/xl.
 const GRADE_BADGE =
     "inline-flex shrink-0 items-center justify-center rounded-full font-semibold " +
     "aspect-square leading-none text-center " +
@@ -195,6 +183,35 @@ const GRADE_BADGE =
     "md:h-8 md:w-8 md:text-sm " +
     "lg:h-9 lg:w-9 lg:text-sm " +
     "xl:h-10 xl:w-10 xl:text-base";
+
+// New customer button — matches the CTA ladder used across the app.
+const NEW_CUSTOMER_BTN =
+    "inline-flex shrink-0 items-center justify-center gap-1.5 font-medium " +
+    "rounded-lg bg-[#0F5C4E] text-white hover:bg-[#0F5C4E]/90 " +
+    "transition-colors duration-200 " +
+    "h-9 px-3 text-sm " +
+    "sm:h-10 sm:rounded-lg sm:px-4 sm:text-sm " +
+    "md:h-11 md:rounded-xl md:px-4 md:text-base " +
+    "lg:h-11 lg:rounded-xl lg:px-5 lg:text-base " +
+    "xl:h-12 xl:rounded-xl xl:px-6 xl:text-base";
+
+function IconPlus({ className = "h-3.5 w-3.5" }: { className?: string }) {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+            aria-hidden="true"
+        >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+    );
+}
 
 // ─── page ────────────────────────────────────────────────────────────────────
 
@@ -255,9 +272,24 @@ export default function CustomersPage() {
 
     return (
         <main className="mx-auto w-full max-w-md space-y-3 px-3 pb-24 pt-14 sm:max-w-xl sm:space-y-3 sm:px-4 sm:pb-24 sm:pt-16 md:max-w-2xl md:space-y-4 md:px-6 md:pb-28 md:pt-20 lg:max-w-3xl lg:space-y-4 lg:px-6 lg:pb-32 lg:pt-24 xl:max-w-4xl xl:space-y-5 xl:px-8 xl:pb-32 xl:pt-24">
-            <h1 className="text-xl font-semibold text-white sm:text-2xl md:text-2xl lg:text-3xl xl:text-4xl">
-                Customers
-            </h1>
+            {/* Header row — title on the left, "New customer" CTA on the
+                right. On base the button drops below the title because
+                11-link desktop nav aside, the header itself can't fit
+                a 150px button and a full-width title side-by-side at
+                360px. From sm up they sit on one line. */}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <h1 className="text-xl font-semibold text-white sm:text-2xl md:text-2xl lg:text-3xl xl:text-4xl">
+                    Customers
+                </h1>
+                <Link
+                    href="/customers/new"
+                    className={NEW_CUSTOMER_BTN}
+                    aria-label="Create a new customer"
+                >
+                    <IconPlus />
+                    New customer
+                </Link>
+            </div>
 
             <input
                 type="search"
@@ -300,16 +332,29 @@ export default function CustomersPage() {
                         : query
                             ? "No customers match your search."
                             : "No customers in this grade."}
-                    {(query || gradeFilter !== "all") && (
-                        <button
-                            onClick={() => {
-                                setQuery("");
-                                setGradeFilter("all");
-                            }}
-                            className="ml-2 underline underline-offset-4"
+                    {/* When the list is genuinely empty (not just filtered
+                        out), point the user at the create button rather
+                        than making them scroll back up. */}
+                    {customers.length === 0 ? (
+                        <Link
+                            href="/customers/new"
+                            className="mt-3 inline-flex items-center gap-1.5 font-medium text-white underline underline-offset-4 hover:text-[#78EDC0]"
                         >
-                            Clear filters
-                        </button>
+                            <IconPlus className="h-3 w-3" />
+                            Create your first customer
+                        </Link>
+                    ) : (
+                        (query || gradeFilter !== "all") && (
+                            <button
+                                onClick={() => {
+                                    setQuery("");
+                                    setGradeFilter("all");
+                                }}
+                                className="ml-2 underline underline-offset-4"
+                            >
+                                Clear filters
+                            </button>
+                        )
                     )}
                 </div>
             )}

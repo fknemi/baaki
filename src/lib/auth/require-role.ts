@@ -7,7 +7,16 @@ import { getSession } from "./session";
 export type AuthContext = {
   userId: string;
   userName: string;
-  phoneE164: string;
+  /**
+   * Nullable on purpose. Google and email/password sign-ins never
+   * produce a phone number, and the `users.phone_e164` column is
+   * nullable. Treating "no phone" as "unauthenticated" is a bug —
+   * the session cookie is the source of truth for auth, not this.
+   *
+   * Downstream code that *needs* a phone (SMS reminders, tel: links)
+   * must null-check this explicitly; auth helpers should not.
+   */
+  phoneE164: string | null;
   businessId: string;
   businessName: string;
   role: "owner" | "accountant" | "staff";
@@ -28,7 +37,11 @@ export async function requireRole(
     );
   }
 
-  const [userRow] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+  const [userRow] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, session.userId))
+    .limit(1);
   if (!userRow) {
     return NextResponse.json(
       { error: { code: "UNAUTHENTICATED", message: "User not found." } },
@@ -65,6 +78,7 @@ export async function requireRole(
   return handler(req, {
     userId: userRow.id,
     userName: userRow.name,
+    // Nullable — do not add a guard here. See AuthContext.phoneE164.
     phoneE164: userRow.phoneE164,
     businessId: memberRow.businessId,
     businessName: memberRow.businessName,

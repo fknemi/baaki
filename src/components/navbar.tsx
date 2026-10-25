@@ -60,11 +60,18 @@ const MENU_LINKS_PUBLIC = [
     { label: "Login", href: "/login" },
 ];
 
+// Cash-collection first → reporting → account.
 const MENU_LINKS_AUTHED = [
     { label: "Dashboard", href: "/dashboard" },
+    { label: "Inbox", href: "/inbox" },
     { label: "Customers", href: "/customers" },
     { label: "Invoices", href: "/invoices" },
+    { label: "Payments", href: "/payments" },
+    { label: "Chase", href: "/chase" },
+    { label: "Follow-ups", href: "/follow-ups" },
     { label: "Forecast", href: "/forecast" },
+    { label: "Documents", href: "/documents" },
+    { label: "Help", href: "/help" },
     { label: "Settings", href: "/settings" },
 ];
 
@@ -86,6 +93,7 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
 
     const [open, setOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
     // ── Open / close animation ────────────────────────────────────
     useEffect(() => {
@@ -171,10 +179,17 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
         };
     }, [open]);
 
+    // ── Reset menu scroll to top on every open ────────────────────
+    // The menu stays mounted (display:none ↔ display:block), so a
+    // previous scroll position would otherwise persist — leaving the
+    // user mid-scroll with the first links hidden above the fold.
+    useEffect(() => {
+        if (open && scrollRef.current) {
+            scrollRef.current.scrollTop = 0;
+        }
+    }, [open]);
+
     // ── Close menu when viewport crosses into desktop territory ───
-    // The hamburger — the only way to open the mobile menu — is hidden at
-    // lg+. Without this, resizing from mobile→desktop while the menu is
-    // open would leave the fullscreen overlay stranded on top of the app.
     useEffect(() => {
         if (!open) return;
         const mq = window.matchMedia("(min-width: 1024px)");
@@ -195,12 +210,7 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
 
     return (
         <nav className="absolute top-0 right-0 left-0 z-50">
-            {/* ─────────── TOP BAR ───────────
-                Mobile: flex justify-between — logo/business on left,
-                toggles + hamburger on right.
-                lg+: grid [auto | 1fr | auto] so the desktop nav links are
-                centred between the left brand cluster and the right
-                action cluster regardless of how wide each side gets. */}
+            {/* ─────────── TOP BAR ─────────── */}
             <div className="relative z-[60] flex items-center justify-between gap-3 px-2 pt-2 sm:gap-4 sm:px-3 md:px-4 lg:grid lg:grid-cols-[auto_1fr_auto] lg:px-6 lg:pt-3 xl:px-8">
                 {/* ── Left: logo + business name ── */}
                 <div className="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -245,15 +255,10 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
                     )}
                 </div>
 
-                {/* ── Center: desktop nav — inline links at lg+ ──
-                    Hidden on < lg so the hamburger is the only nav there.
-                    The `1fr` grid cell (see container above) absorbs the
-                    leftover space; `justify-center` then centres the link
-                    row within that cell regardless of how wide the left
-                    brand cluster and right action cluster get. */}
+                {/* ── Center: desktop nav — inline links at lg+ ── */}
                 <nav
                     aria-label="Main navigation"
-                    className="hidden lg:flex lg:items-center lg:justify-center lg:gap-6 xl:gap-8"
+                    className="hidden lg:flex lg:items-center lg:justify-center lg:gap-2 xl:gap-4 2xl:gap-6"
                 >
                     {links.map((link) => {
                         const isActive =
@@ -264,7 +269,7 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`whitespace-nowrap text-sm font-medium transition-colors duration-200 hover:text-[#78EDC0] xl:text-base ${
+                                className={`whitespace-nowrap text-xs font-medium transition-colors duration-200 hover:text-[#78EDC0] xl:text-sm 2xl:text-base ${
                                     isActive ? "text-[#78EDC0]" : "text-white"
                                 }`}
                             >
@@ -323,11 +328,7 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
                 </div>
             </div>
 
-            {/* ─────────── FULLSCREEN GSAP MENU (mobile only) ───────────
-                Preserved unchanged. Only reachable via the hamburger,
-                which is `lg:hidden`, so this menu can't be opened on
-                desktop — the desktop nav (above) is the source of truth
-                at lg+. */}
+            {/* ─────────── FULLSCREEN MENU (mobile only) ─────────── */}
             <div
                 ref={menuRef}
                 id="fullscreen-menu"
@@ -341,32 +342,58 @@ export default function Navbar({ isAuthed, business }: NavbarProps) {
                     <div className="backdrop-layer absolute inset-0 bg-[#171717]" />
                 </div>
 
-                <div className="absolute inset-0" onClick={() => setOpen(false)} />
+                {/* Scrollable content — survives 11 links on landscape
+                    phones (390px tall) via overflow-y-auto. The inner
+                    min-h-full + justify-center still centers the list
+                    when it fits. overscroll-contain stops the page
+                    behind from scrolling when the menu hits its edges. */}
+                <div
+                    ref={scrollRef}
+                    className="relative z-10 h-full overflow-y-auto overscroll-contain"
+                >
+                    <div className="relative flex min-h-full flex-col items-center justify-center px-6 py-20 sm:py-24">
+                        {/* Dismiss backdrop — sits behind the links inside
+                            the scroll container so tapping empty space
+                            still closes the menu. */}
+                        <div
+                            className="absolute inset-0 cursor-pointer"
+                            onClick={() => setOpen(false)}
+                            aria-hidden="true"
+                        />
 
-                <div className="pointer-events-none relative z-10 flex h-full flex-col items-center justify-center px-6">
-                    <ul className="pointer-events-auto flex flex-col items-center gap-12 md:gap-6">
-                        {links.map((link) => (
-                            <li key={link.href} className="overflow-hidden">
-                                <Link
-                                    href={link.href}
-                                    onClick={() => setOpen(false)}
-                                    className="nav-link-item inline-block text-4xl font-medium text-white transition-colors duration-200 hover:text-[#78EDC0] md:text-6xl"
-                                >
-                                    {link.label}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                        {/* Link list.
+                            - Base (< 640): 1-col, text-xl (20px / 28lh) +
+                              gap-3.5 (14px) → 11 links ≈ 448px, fits
+                              iPhone 12+ portrait cleanly.
+                            - sm (640–767): 1-col, text-2xl (24px / 32lh) +
+                              gap-4 (16px) → ≈ 512px, fits tablets in
+                              portrait.
+                            - md (768–1023): 2-col grid — 11 links become
+                              6 rows × 32 + 5 × 16 = 272px, dwarfed by the
+                              viewport. Solves the tablet-landscape case
+                              where 1-col would still overflow.
+                            `place-items-center` centers each cell's
+                            content so left/right columns visually align. */}
+                        <ul className="relative flex w-full flex-col items-center gap-3.5 text-center sm:gap-4 md:grid md:max-w-xl md:grid-cols-2 md:place-items-center md:gap-x-12 md:gap-y-4">
+                            {links.map((link) => (
+                                <li key={link.href} className="overflow-hidden">
+                                    <Link
+                                        href={link.href}
+                                        onClick={() => setOpen(false)}
+                                        className="nav-link-item inline-block text-xl font-medium text-white transition-colors duration-200 hover:text-[#78EDC0] sm:text-2xl"
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
 
-                    {/* Sign out — only when logged in. Hidden at lg+ so it
-                        never double-renders alongside the desktop nav's
-                        sign-out if the menu is somehow visible on desktop
-                        (e.g. mid-resize). */}
-                    {isAuthed && (
-                        <div className="pointer-events-auto mt-10 lg:hidden">
-                            <SignOutButton />
-                        </div>
-                    )}
+                        {isAuthed && (
+                            <div className="relative mt-8 flex-shrink-0 sm:mt-10">
+                                <SignOutButton />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </nav>
